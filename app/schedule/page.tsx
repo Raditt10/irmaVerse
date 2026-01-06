@@ -5,7 +5,7 @@ import DashboardHeader from "@/components/ui/DashboardHeader";
 import Sidebar from "@/components/ui/Sidebar";
 import ChatbotButton from "@/components/ui/ChatbotButton";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, MapPin, User, Clock, Users, Search, Filter } from "lucide-react";
+import { Calendar, MapPin, User, Clock, Users, Search, Filter, ArrowRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
 interface Schedule {
@@ -96,6 +96,50 @@ const Schedule = () => {
           pemateri: "Ustadz Abdullah Hakim",
           registeredCount: 89,
           status: "Acara telah dilaksanakan"
+        },
+        {
+          id: "5",
+          title: "Mentoring Calon Hafidz",
+          description: "Program intensif bimbingan hafalan Al-Quran personal",
+          date: "2024-12-08",
+          time: "16:00 WIB",
+          location: "Ruang Belajar Privat",
+          pemateri: "Ustadz Qur'ani Ibrahim",
+          registeredCount: 20,
+          status: "Segera hadir"
+        },
+        {
+          id: "6",
+          title: "Workshop Parenting Islami",
+          description: "Memahami pola asuh anak menurut perspektif Islam",
+          date: "2024-12-12",
+          time: "10:00 WIB",
+          location: "Aula Keluarga",
+          pemateri: "Ustadzah Dr. Nurfitrianti, M.Psi",
+          registeredCount: 54,
+          status: "Segera hadir"
+        },
+        {
+          id: "7",
+          title: "Fikih Muamalah Praktis",
+          description: "Pemahaman hukum Islam dalam transaksi bisnis modern",
+          date: "2024-12-15",
+          time: "14:00 WIB",
+          location: "Aula Utama",
+          pemateri: "Ustadz Dr. Didi Junaedi, M.A",
+          registeredCount: 38,
+          status: "Segera hadir"
+        },
+        {
+          id: "8",
+          title: "Qira'at Al-Quran 7 Metode",
+          description: "Pembelajaran variasi bacaan Al-Quran dari berbagai qira'at",
+          date: "2024-12-18",
+          time: "17:00 WIB",
+          location: "Ruang Tajwid Premium",
+          pemateri: "Qari Mahmud Al-Banawi",
+          registeredCount: 25,
+          status: "Segera hadir"
         }
       ];
       // Add thumbnail images to each schedule
@@ -283,9 +327,10 @@ const Schedule = () => {
                       {/* Button */}
                       <button 
                         onClick={() => router.push(`/schedule/${schedule.id}`)}
-                        className="w-full py-3 rounded-xl bg-linear-to-r from-teal-500 to-cyan-500 text-white font-semibold hover:from-teal-600 hover:to-cyan-600 shadow-lg hover:shadow-xl transition-all duration-300"
+                        className="w-full py-3 rounded-xl bg-linear-to-r from-teal-500 to-cyan-500 text-white font-semibold hover:from-teal-600 hover:to-cyan-600 shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center gap-2"
                       >
-                        Lihat Detail
+                        <span>Lihat Detail</span>
+                        <ArrowRight className="h-5 w-5" />
                       </button>
                     </div>
                   </div>

@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import DashboardHeader from "@/components/ui/DashboardHeader";
 import Sidebar from "@/components/ui/Sidebar";
 import ChatbotButton from "@/components/ui/ChatbotButton";
@@ -50,6 +51,7 @@ const badgeStyles: Record<CompetitionItem["category"], string> = {
 
 const Competitions = () => {
   const [user, setUser] = useState<any>(null);
+  const router = useRouter();
 
   useEffect(() => {
     setUser({
@@ -118,7 +120,10 @@ const Competitions = () => {
                         <span className="text-emerald-600 font-semibold">{item.prize}</span>
                       </div>
                     </div>
-                    <button className="w-full rounded-full bg-gradient-to-r from-teal-500 to-cyan-500 text-white font-semibold py-3 transition-all duration-300 shadow-md hover:shadow-lg hover:from-teal-600 hover:to-cyan-600 flex items-center justify-center gap-2">
+                    <button 
+                      onClick={() => router.push(`/competitions/${item.id}`)}
+                      className="w-full rounded-full bg-gradient-to-r from-teal-500 to-cyan-500 text-white font-semibold py-3 transition-all duration-300 shadow-md hover:shadow-lg hover:from-teal-600 hover:to-cyan-600 flex items-center justify-center gap-2"
+                    >
                       <span>Lihat Detail</span>
                       <ArrowRight className="h-5 w-5" />
                     </button>

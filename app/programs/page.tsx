@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import DashboardHeader from "@/components/ui/DashboardHeader";
 import Sidebar from "@/components/ui/Sidebar";
 import ChatbotButton from "@/components/ui/ChatbotButton";
@@ -8,6 +9,7 @@ import { ArrowRight, CheckCircle2, Clock3, Hourglass } from "lucide-react";
 interface DiklatProgram {
   id: string;
   title: string;
+  description?: string;
   duration: string;
   level: string;
   quota: {
@@ -23,6 +25,7 @@ const OurPrograms = () => {
   const [user, setUser] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const router = useRouter();
 
   useEffect(() => {
     loadUser();
@@ -44,8 +47,9 @@ const OurPrograms = () => {
         {
           id: "1",
           title: "Kedudukan akal dan wahyu",
+          description: "Memahami hubungan akal dan wahyu dalam Islam",
           duration: "3 bulan",
-          level: "Pemula",
+          level: "Kelas 10",
           quota: {
             filled: 18,
             total: 30
@@ -55,8 +59,9 @@ const OurPrograms = () => {
         {
           id: "2",
           title: "Kursus Bahasa Arab",
+          description: "Menguasai bahasa Arab untuk pemahaman kitab dan hadits",
           duration: "6 bulan",
-          level: "Menengah",
+          level: "Kelas 11",
           quota: {
             filled: 22,
             total: 25
@@ -66,8 +71,9 @@ const OurPrograms = () => {
         {
           id: "3",
           title: "Training Imam & Khatib",
+          description: "Pelatihan intensif untuk menjadi imam dan khatib profesional",
           duration: "2 bulan",
-          level: "Lanjutan",
+          level: "Kelas 12",
           quota: {
             filled: 15,
             total: 20
@@ -77,8 +83,9 @@ const OurPrograms = () => {
         {
           id: "4",
           title: "Tahsin & Tajwid Intensif",
+          description: "Memperbaiki bacaan Al-Quran dengan kaidah tajwid yang benar",
           duration: "4 bulan",
-          level: "Pemula",
+          level: "Kelas 10",
           quota: {
             filled: 28,
             total: 35
@@ -88,8 +95,9 @@ const OurPrograms = () => {
         {
           id: "5",
           title: "Manajemen Masjid Modern",
+          description: "Mengelola masjid dengan manajemen profesional dan modern",
           duration: "3 bulan",
-          level: "Lanjutan",
+          level: "Kelas 12",
           quota: {
             filled: 12,
             total: 20
@@ -100,7 +108,7 @@ const OurPrograms = () => {
           id: "6",
           title: "Media Dakwah Digital",
           duration: "5 bulan",
-          level: "Menengah",
+          level: "Kelas 11",
           quota: {
             filled: 20,
             total: 25
@@ -207,7 +215,7 @@ const OurPrograms = () => {
                   return (
                   <div
                     key={program.id}
-                    className="bg-white rounded-3xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden group hover:-translate-y-2"
+                    className="bg-white rounded-3xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden group hover:-translate-y-2 flex flex-col"
                   >
                     {/* Image with Overlay */}
                     <div className="relative h-40 overflow-hidden">
@@ -223,14 +231,28 @@ const OurPrograms = () => {
                       </div>
                     </div>
 
-                    <div className="p-6">
-                      {/* Title */}
-                      <h3 className="text-xl font-bold text-slate-800 mb-4 text-center group-hover:text-teal-600 transition-colors">
-                        {program.title}
-                      </h3>
+                    <div className="p-6 flex flex-col justify-between flex-1">
+                      {/* Title & Description */}
+                      <div className="mb-6">
+                        <h3 className="text-lg font-bold text-slate-800 mb-2 group-hover:text-teal-600 transition-colors">
+                          {program.title}
+                        </h3>
+                        {program.description && (
+                          <p className="text-sm text-slate-600 leading-relaxed mb-4">
+                            {program.description}
+                          </p>
+                        )}
+                        <div className="pt-4 border-t border-slate-200 flex items-center gap-3 text-xs font-medium text-slate-600">
+                          <span>{program.duration}</span>
+                          <span className="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700">{program.level}</span>
+                        </div>
+                      </div>
 
                       {/* Button */}
-                      <button className="w-full py-3 rounded-xl bg-gradient-to-r from-teal-500 to-cyan-500 text-white font-semibold hover:from-teal-600 hover:to-cyan-600 shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center gap-2">
+                      <button 
+                        onClick={() => router.push(`/programs/${program.id}`)}
+                        className="w-full py-3 rounded-xl bg-gradient-to-r from-teal-500 to-cyan-500 text-white font-semibold hover:from-teal-600 hover:to-cyan-600 shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center gap-2"
+                      >
                         <span>Lihat Detail</span>
                         <ArrowRight className="h-5 w-5" />
                       </button>
