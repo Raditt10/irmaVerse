@@ -95,112 +95,116 @@ const Profile = () => {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Left Column - Profile Info */}
             <div className="lg:col-span-2 space-y-6">
-              <ProfileInformationForm stats={stats} level={stats.level} rank={stats.rank} />
+              <ProfileInformationForm stats={stats || 0} level={stats.level || 0} rank={stats.rank || 0} />
 
               {/* Activity History */}
-              <div className="rounded-2xl bg-white border border-slate-200 p-8 shadow-sm">
-                <h2 className="text-2xl font-bold text-slate-900 mb-6">Aktivitas Terbaru</h2>
-                <div className="space-y-4">
-                  {activities.map((activity, index) => (
-                    <div
+              { session?.user.role == "user" && (
+                <div className="rounded-2xl bg-white border border-slate-200 p-8 shadow-sm">
+                  <h2 className="text-2xl font-bold text-slate-900 mb-6">Aktivitas Terbaru</h2>
+                  <div className="space-y-4">
+                    {activities.map((activity, index) => (
+                      <div
                       key={index}
                       className="flex items-center gap-4 p-4 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors"
-                    >
-                      <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center text-slate-700">
-                        {getActivityIcon(activity.type)}
+                      >
+                        <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center text-slate-700">
+                          {getActivityIcon(activity.type)}
+                        </div>
+                        <div className="flex-1">
+                          <p className="font-semibold text-slate-900">{activity.title}</p>
+                          <p className="text-sm text-slate-500">{activity.date}</p>
+                        </div>
+                        <span className="text-emerald-600 font-bold">{activity.points}</span>
                       </div>
-                      <div className="flex-1">
-                        <p className="font-semibold text-slate-900">{activity.title}</p>
-                        <p className="text-sm text-slate-500">{activity.date}</p>
-                      </div>
-                      <span className="text-emerald-600 font-bold">{activity.points}</span>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
 
             {/* Right Column - Stats & Badges */}
-            <div className="space-y-6">
-              {/* Stats Card */}
-              <div className="rounded-2xl bg-white border border-slate-200 p-6 shadow-sm">
-                <h2 className="text-xl font-bold text-slate-900 mb-6">Statistik</h2>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between p-4 rounded-lg bg-gradient-to-br from-amber-50 to-orange-50">
-                    <div className="flex items-center gap-3">
-                      <Trophy className="h-5 w-5 text-slate-700" />
-                      <span className="text-sm font-semibold text-slate-700">Total Poin</span>
-                    </div>
-                    <span className="text-lg font-bold text-slate-900">{stats.totalPoints}</span>
-                  </div>
-
-                  <div className="flex items-center justify-between p-4 rounded-lg bg-gradient-to-br from-blue-50 to-cyan-50">
-                    <div className="flex items-center gap-3">
-                      <Award className="h-5 w-5 text-slate-700" />
-                      <span className="text-sm font-semibold text-slate-700">Badge</span>
-                    </div>
-                    <span className="text-lg font-bold text-slate-900">{stats.totalBadges}</span>
-                  </div>
-
-                  <div className="flex items-center justify-between p-4 rounded-lg bg-gradient-to-br from-purple-50 to-pink-50">
-                    <div className="flex items-center gap-3">
-                      <BarChart3 className="h-5 w-5 text-slate-700" />
-                      <span className="text-sm font-semibold text-slate-700">Quiz</span>
-                    </div>
-                    <span className="text-lg font-bold text-slate-900">{stats.totalQuizzes}</span>
-                  </div>
-
-                  <div className="flex items-center justify-between p-4 rounded-lg bg-gradient-to-br from-red-50 to-pink-50">
-                    <div className="flex items-center gap-3">
-                      <Flame className="h-5 w-5 text-slate-700" />
-                      <span className="text-sm font-semibold text-slate-700">Streak</span>
-                    </div>
-                    <span className="text-lg font-bold text-slate-900">{stats.streak} Hari</span>
-                  </div>
-
-                  <div className="flex items-center justify-between p-4 rounded-lg bg-gradient-to-br from-green-50 to-emerald-50">
-                    <div className="flex items-center gap-3">
-                      <Target className="h-5 w-5 text-slate-700" />
-                      <span className="text-sm font-semibold text-slate-700">Rata-rata</span>
-                    </div>
-                    <span className="text-lg font-bold text-slate-900">{stats.averageScore}%</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Programs Card */}
-              <div className="rounded-2xl bg-white border border-slate-200 p-6 shadow-sm">
-                <h2 className="text-xl font-bold text-slate-900 mb-6">Program Kurikulum yang saya tuntaskan</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {programs
-                    .filter((program) => program.status === "done")
-                    .map((program) => {
-                    return (
-                      <div
-                        key={program.id}
-                        className="relative rounded-2xl border border-slate-200 bg-slate-50 p-6 shadow-sm hover:shadow-md transition-all min-h-[190px]"
-                      >
-                        <div className="flex flex-col gap-4 pr-24">
-                          <p className="text-base font-semibold text-slate-900 leading-snug">{program.title}</p>
-                          <div className="flex flex-wrap items-center gap-4 text-sm text-slate-700">
-                            <span className="flex items-center gap-1">
-                              <Clock3 className="h-4 w-4 text-slate-700" />
-                              {program.duration}
-                            </span>
-                            <span className="text-slate-700 font-medium">{program.level}</span>
-                          </div>
-                        </div>
-
-                        <button className="mt-6 w-full py-2.5 rounded-lg bg-gradient-to-r from-emerald-500 to-cyan-500 text-white text-sm font-semibold flex items-center justify-center gap-2 hover:from-emerald-600 hover:to-cyan-600 transition-colors">
-                          <span>Lihat Detail</span>
-                          <ArrowRight className="h-4 w-4" />
-                        </button>
+            { session?.user.role == "user" && (
+              <div className="space-y-6">
+                {/* Stats Card */}
+                <div className="rounded-2xl bg-white border border-slate-200 p-6 shadow-sm">
+                  <h2 className="text-xl font-bold text-slate-900 mb-6">Statistik</h2>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between p-4 rounded-lg bg-gradient-to-br from-amber-50 to-orange-50">
+                      <div className="flex items-center gap-3">
+                        <Trophy className="h-5 w-5 text-slate-700" />
+                        <span className="text-sm font-semibold text-slate-700">Total Poin</span>
                       </div>
-                    );
-                  })}
+                      <span className="text-lg font-bold text-slate-900">{stats.totalPoints}</span>
+                    </div>
+
+                    <div className="flex items-center justify-between p-4 rounded-lg bg-gradient-to-br from-blue-50 to-cyan-50">
+                      <div className="flex items-center gap-3">
+                        <Award className="h-5 w-5 text-slate-700" />
+                        <span className="text-sm font-semibold text-slate-700">Badge</span>
+                      </div>
+                      <span className="text-lg font-bold text-slate-900">{stats.totalBadges}</span>
+                    </div>
+
+                    <div className="flex items-center justify-between p-4 rounded-lg bg-gradient-to-br from-purple-50 to-pink-50">
+                      <div className="flex items-center gap-3">
+                        <BarChart3 className="h-5 w-5 text-slate-700" />
+                        <span className="text-sm font-semibold text-slate-700">Quiz</span>
+                      </div>
+                      <span className="text-lg font-bold text-slate-900">{stats.totalQuizzes}</span>
+                    </div>
+
+                    <div className="flex items-center justify-between p-4 rounded-lg bg-gradient-to-br from-red-50 to-pink-50">
+                      <div className="flex items-center gap-3">
+                        <Flame className="h-5 w-5 text-slate-700" />
+                        <span className="text-sm font-semibold text-slate-700">Streak</span>
+                      </div>
+                      <span className="text-lg font-bold text-slate-900">{stats.streak} Hari</span>
+                    </div>
+
+                    <div className="flex items-center justify-between p-4 rounded-lg bg-gradient-to-br from-green-50 to-emerald-50">
+                      <div className="flex items-center gap-3">
+                        <Target className="h-5 w-5 text-slate-700" />
+                        <span className="text-sm font-semibold text-slate-700">Rata-rata</span>
+                      </div>
+                      <span className="text-lg font-bold text-slate-900">{stats.averageScore}%</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Programs Card */}
+                <div className="rounded-2xl bg-white border border-slate-200 p-6 shadow-sm">
+                  <h2 className="text-xl font-bold text-slate-900 mb-6">Program Kurikulum yang saya tuntaskan</h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {programs
+                      .filter((program) => program.status === "done")
+                      .map((program) => {
+                      return (
+                        <div
+                          key={program.id}
+                          className="relative rounded-2xl border border-slate-200 bg-slate-50 p-6 shadow-sm hover:shadow-md transition-all min-h-[190px]"
+                        >
+                          <div className="flex flex-col gap-4 pr-24">
+                            <p className="text-base font-semibold text-slate-900 leading-snug">{program.title}</p>
+                            <div className="flex flex-wrap items-center gap-4 text-sm text-slate-700">
+                              <span className="flex items-center gap-1">
+                                <Clock3 className="h-4 w-4 text-slate-700" />
+                                {program.duration}
+                              </span>
+                              <span className="text-slate-700 font-medium">{program.level}</span>
+                            </div>
+                          </div>
+
+                          <button className="mt-6 w-full py-2.5 rounded-lg bg-gradient-to-r from-emerald-500 to-cyan-500 text-white text-sm font-semibold flex items-center justify-center gap-2 hover:from-emerald-600 hover:to-cyan-600 transition-colors">
+                            <span>Lihat Detail</span>
+                            <ArrowRight className="h-4 w-4" />
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </div>
