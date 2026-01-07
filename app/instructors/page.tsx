@@ -3,7 +3,8 @@ import { useEffect, useState } from "react";
 import DashboardHeader from "@/components/ui/DashboardHeader";
 import Sidebar from "@/components/ui/Sidebar";
 import ChatbotButton from "@/components/ui/ChatbotButton";
-import { Star, BookOpen, Users, MessageCircle, Award } from "lucide-react";
+import { Star, BookOpen, Users, MessageCircle, Award, Plus } from "lucide-react";
+import Link from "next/link";
 
 interface Instructor {
   id: string;
@@ -125,27 +126,37 @@ const Instructors = () => {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 flex items-center justify-center">
+      <div className="min-h-screen bg-linear-to-br from-slate-50 via-white to-slate-100 flex items-center justify-center">
         <p className="text-slate-500">Memuat...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100" style={{ fontFamily: "'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', cursive" }}>
+    <div className="min-h-screen bg-linear-to-br from-slate-50 via-white to-slate-100" style={{ fontFamily: "'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', cursive" }}>
       <DashboardHeader user={user} />
       <div className="flex">
         <Sidebar />
         <div className="flex-1 px-6 lg:px-8 py-12">
           <div className="max-w-7xl mx-auto">
             {/* Header */}
-            <div className="mb-8">
-              <h1 className="text-4xl font-black text-slate-800 mb-2">
-                Daftar Instruktur
-              </h1>
-              <p className="text-slate-600 text-lg">
-                Para instruktur terbaik kami yang siap membimbing kamu!
-              </p>
+            <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h1 className="text-4xl font-black text-slate-800 mb-1">
+                  Daftar Instruktur
+                </h1>
+                <p className="text-slate-600 text-lg">
+                  Para instruktur terbaik kami yang siap membimbing kamu!
+                </p>
+              </div>
+
+              <Link
+                href="/instructor-dashboard/kajian"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-linear-to-r from-teal-500 to-cyan-500 px-4 py-3 text-sm font-semibold text-white shadow-lg hover:shadow-xl hover:from-teal-600 hover:to-cyan-600 transition-all duration-200"
+              >
+                <Plus className="h-4 w-4" />
+                Buat Kajian Baru
+              </Link>
             </div>
 
             {loading ? (
@@ -234,7 +245,7 @@ const Instructors = () => {
 
                       {/* Buttons */}
                       <div className="space-y-2">
-                        <button className="w-full py-3 rounded-xl bg-gradient-to-r from-teal-500 to-cyan-500 text-white font-semibold hover:from-teal-600 hover:to-cyan-600 shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center gap-2">
+                        <button className="w-full py-3 rounded-xl bg-linear-to-r from-teal-500 to-cyan-500 text-white font-semibold hover:from-teal-600 hover:to-cyan-600 shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center gap-2">
                           <MessageCircle className="h-4 w-4" />
                           Mulai Chat
                         </button>

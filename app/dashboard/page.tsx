@@ -156,7 +156,7 @@ const Dashboard = async () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100" style={{ fontFamily: "'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', cursive" }}>
+    <div className="min-h-screen bg-linear-to-br from-slate-50 via-white to-slate-100" style={{ fontFamily: "'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', cursive" }}>
       {/* Header */}
       <DashboardHeader user={user} />
 
@@ -181,7 +181,7 @@ const Dashboard = async () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {/* Points Stat */}
             <div className="group relative overflow-hidden rounded-2xl p-6 bg-white border border-slate-200 hover:border-slate-300 transition-all duration-300 hover:shadow-xl">
-              <div className="absolute inset-0 bg-gradient-to-br from-amber-500/0 to-orange-500/0 group-hover:from-amber-500/5 group-hover:to-orange-500/5 transition-colors duration-300" />
+              <div className="absolute inset-0 bg-linear-to-br from-amber-500/0 to-orange-500/0 group-hover:from-amber-500/5 group-hover:to-orange-500/5 transition-colors duration-300" />
               <div className="relative z-10">
                 <div className="flex items-center justify-between mb-4">
                   <div className="h-12 w-12 rounded-full bg-slate-100 flex items-center justify-center shadow-[3px_3px_6px_rgba(0,0,0,0.1),-3px_-3px_6px_rgba(255,255,255,1)]">
@@ -199,7 +199,7 @@ const Dashboard = async () => {
 
             {/* Badges Stat */}
             <div className="group relative overflow-hidden rounded-2xl p-6 bg-white border border-slate-200 hover:border-slate-300 transition-all duration-300 hover:shadow-xl">
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/0 to-cyan-500/0 group-hover:from-blue-500/5 group-hover:to-cyan-500/5 transition-colors duration-300" />
+              <div className="absolute inset-0 bg-linear-to-br from-blue-500/0 to-cyan-500/0 group-hover:from-blue-500/5 group-hover:to-cyan-500/5 transition-colors duration-300" />
               <div className="relative z-10">
                 <div className="flex items-center justify-between mb-4">
                   <div className="h-12 w-12 rounded-full bg-slate-100 flex items-center justify-center shadow-[3px_3px_6px_rgba(0,0,0,0.1),-3px_-3px_6px_rgba(255,255,255,1)]">
@@ -219,7 +219,7 @@ const Dashboard = async () => {
 
             {/* Quiz Stat */}
             <div className="group relative overflow-hidden rounded-2xl p-6 bg-white border border-slate-200 hover:border-slate-300 transition-all duration-300 hover:shadow-xl">
-              <div className="absolute inset-0 bg-gradient-to-br from-purple-500/0 to-pink-500/0 group-hover:from-purple-500/5 group-hover:to-pink-500/5 transition-colors duration-300" />
+              <div className="absolute inset-0 bg-linear-to-br from-purple-500/0 to-pink-500/0 group-hover:from-purple-500/5 group-hover:to-pink-500/5 transition-colors duration-300" />
               <div className="relative z-10">
                 <div className="flex items-center justify-between mb-4">
                   <div className="h-12 w-12 rounded-full bg-slate-100 flex items-center justify-center shadow-[3px_3px_6px_rgba(0,0,0,0.1),-3px_-3px_6px_rgba(255,255,255,1)]">
@@ -237,7 +237,7 @@ const Dashboard = async () => {
 
             {/* Streak Stat */}
             <div className="group relative overflow-hidden rounded-2xl p-6 bg-white border border-slate-200 hover:border-slate-300 transition-all duration-300 hover:shadow-xl">
-              <div className="absolute inset-0 bg-gradient-to-br from-red-500/0 to-pink-500/0 group-hover:from-red-500/5 group-hover:to-pink-500/5 transition-colors duration-300" />
+              <div className="absolute inset-0 bg-linear-to-br from-red-500/0 to-pink-500/0 group-hover:from-red-500/5 group-hover:to-pink-500/5 transition-colors duration-300" />
               <div className="relative z-10">
                 <div className="flex items-center justify-between mb-4">
                   <div className="h-12 w-12 rounded-full bg-slate-100 flex items-center justify-center shadow-[3px_3px_6px_rgba(0,0,0,0.1),-3px_-3px_6px_rgba(255,255,255,1)]">
@@ -314,7 +314,7 @@ const Dashboard = async () => {
                   ].map((news) => (
                     <div
                       key={news.id}
-                      className="flex-shrink-0 w-64 rounded-xl bg-white border border-slate-200 overflow-hidden hover:shadow-lg transition-shadow duration-300 cursor-pointer"
+                      className="shrink-0 w-64 rounded-xl bg-white border border-slate-200 overflow-hidden hover:shadow-lg transition-shadow duration-300 cursor-pointer"
                     >
                       <img src={news.image} alt={news.title} className="h-32 w-full object-cover bg-slate-200" />
                       <div className="p-4">
@@ -337,9 +337,9 @@ const Dashboard = async () => {
             {/* Features Section */}
             <div className="mt-12 grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Chatbot AI Card */}
-              <div className="rounded-2xl border border-teal-200 bg-gradient-to-br from-teal-50 to-cyan-50 p-6 hover:shadow-lg transition-shadow duration-300">
+              <div className="rounded-2xl border border-teal-200 bg-linear-to-br from-teal-50 to-cyan-50 p-6 hover:shadow-lg transition-shadow duration-300">
                 <div className="flex items-start gap-4 mb-4">
-                  <div className="h-12 w-12 rounded-lg overflow-hidden flex-shrink-0">
+                  <div className="h-12 w-12 rounded-lg overflow-hidden shrink-0">
                     <img src="/ci irma.jpg" alt="Ci Irma" className="h-12 w-12 object-cover" />
                   </div>
                   <div className="flex-1">
@@ -354,9 +354,9 @@ const Dashboard = async () => {
               </div>
 
               {/* Konsultasi Instruktur Card */}
-              <div className="rounded-2xl border border-teal-200 bg-gradient-to-br from-teal-50 to-cyan-50 p-6 hover:shadow-lg transition-shadow duration-300">
+              <div className="rounded-2xl border border-teal-200 bg-linear-to-br from-teal-50 to-cyan-50 p-6 hover:shadow-lg transition-shadow duration-300">
                 <div className="flex items-start gap-4 mb-4">
-                  <div className="h-12 w-12 rounded-lg overflow-hidden flex-shrink-0">
+                  <div className="h-12 w-12 rounded-lg overflow-hidden shrink-0">
                     <img src="/instruktur.jpg" alt="Instruktur" className="h-12 w-12 object-cover" />
                   </div>
                   <div className="flex-1">
@@ -377,17 +377,17 @@ const Dashboard = async () => {
             {/* Level Card */}
             <div className="relative overflow-hidden rounded-2xl p-8 bg-white border border-slate-200">
               <div className="absolute inset-0 opacity-10">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-emerald-500 to-cyan-500 rounded-full blur-3xl" />
+                <div className="absolute top-0 right-0 w-32 h-32 bg-linear-to-br from-emerald-500 to-cyan-500 rounded-full blur-3xl" />
               </div>
 
               <div className="relative z-10">
                 <p className="text-slate-600 text-sm font-medium mb-3">Tingkat Pencapaian</p>
                 
                 <div className="flex items-center gap-3 mb-6">
-                  <div className="px-6 py-3 rounded-2xl bg-gradient-to-br from-emerald-400 via-teal-400 to-cyan-500 shadow-[3px_3px_8px_rgba(20,184,166,0.4),-2px_-2px_6px_rgba(255,255,255,0.9)] border-2 border-white">
+                  <div className="px-6 py-3 rounded-2xl bg-linear-to-br from-emerald-400 via-teal-400 to-cyan-500 shadow-[3px_3px_8px_rgba(20,184,166,0.4),-2px_-2px_6px_rgba(255,255,255,0.9)] border-2 border-white">
                     <h3 className="text-4xl font-black text-white drop-shadow-[2px_2px_4px_rgba(0,0,0,0.3)] tracking-wide" style={{ fontFamily: '"Comic Sans MS", "Chalkboard SE", "Comic Neue", cursive' }}>Level 5</h3>
                   </div>
-                  <div className="px-3 py-1.5 rounded-full bg-gradient-to-r from-amber-400 to-amber-500 shadow-[2px_2px_6px_rgba(251,191,36,0.3),-1px_-1px_4px_rgba(255,255,255,0.8)] border border-amber-300">
+                  <div className="px-3 py-1.5 rounded-full bg-linear-to-r from-amber-400 to-amber-500 shadow-[2px_2px_6px_rgba(251,191,36,0.3),-1px_-1px_4px_rgba(255,255,255,0.8)] border border-amber-300">
                     <span className="text-sm font-bold text-white drop-shadow-md" style={{ fontFamily: '"Comic Sans MS", "Chalkboard SE", "Comic Neue", cursive' }}>Mashaallah</span>
                   </div>
                 </div>
@@ -401,8 +401,8 @@ const Dashboard = async () => {
                       <span className="text-xs text-slate-900 font-bold">75%</span>
                     </div>
                     <div className="h-3 rounded-full bg-slate-200 overflow-hidden shadow-[inset_2px_2px_4px_rgba(0,0,0,0.1),inset_-2px_-2px_4px_rgba(255,255,255,0.7)]">
-                      <div className="h-full w-3/4 rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500 shadow-[0_2px_4px_rgba(16,185,129,0.3)] relative">
-                        <div className="absolute inset-0 bg-gradient-to-t from-transparent to-white/20 rounded-full"></div>
+                      <div className="h-full w-3/4 rounded-full bg-linear-to-r from-emerald-500 to-cyan-500 shadow-[0_2px_4px_rgba(16,185,129,0.3)] relative">
+                        <div className="absolute inset-0 bg-linear-to-t from-transparent to-white/20 rounded-full"></div>
                       </div>
                     </div>
                   </div>

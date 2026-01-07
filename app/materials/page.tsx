@@ -157,7 +157,7 @@ const Materials = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100" style={{ fontFamily: "'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', cursive" }}>
+    <div className="min-h-screen bg-linear-to-br from-slate-50 via-white to-slate-100" style={{ fontFamily: "'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', cursive" }}>
       <DashboardHeader user={user} />
       <div className="flex">
         <Sidebar />
@@ -182,7 +182,7 @@ const Materials = () => {
                     onClick={() => setSelectedProgram(category)}
                     className={`px-5 py-2.5 rounded-full font-semibold transition-all duration-300 ${
                       selectedProgram === category
-                        ? "bg-gradient-to-r from-teal-500 to-cyan-500 text-white shadow-lg scale-105"
+                        ? "bg-linear-to-r from-teal-500 to-cyan-500 text-white shadow-lg scale-105"
                         : "bg-white text-slate-700 hover:bg-slate-100 shadow-sm"
                     }`}
                   >
@@ -198,7 +198,7 @@ const Materials = () => {
                     onClick={() => setSelectedClass(kelas)}
                     className={`px-5 py-2.5 rounded-full font-semibold transition-all duration-300 ${
                       selectedClass === kelas
-                        ? "bg-gradient-to-r from-emerald-500 to-lime-400 text-white shadow-lg scale-105"
+                        ? "bg-linear-to-r from-emerald-500 to-lime-400 text-white shadow-lg scale-105"
                         : "bg-white text-slate-700 hover:bg-slate-100 shadow-sm"
                     }`}
                   >
@@ -244,7 +244,7 @@ const Materials = () => {
                         alt={material.title}
                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                      <div className="absolute inset-0 bg-linear-to-t from-black/60 to-transparent" />
 
                       {/* Category + Class Badges */}
                       <div className="absolute top-4 left-4 flex flex-wrap items-center gap-2">
@@ -292,7 +292,7 @@ const Materials = () => {
                       {/* Button */}
                       <button
                         onClick={() => router.push("/absensi")}
-                        className="w-full py-3 rounded-xl bg-gradient-to-r from-teal-500 to-cyan-500 text-white font-semibold hover:from-teal-600 hover:to-cyan-600 shadow-lg hover:shadow-xl transition-all duration-300"
+                        className="w-full py-3 rounded-xl bg-linear-to-r from-teal-500 to-cyan-500 text-white font-semibold hover:from-teal-600 hover:to-cyan-600 shadow-lg hover:shadow-xl transition-all duration-300"
                       >
                         Aku ikut!
                       </button>
