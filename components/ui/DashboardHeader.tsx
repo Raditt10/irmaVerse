@@ -1,6 +1,6 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { signOut } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import { Bell, LogOut, Settings, User as UserIcon } from "lucide-react";
 import {
   DropdownMenu,
@@ -12,21 +12,15 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-interface DashboardHeaderProps {
-  user: {
-    name?: string | null;
-    email: string;
-    avatar?: string | null;
-  };
-}
-
-const DashboardHeader = ({ user }: DashboardHeaderProps) => {
+export default function DashboardHeader() {
   const router = useRouter();
+  const { data: session } = useSession({
+    required: true,
+    onUnauthenticated() {
+      window.location.href = "/auth";
+    }
+  });
   const avatarUrl = "https://api.dicebear.com/7.x/avataaars/svg?seed=Fatimah";
-
-  if (!user) {
-    return null;
-  }
   
   return (
     <div className="border-b border-slate-200 backdrop-blur-xl bg-white/80 sticky top-0 z-40 shadow-sm">
@@ -76,26 +70,26 @@ const DashboardHeader = ({ user }: DashboardHeaderProps) => {
             <DropdownMenuTrigger asChild>
               <button className="flex items-center gap-2 h-10 px-2 rounded-lg hover:bg-green-100 transition-colors">
                 <Avatar className="h-8 w-8">
-                  <AvatarImage src={avatarUrl} alt={user.name ?? user.email} />
+                  <AvatarImage src={avatarUrl} alt={session?.user.name ?? session?.user.email} />
                   <AvatarFallback className="bg-gradient-to-br from-emerald-500 to-cyan-500 text-white text-sm font-semibold">
-                    {(user.name ?? user.email)?.substring(0, 2).toUpperCase()}
+                    {(session?.user.name ?? session?.user.email)?.substring(0, 2).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
-                <span className="hidden sm:inline text-sm font-semibold text-slate-900">{user.name ?? user.email}</span>
+                <span className="hidden sm:inline text-sm font-semibold text-slate-900">{session?.user.name ?? session?.user.email}</span>
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56" style={{ fontFamily: "'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', cursive" }}>
               <DropdownMenuLabel>
                 <div className="flex items-center gap-3">
                   <Avatar className="h-10 w-10">
-                    <AvatarImage src={avatarUrl} alt={user.name ?? user.email} />
+                    <AvatarImage src={avatarUrl} alt={session?.user.name ?? session?.user.email} />
                     <AvatarFallback className="bg-gradient-to-br from-emerald-500 to-cyan-500 text-white font-semibold">
-                      {(user.name ?? user.email)?.substring(0, 2).toUpperCase()}
+                      {(session?.user.name ?? session?.user.email)?.substring(0, 2).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex flex-col">
-                    <span className="text-sm font-semibold text-slate-900">{user.name ?? user.email}</span>
-                    <span className="text-xs text-slate-500">{user.email}</span>
+                    <span className="text-sm font-semibold text-slate-900">{session?.user.name ?? session?.user.email}</span>
+                    <span className="text-xs text-slate-500">{session?.user.email}</span>
                   </div>
                 </div>
               </DropdownMenuLabel>
@@ -123,5 +117,3 @@ const DashboardHeader = ({ user }: DashboardHeaderProps) => {
     </div>
   );
 };
-
-export default DashboardHeader;

@@ -17,10 +17,15 @@ import {
 } from "lucide-react";
 import DashboardHeader from "@/components/ui/DashboardHeader";
 import Sidebar from "@/components/ui/Sidebar";
-import ProfileInformationForm from "./ProfileInformationForm";
+import ProfileInformationForm from "./_components/ProfileInformationForm";
 
 const Profile = () => {
-  const { data: session } = useSession();
+  const { data: session } = useSession({
+    required: true,
+    onUnauthenticated() {
+      window.location.href = "/auth";
+    },
+  });
 
   const stats = {
     totalPoints: 2450,
