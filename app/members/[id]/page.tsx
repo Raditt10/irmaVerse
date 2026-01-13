@@ -1,0 +1,504 @@
+"use client";
+import { useEffect, useState } from "react";
+import { useRouter, useParams } from "next/navigation";
+import DashboardHeader from "@/components/ui/DashboardHeader";
+import Sidebar from "@/components/ui/Sidebar";
+import ChatbotButton from "@/components/ui/ChatbotButton";
+import {
+  ArrowLeft,
+  Mail,
+  Phone,
+  Calendar,
+  Award,
+  TrendingUp,
+  Users,
+  BookOpen,
+  Star,
+  Target,
+  Activity,
+  Clock,
+} from "lucide-react";
+
+interface MemberDetail {
+  id: string;
+  name: string;
+  role: string;
+  class: string;
+  avatar: string;
+  points: number;
+  status: "Aktif" | "Tidak Aktif";
+  email: string;
+  phone: string;
+  joinDate: string;
+  totalEvents: number;
+  totalKajian: number;
+  achievements: Achievement[];
+  recentActivities: Activity[];
+  stats: {
+    eventsAttended: number;
+    kajianAttended: number;
+    tasksCompleted: number;
+    contributionRank: number;
+  };
+}
+
+interface Achievement {
+  id: string;
+  title: string;
+  description: string;
+  icon: string;
+  date: string;
+}
+
+interface Activity {
+  id: string;
+  type: "event" | "kajian" | "task";
+  title: string;
+  date: string;
+  points: number;
+}
+
+const MemberDetail = () => {
+  const [member, setMember] = useState<MemberDetail | null>(null);
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
+  const params = useParams();
+
+  useEffect(() => {
+    if (params?.id) {
+      fetchMemberDetail(params.id as string);
+    }
+  }, [params?.id]);
+
+  const fetchMemberDetail = async (id: string) => {
+    try {
+      const mockMember: MemberDetail = {
+        id,
+        name: "Ahmad Syarif",
+        role: "Ketua IRMA",
+        class: "XII IPA 1",
+        avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Ahmad",
+        points: 850,
+        status: "Aktif",
+        email: "ahmad.syarif@irmaverse.local",
+        phone: "+62 812-3456-7890",
+        joinDate: "2023-08-01",
+        totalEvents: 15,
+        totalKajian: 22,
+        stats: {
+          eventsAttended: 15,
+          kajianAttended: 22,
+          tasksCompleted: 34,
+          contributionRank: 1,
+        },
+        achievements: [
+          {
+            id: "1",
+            title: "Top Contributor",
+            description: "Kontribusi terbanyak bulan ini",
+            icon: "🏆",
+            date: "2024-01-15",
+          },
+          {
+            id: "2",
+            title: "Perfect Attendance",
+            description: "Hadir di semua kajian bulan lalu",
+            icon: "⭐",
+            date: "2023-12-31",
+          },
+          {
+            id: "3",
+            title: "Event Master",
+            description: "Mengikuti 10+ event",
+            icon: "🎯",
+            date: "2023-11-20",
+          },
+        ],
+        recentActivities: [
+          {
+            id: "1",
+            type: "kajian",
+            title: "Kajian Tafsir Al-Quran",
+            date: "2024-01-20",
+            points: 50,
+          },
+          {
+            id: "2",
+            type: "event",
+            title: "Bakti Sosial Ramadhan",
+            date: "2024-01-18",
+            points: 100,
+          },
+          {
+            id: "3",
+            type: "task",
+            title: "Menyusun Laporan Kegiatan",
+            date: "2024-01-15",
+            points: 30,
+          },
+          {
+            id: "4",
+            type: "kajian",
+            title: "Kajian Fiqih",
+            date: "2024-01-13",
+            points: 50,
+          },
+          {
+            id: "5",
+            type: "event",
+            title: "Mentoring Adik Kelas",
+            date: "2024-01-10",
+            points: 40,
+          },
+        ],
+      };
+      setMember(mockMember);
+    } catch (error: any) {
+      console.error("Error fetching member:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getActivityIcon = (type: string) => {
+    switch (type) {
+      case "event":
+        return <Users className="h-4 w-4" />;
+      case "kajian":
+        return <BookOpen className="h-4 w-4" />;
+      case "task":
+        return <Target className="h-4 w-4" />;
+      default:
+        return <Activity className="h-4 w-4" />;
+    }
+  };
+
+  const getActivityColor = (type: string) => {
+    switch (type) {
+      case "event":
+        return "bg-blue-50 text-blue-600";
+      case "kajian":
+        return "bg-teal-50 text-teal-600";
+      case "task":
+        return "bg-purple-50 text-purple-600";
+      default:
+        return "bg-slate-50 text-slate-600";
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-linear-to-br from-slate-50 via-white to-slate-100 flex items-center justify-center">
+        <p className="text-slate-500">Memuat...</p>
+      </div>
+    );
+  }
+
+  if (!member) {
+    return (
+      <div className="min-h-screen bg-linear-to-br from-slate-50 via-white to-slate-100 flex items-center justify-center">
+        <p className="text-slate-500">Anggota tidak ditemukan</p>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className="min-h-screen bg-linear-to-br from-slate-50 via-white to-slate-100"
+      style={{
+        fontFamily:
+          "'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', cursive",
+      }}
+    >
+      <DashboardHeader />
+      <div className="flex">
+        <Sidebar />
+        <div className="flex-1 px-6 lg:px-8 py-12">
+          <div className="max-w-7xl mx-auto">
+            {/* Back Button */}
+            <button
+              onClick={() => router.back()}
+              className="flex items-center gap-2 text-slate-600 hover:text-teal-600 mb-6 transition-colors duration-200"
+            >
+              <ArrowLeft className="h-5 w-5" />
+              <span className="font-semibold">Kembali</span>
+            </button>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Left Column - Profile Card */}
+              <div className="lg:col-span-1">
+                <div className="bg-white rounded-3xl shadow-lg overflow-hidden sticky top-6">
+                  {/* Header with gradient */}
+                  <div className="h-32 bg-gradient-to-br from-teal-400 via-green-300 to-green-500"></div>
+
+                  {/* Profile Info */}
+                  <div className="px-6 pb-6 -mt-16">
+                    {/* Avatar */}
+                    <div className="flex justify-center mb-4">
+                      <div className="relative">
+                        <div className="w-32 h-32 rounded-full overflow-hidden ring-4 ring-white shadow-xl">
+                          <img
+                            src={member.avatar}
+                            alt={member.name}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <div className="absolute bottom-2 right-2 w-8 h-8 bg-emerald-500 rounded-full ring-4 ring-white flex items-center justify-center">
+                          <div className="w-3 h-3 bg-white rounded-full"></div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Name & Role */}
+                    <div className="text-center mb-6">
+                      <h1 className="text-2xl font-black text-slate-800 mb-2">
+                        {member.name}
+                      </h1>
+                      <div className="inline-block px-4 py-2 rounded-full bg-gradient-to-r from-green-400 to-teal-500 text-white text-sm font-semibold mb-1">
+                        {member.role}
+                      </div>
+                      <p className="text-slate-600 text-sm font-medium">
+                        {member.class}
+                      </p>
+                    </div>
+
+                    {/* Points Display */}
+                    <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl p-6 mb-6">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm text-slate-600 font-medium">
+                          Total Poin
+                        </span>
+                        <Star className="h-5 w-5 text-amber-500" />
+                      </div>
+                      <div className="text-4xl font-black text-amber-600">
+                        {member.points}
+                      </div>
+                      <div className="mt-2 text-xs text-slate-500">
+                        Peringkat #{member.stats.contributionRank} di IRMA
+                      </div>
+                    </div>
+
+                    {/* Contact Info */}
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-3 text-sm">
+                        <div className="w-10 h-10 rounded-xl bg-teal-50 flex items-center justify-center">
+                          <Mail className="h-5 w-5 text-teal-600" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs text-slate-500">Email</p>
+                          <p className="text-slate-700 font-medium truncate">
+                            {member.email}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3 text-sm">
+                        <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
+                          <Phone className="h-5 w-5 text-blue-600" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-xs text-slate-500">Telepon</p>
+                          <p className="text-slate-700 font-medium">
+                            {member.phone}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3 text-sm">
+                        <div className="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center">
+                          <Calendar className="h-5 w-5 text-purple-600" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-xs text-slate-500">
+                            Bergabung Sejak
+                          </p>
+                          <p className="text-slate-700 font-medium">
+                            {new Date(member.joinDate).toLocaleDateString(
+                              "id-ID",
+                              {
+                                year: "numeric",
+                                month: "long",
+                                day: "numeric",
+                              }
+                            )}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Column - Stats & Activities */}
+              <div className="lg:col-span-2 space-y-6">
+                {/* Stats Cards */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="bg-white rounded-2xl p-5 shadow-md hover:shadow-lg transition-shadow duration-300">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="w-12 h-12 rounded-xl bg-green-500 flex items-center justify-center">
+                        <Users className="h-6 w-6 text-white" />
+                      </div>
+                    </div>
+                    <div className="text-3xl font-black text-slate-800 mb-1">
+                      {member.stats.eventsAttended}
+                    </div>
+                    <div className="text-sm text-slate-600 font-medium">
+                      Event Diikuti
+                    </div>
+                  </div>
+
+                  <div className="bg-white rounded-2xl p-5 shadow-md hover:shadow-lg transition-shadow duration-300">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="w-12 h-12 rounded-xl bg-green-500 flex items-center justify-center">
+                        <BookOpen className="h-6 w-6 text-white" />
+                      </div>
+                    </div>
+                    <div className="text-3xl font-black text-slate-800 mb-1">
+                      {member.stats.kajianAttended}
+                    </div>
+                    <div className="text-sm text-slate-600 font-medium">
+                      Kajian Diikuti
+                    </div>
+                  </div>
+
+                  <div className="bg-white rounded-2xl p-5 shadow-md hover:shadow-lg transition-shadow duration-300">
+                    <div className="flex items-center justify-between mb-3">
+                     <div className="w-12 h-12 rounded-xl bg-green-500 flex items-center justify-center">
+                        <Target className="h-6 w-6 text-white" />
+                      </div>
+                    </div>
+                    <div className="text-3xl font-black text-slate-800 mb-1">
+                      {member.stats.tasksCompleted}
+                    </div>
+                    <div className="text-sm text-slate-600 font-medium">
+                      Tugas Selesai
+                    </div>
+                  </div>
+
+                  <div className="bg-white rounded-2xl p-5 shadow-md hover:shadow-lg transition-shadow duration-300">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="w-12 h-12 rounded-xl bg-green-500 flex items-center justify-center">
+                        <TrendingUp className="h-6 w-6 text-white" />
+                      </div>
+                    </div>
+                    <div className="text-3xl font-black text-slate-800 mb-1">
+                      #{member.stats.contributionRank}
+                    </div>
+                    <div className="text-sm text-slate-600 font-medium">
+                      Peringkat
+                    </div>
+                  </div>
+                </div>
+
+                {/* Achievements */}
+                <div className="bg-white rounded-3xl shadow-lg p-6">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-12 h-12 rounded-xl bg-green-700 flex items-center justify-center">
+                      <Award className="h-6 w-6 text-white" />
+                    </div>
+                    <div>
+                      <h2 className="text-2xl font-black text-slate-800">
+                        Pencapaian
+                      </h2>
+                      <p className="text-sm text-slate-600">
+                        Badge dan penghargaan
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {member.achievements.map((achievement) => (
+                      <div
+                        key={achievement.id}
+                        className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-2xl p-5 hover:shadow-md transition-all duration-300 hover:-translate-y-1"
+                      >
+                        <div className="text-4xl mb-3">{achievement.icon}</div>
+                        <h3 className="font-bold text-slate-800 mb-2">
+                          {achievement.title}
+                        </h3>
+                        <p className="text-sm text-slate-600 mb-3">
+                          {achievement.description}
+                        </p>
+                        <div className="flex items-center gap-2 text-xs text-slate-500">
+                          <Clock className="h-3 w-3" />
+                          {new Date(achievement.date).toLocaleDateString(
+                            "id-ID",
+                            {
+                              year: "numeric",
+                              month: "short",
+                              day: "numeric",
+                            }
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Recent Activities */}
+                <div className="bg-white rounded-3xl shadow-lg p-6">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-12 h-12 rounded-xl bg-green-700 flex items-center justify-center">
+                      <Activity className="h-6 w-6 text-white" />
+                    </div>
+                    <div>
+                      <h2 className="text-2xl font-black text-slate-800">
+                        Aktivitas Terkini
+                      </h2>
+                      <p className="text-sm text-slate-600">
+                        Riwayat kegiatan terbaru
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    {member.recentActivities.map((activity, index) => (
+                      <div
+                        key={activity.id}
+                        className="flex items-center gap-4 p-4 rounded-2xl hover:bg-slate-50 transition-colors duration-200"
+                      >
+                        <div
+                          className={`w-12 h-12 rounded-xl flex items-center justify-center ${getActivityColor(
+                            activity.type
+                          )}`}
+                        >
+                          {getActivityIcon(activity.type)}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-bold text-slate-800 mb-1">
+                            {activity.title}
+                          </h4>
+                          <p className="text-sm text-slate-600">
+                            {new Date(activity.date).toLocaleDateString(
+                              "id-ID",
+                              {
+                                year: "numeric",
+                                month: "long",
+                                day: "numeric",
+                              }
+                            )}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <div className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-amber-50">
+                            <Star className="h-4 w-4 text-amber-600" />
+                            <span className="text-sm font-bold text-amber-600">
+                              +{activity.points}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <ChatbotButton />
+    </div>
+  );
+};
+
+export default MemberDetail;

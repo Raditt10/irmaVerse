@@ -335,7 +335,7 @@ const ProgramDetail = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-linear-to-br from-slate-50 via-white to-slate-100" style={{ fontFamily: "'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', cursive" }}>
-        <DashboardHeader user={user} />
+        <DashboardHeader />
         <div className="flex">
           <Sidebar />
           <div className="flex-1 px-4 sm:px-6 lg:px-8 py-6">
@@ -353,7 +353,7 @@ const ProgramDetail = () => {
   if (!program) {
     return (
       <div className="min-h-screen bg-linear-to-br from-slate-50 via-white to-slate-100" style={{ fontFamily: "'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', cursive" }}>
-        <DashboardHeader user={user} />
+        <DashboardHeader />
         <div className="flex">
           <Sidebar />
           <div className="flex-1 px-4 sm:px-6 lg:px-8 py-6">
@@ -386,7 +386,7 @@ const ProgramDetail = () => {
 
   return (
     <div className="min-h-screen bg-linear-to-br from-slate-50 via-white to-slate-100" style={{ fontFamily: "'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', cursive" }}>
-      <DashboardHeader user={user} />
+      <DashboardHeader />
       <div className="flex">
         <Sidebar />
         <ChatbotButton />
@@ -625,7 +625,7 @@ const ProgramDetail = () => {
                       <p className="text-sm text-slate-600 mb-4">
                         Daftar sekarang dan tingkatkan kemampuan Anda bersama kami!
                       </p>
-                      <button className="w-full py-3 rounded-xl bg-gradient-to-r from-teal-500 to-cyan-500 text-white font-semibold hover:from-teal-600 hover:to-cyan-600 shadow-lg hover:shadow-xl transition-all duration-300">
+                      <button className="w-full py-3 rounded-xl bg-linear-to-r from-teal-500 to-cyan-500 text-white font-semibold hover:from-teal-600 hover:to-cyan-600 shadow-lg hover:shadow-xl transition-all duration-300">
                         Konsultasikan dengan Instruktur
                       </button>
                       <p className="text-xs text-slate-500 mt-3">

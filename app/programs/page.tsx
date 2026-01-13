@@ -132,15 +132,15 @@ const OurPrograms = () => {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 flex items-center justify-center">
+      <div className="min-h-screen bg-linear-to-br from-slate-50 via-white to-slate-100 flex items-center justify-center">
         <p className="text-slate-500">Memuat...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100" style={{ fontFamily: "'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', cursive" }}>
-      <DashboardHeader user={user} />
+    <div className="min-h-screen bg-linear-to-br from-slate-50 via-white to-slate-100" style={{ fontFamily: "'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', cursive" }}>
+      <DashboardHeader />
       <div className="flex">
         <Sidebar />
         <div className="flex-1 px-6 lg:px-8 py-12">
@@ -224,7 +224,7 @@ const OurPrograms = () => {
                         alt={program.title}
                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+                      <div className="absolute inset-0 bg-linear-to-t from-black/60 via-black/20 to-transparent" />
                       <div className="absolute top-3 right-3 px-3 h-10 rounded-2xl bg-white/90 backdrop-blur flex items-center gap-2 shadow-md">
                         <meta.icon className={`h-5 w-5 ${meta.color}`} />
                         <span className="text-xs font-semibold text-slate-800">{meta.label}</span>
@@ -251,7 +251,7 @@ const OurPrograms = () => {
                       {/* Button */}
                       <button 
                         onClick={() => router.push(`/programs/${program.id}`)}
-                        className="w-full py-3 rounded-xl bg-gradient-to-r from-teal-500 to-cyan-500 text-white font-semibold hover:from-teal-600 hover:to-cyan-600 shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center gap-2"
+                        className="w-full py-3 rounded-xl bg-linear-to-r from-teal-500 to-cyan-500 text-white font-semibold hover:from-teal-600 hover:to-cyan-600 shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center gap-2"
                       >
                         <span>Lihat Detail</span>
                         <ArrowRight className="h-5 w-5" />

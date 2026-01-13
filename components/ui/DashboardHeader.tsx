@@ -24,7 +24,7 @@ export default function DashboardHeader() {
   
   return (
     <div className="border-b border-slate-200 backdrop-blur-xl bg-white/80 sticky top-0 z-40 shadow-sm">
-      <div className="flex items-center justify-between gap-8 h-20">
+      <div className="flex items-center justify-between gap-4 h-16">
         {/* Logo - Left (aligned with sidebar) */}
         <div className="flex items-center gap-3 flex-shrink-0 pl-6 lg:pl-8">
           <img src="/logo.png" alt="IRMA Verse" className="h-10 w-10 object-contain" />
