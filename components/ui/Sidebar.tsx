@@ -117,7 +117,7 @@ const Sidebar = () => {
                 <div>
                   <h2 className="text-xs font-black leading-tight text-white uppercase tracking-wide bg-linear-to-r from-teal-600 to-emerald-600 px-2 py-0.5 rounded-lg">
                     IRMA VERSE
-                  </h2>
+                  </h2><p className="text-[10px] text-slate-600 mt-0.5\">Platform Rohis Digital Irma 13</p>
                 </div>
               </div>
               <button
