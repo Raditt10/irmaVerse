@@ -68,16 +68,13 @@ const Sidebar = () => {
         <div className="space-y-2">
           <button
             onClick={() => setIsExpanded(!isExpanded)}
-            className="w-full flex items-center justify-center gap-2 px-4 py-3 mb-4 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+            className="flex items-center justify-center p-2 text-slate-700 hover:text-slate-900 transition-colors duration-300 mb-4"
             title={isExpanded ? "Persempit Sidebar" : "Perlebar Sidebar"}
           >
             {isExpanded ? (
-              <>
-                <PanelLeftClose className="h-5 w-5" />
-                <span className="text-sm font-semibold">Perkecil</span>
-              </>
+              <PanelLeftClose className="h-5 w-5" />
             ) : (
-              <PanelLeftOpen className="h-5 w-5" />
+              <Menu className="h-5 w-5" />
             )}
           </button>
           {menuItems.map((item, idx) => {
@@ -112,7 +109,7 @@ const Sidebar = () => {
             onClick={() => setIsMobileOpen(false)}
           />
           {/* Panel */}
-          <div className="fixed z-50 top-0 left-0 h-screen w-1/2 bg-white dark:bg-white border-r border-slate-200 dark:border-slate-200 shadow-2xl animate-in slide-in-from-left duration-500 ease-out rounded-r-3xl">
+          <div className="fixed z-50 top-0 left-0 h-screen w-3/4 bg-white dark:bg-white border-r border-slate-200 dark:border-slate-200 shadow-2xl animate-in slide-in-from-left duration-500 ease-out rounded-r-3xl">
             {/* Header */}
             <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-slate-200">
               <div className="flex items-center gap-2">
@@ -124,7 +121,7 @@ const Sidebar = () => {
                 </div>
               </div>
               <button
-                className="inline-flex items-center justify-center rounded-lg p-2 text-slate-700 hover:text-white bg-slate-100 hover:bg-gradient-to-r hover:from-emerald-500 hover:to-teal-500 transition-all duration-300"
+                className="inline-flex items-center justify-center rounded-lg p-2 text-slate-700 hover:text-slate-900 transition-colors duration-300"
                 onClick={() => setIsMobileOpen(false)}
                 aria-label="Tutup menu"
               >

@@ -245,10 +245,10 @@ const Dashboard = async () => {
                   </div>
                   <span className="text-xs font-semibold text-red-600 bg-red-500/10 px-3 py-1 rounded-full">Aktif</span>
                 </div>
-                <p className="text-slate-600 text-sm font-medium mb-1">Konsistensi</p>
+                <p className="text-slate-600 text-sm font-medium mb-1">Konsistensi Kajian Mingguan</p>
                 <p className="text-3xl font-bold text-slate-900">{stats.streak} Hari</p>
                 <div className="mt-4 pt-4 border-t border-slate-200">
-                  <p className="text-xs text-slate-500">Jangan putus! 💪</p>
+                  <p className="text-xs text-slate-500">Tetap Semangat! 🚀</p>
                 </div>
               </div>
             </div>

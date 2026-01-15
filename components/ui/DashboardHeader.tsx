@@ -29,7 +29,7 @@ export default function DashboardHeader() {
         <div className="flex items-center gap-3 shrink-0 pl-6 lg:pl-8">
           {/* Mobile burger button */}
           <button
-            className="lg:hidden mr-1 inline-flex items-center justify-center h-10 w-10 rounded-md bg-emerald-500 text-white shadow-md hover:bg-emerald-600 active:scale-95 transition-transform"
+            className="lg:hidden mr-1 inline-flex items-center justify-center h-10 w-10 rounded-md text-slate-700 hover:text-slate-900 transition-colors"
             onClick={() => window.dispatchEvent(new Event('open-mobile-sidebar'))}
             aria-label="Buka menu"
           >
