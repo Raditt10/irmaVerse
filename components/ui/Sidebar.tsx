@@ -85,10 +85,10 @@ const Sidebar = () => {
               <button
                 key={idx}
                 onClick={() => router.push(item.path)}
-                className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-colors text-left ${
+                className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-300 text-left ${
                   isActive
-                    ? "bg-emerald-600 text-white"
-                    : "text-slate-700 hover:bg-slate-100 hover:text-slate-900"
+                    ? "bg-gradient-to-r from-teal-500 to-cyan-500 text-white shadow-lg"
+                    : "text-slate-700 hover:bg-gradient-to-r hover:from-emerald-100 hover:via-teal-50 hover:to-cyan-100 hover:text-emerald-700 hover:shadow-md"
                 } ${!isExpanded && 'justify-center'}`}
                 title={!isExpanded ? item.label : ''}
               >
