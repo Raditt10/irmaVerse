@@ -168,33 +168,30 @@ const Profile = () => {
                 {/* Programs Card */}
                 <div className="rounded-2xl bg-white border border-slate-200 p-6 shadow-sm">
                   <h2 className="text-xl font-bold text-slate-900 mb-6">Program Kurikulum yang saya tuntaskan</h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="flex flex-col gap-6">
                     {programs
                       .filter((program) => program.status === "done")
                       .map((program) => {
-                      return (
-                        <div
-                          key={program.id}
-                          className="relative rounded-2xl border border-slate-200 bg-slate-50 p-6 shadow-sm hover:shadow-md transition-all min-h-[190px]"
-                        >
-                          <div className="flex flex-col gap-4 pr-24">
-                            <p className="text-base font-semibold text-slate-900 leading-snug">{program.title}</p>
-                            <div className="flex flex-wrap items-center gap-4 text-sm text-slate-700">
-                              <span className="flex items-center gap-1">
-                                <Clock3 className="h-4 w-4 text-slate-700" />
-                                {program.duration}
-                              </span>
-                              <span className="text-slate-700 font-medium">{program.level}</span>
+                        return (
+                          <Link
+                            key={program.id}
+                            href={`/programs/${program.id}`}
+                            className="relative rounded-2xl border border-slate-200 bg-slate-50 p-6 shadow-sm hover:shadow-md transition-all min-h-[100px] flex flex-col md:flex-row md:items-center md:gap-6 cursor-pointer focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                            style={{ textDecoration: 'none' }}
+                          >
+                            <div className="flex-1 flex flex-col justify-center">
+                              <p className="text-base font-semibold text-slate-900 leading-snug mb-2">{program.title}</p>
+                              <div className="flex flex-row items-center gap-6 text-sm text-slate-700">
+                                <span className="flex items-center gap-1">
+                                  <Clock3 className="h-4 w-4 text-slate-700" />
+                                  {program.duration}
+                                </span>
+                                <span className="text-slate-700 font-medium">{program.level}</span>
+                              </div>
                             </div>
-                          </div>
-
-                          <button className="mt-6 w-full py-2.5 rounded-lg bg-linear-to-r from-emerald-500 to-cyan-500 text-white text-sm font-semibold flex items-center justify-center gap-2 hover:from-emerald-600 hover:to-cyan-600 transition-colors">
-                            <span>Lihat Detail</span>
-                            <ArrowRight className="h-4 w-4" />
-                          </button>
-                        </div>
-                      );
-                    })}
+                          </Link>
+                        );
+                      })}
                   </div>
                 </div>
               </div>
