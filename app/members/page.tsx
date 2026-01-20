@@ -149,9 +149,6 @@
                                   className="w-full h-full object-cover"
                                 />
                               </div>
-                              <div className="absolute bottom-0 right-0 w-6 h-6 bg-emerald-500 rounded-full ring-2 ring-white flex items-center justify-center">
-                                <div className="w-2 h-2 bg-white rounded-full"></div>
-                              </div>
                             </div>
                           </div>
 

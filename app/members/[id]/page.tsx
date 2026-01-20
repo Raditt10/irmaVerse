@@ -235,18 +235,13 @@ const MemberDetail = () => {
                   <div className="px-6 pb-6 -mt-16">
                     {/* Avatar */}
                     <div className="flex justify-center mb-4">
-                      <div className="relative">
-                        <div className="w-32 h-32 rounded-full overflow-hidden ring-4 ring-white shadow-xl">
-                          <img
-                            src={member.avatar}
-                            alt={member.name}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                        <div className="absolute bottom-2 right-2 w-8 h-8 bg-emerald-500 rounded-full ring-4 ring-white flex items-center justify-center">
-                          <div className="w-3 h-3 bg-white rounded-full"></div>
-                        </div>
-                      </div>
+                      <div className="w-32 h-32 rounded-full overflow-hidden ring-4 ring-white shadow-xl">
+                        <img
+                          src={member.avatar}
+                          alt={member.name}
+                          className="w-full h-full object-cover"
+                        />
+             nhjiop[-]         </div>
                     </div>
 
                     {/* Name & Role */}
@@ -333,10 +328,11 @@ const MemberDetail = () => {
               <div className="lg:col-span-2 space-y-6">
                 {/* Stats Cards */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {/* Event Diikuti */}
                   <div className="bg-white rounded-2xl p-5 shadow-md hover:shadow-lg transition-shadow duration-300">
                     <div className="flex items-center justify-between mb-3">
-                      <div className="w-12 h-12 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 flex items-center justify-center">
-                        <Users className="h-6 w-6 text-white" />
+                      <div className="w-12 h-12 rounded-full bg-white border border-slate-200 shadow-[0_6px_24px_0_rgba(60,72,88,0.10)] flex items-center justify-center">
+                        <Users className="h-7 w-7 text-[#23272f] stroke-[1.2]" />
                       </div>
                     </div>
                     <div className="text-3xl font-black text-slate-800 mb-1">
@@ -346,11 +342,11 @@ const MemberDetail = () => {
                       Event Diikuti
                     </div>
                   </div>
-
+                  {/* Kajian Diikuti */}
                   <div className="bg-white rounded-2xl p-5 shadow-md hover:shadow-lg transition-shadow duration-300">
                     <div className="flex items-center justify-between mb-3">
-                      <div className="w-12 h-12 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 flex items-center justify-center">
-                        <BookOpen className="h-6 w-6 text-white" />
+                      <div className="w-12 h-12 rounded-full bg-white border border-slate-200 shadow-[0_6px_24px_0_rgba(60,72,88,0.10)] flex items-center justify-center">
+                        <BookOpen className="h-7 w-7 text-[#23272f] stroke-[1.2]" />
                       </div>
                     </div>
                     <div className="text-3xl font-black text-slate-800 mb-1">
@@ -360,11 +356,11 @@ const MemberDetail = () => {
                       Kajian Diikuti
                     </div>
                   </div>
-
+                  {/* Tugas Selesai */}
                   <div className="bg-white rounded-2xl p-5 shadow-md hover:shadow-lg transition-shadow duration-300">
                     <div className="flex items-center justify-between mb-3">
-                     <div className="w-12 h-12 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 flex items-center justify-center">
-                        <Target className="h-6 w-6 text-white" />
+                      <div className="w-12 h-12 rounded-full bg-white border border-slate-200 shadow-[0_6px_24px_0_rgba(60,72,88,0.10)] flex items-center justify-center">
+                        <Target className="h-7 w-7 text-[#23272f] stroke-[1.2]" />
                       </div>
                     </div>
                     <div className="text-3xl font-black text-slate-800 mb-1">
@@ -374,11 +370,11 @@ const MemberDetail = () => {
                       Tugas Selesai
                     </div>
                   </div>
-
+                  {/* Peringkat */}
                   <div className="bg-white rounded-2xl p-5 shadow-md hover:shadow-lg transition-shadow duration-300">
                     <div className="flex items-center justify-between mb-3">
-                      <div className="w-12 h-12 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 flex items-center justify-center">
-                        <TrendingUp className="h-6 w-6 text-white" />
+                      <div className="w-12 h-12 rounded-full bg-white border border-slate-200 shadow-[0_6px_24px_0_rgba(60,72,88,0.10)] flex items-center justify-center">
+                        <TrendingUp className="h-7 w-7 text-[#23272f] stroke-[1.2]" />
                       </div>
                     </div>
                     <div className="text-3xl font-black text-slate-800 mb-1">
@@ -393,8 +389,8 @@ const MemberDetail = () => {
                 {/* Achievements */}
                 <div className="bg-white rounded-3xl shadow-lg p-6">
                   <div className="flex items-center gap-3 mb-6">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-r from-teal-500 to-cyan-500 flex items-center justify-center">
-                      <Award className="h-6 w-6 text-white" />
+                    <div className="w-12 h-12 rounded-full bg-white border border-slate-200 shadow-[0_6px_24px_0_rgba(60,72,88,0.10)] flex items-center justify-center">
+                      <Award className="h-7 w-7 text-[#23272f] stroke-[1.2]" />
                     </div>
                     <div>
                       <h2 className="text-2xl font-black text-slate-800">
@@ -438,8 +434,8 @@ const MemberDetail = () => {
                 {/* Recent Activities */}
                 <div className="bg-white rounded-3xl shadow-lg p-6">
                   <div className="flex items-center gap-3 mb-6">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-r from-teal-500 to-cyan-500 flex items-center justify-center">
-                      <Activity className="h-6 w-6 text-white" />
+                    <div className="w-12 h-12 rounded-full bg-white border border-slate-200 shadow-[0_6px_24px_0_rgba(60,72,88,0.10)] flex items-center justify-center">
+                      <Activity className="h-7 w-7 text-[#23272f] stroke-[1.2]" />
                     </div>
                     <div>
                       <h2 className="text-2xl font-black text-slate-800">
