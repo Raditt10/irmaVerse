@@ -187,10 +187,10 @@ const ProfileInformationForm = ({ stats, level, rank }: any) => {
             </button>
           )}
         </div>
-        <div className="space-y-2">
+        <div className="space-y-2 w-full">
           <h3 className="text-2xl font-bold text-slate-900">{user.name}</h3>
           <p className="text-slate-600">{user.email}</p>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2 mb-2">
             <span className="px-3 py-1 rounded-full bg-gradient-to-r from-emerald-400 to-cyan-500 text-white text-sm font-semibold">
               Level {level}
             </span>
@@ -244,7 +244,7 @@ const ProfileInformationForm = ({ stats, level, rank }: any) => {
             {isEditing ? (
               <input
                 type="tel"
-                value={editedUser.notelp}
+                value={editedUser.notelp || ""}
                 onChange={(e) =>
                   setEditedUser({ ...editedUser, notelp: e.target.value })
                 }

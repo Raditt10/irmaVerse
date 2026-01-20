@@ -229,7 +229,7 @@ const MemberDetail = () => {
               <div className="lg:col-span-1">
                 <div className="bg-white rounded-3xl shadow-lg overflow-hidden sticky top-6">
                   {/* Header with gradient */}
-                  <div className="h-32 bg-gradient-to-br from-teal-400 via-green-300 to-green-500"></div>
+                  <div className="h-32 bg-white"></div>
 
                   {/* Profile Info */}
                   <div className="px-6 pb-6 -mt-16">
