@@ -61,6 +61,86 @@ const Dashboard = async () => {
     { title: "Peringkat", icon: TrendingUp, link: "/leaderboard" },
   ];
 
+  // Data Berita Tambahan
+  const newsItems = [
+    {
+      id: 1,
+      category: "Kegiatan",
+      title: "Workshop Kepemimpinan Remaja Masjid 2024",
+      date: "2 hari yang lalu",
+      imageId: 10,
+    },
+    {
+      id: 2,
+      category: "Prestasi",
+      title: "Juara 1 Lomba Tilawah Tingkat Provinsi",
+      date: "5 hari yang lalu",
+      imageId: 20,
+    },
+    {
+      id: 3,
+      category: "Kajian",
+      title: "Bedah Buku: Adab Penuntut Ilmu & Akhlak",
+      date: "1 minggu yang lalu",
+      imageId: 33,
+    },
+    {
+      id: 4,
+      category: "Sosial",
+      title: "Aksi Bakti Sosial IRMA Peduli Bencana Alam",
+      date: "2 minggu yang lalu",
+      imageId: 45,
+    },
+  ];
+
+  // Komponen Card Level
+  const LevelCardContent = () => (
+    <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-teal-500 to-emerald-600 text-white p-6 shadow-lg shadow-teal-500/20">
+      <div className="relative z-10">
+        <div className="mb-6">
+          <p className="text-teal-100 text-sm font-bold mb-3">Status Pencapaian</p>
+          
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Pill 1: Level (Teal) - JAUH LEBIH BESAR */}
+            <div className="bg-[#00D1C6] text-white px-6 py-2.5 rounded-full shadow-md border-2 border-white/30 transform hover:scale-105 transition-transform cursor-default">
+              <span className="font-black text-2xl md:text-3xl tracking-wide">Level 5</span>
+            </div>
+
+            {/* Container untuk badge kecil */}
+            <div className="flex flex-wrap gap-2">
+              {/* Pill 2: Mashaallah */}
+              <div className="bg-amber-400 text-white px-3 py-1 rounded-full shadow-sm border border-white/20 h-fit">
+                <span className="font-bold text-xs md:text-sm">Mashaallah</span>
+              </div>
+
+              {/* Pill 3: Peringkat */}
+              <div className="bg-[#FFF8D6] text-amber-900 px-3 py-1 rounded-full shadow-sm h-fit">
+                <span className="font-bold text-xs md:text-sm">Peringkat #12</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div className="space-y-2 mt-8">
+          <div className="flex justify-between text-sm font-bold text-teal-50">
+            <span>Progress Level</span>
+            <span>75%</span>
+          </div>
+          <div className="h-3 bg-black/20 rounded-full overflow-hidden">
+            <div className="h-full w-3/4 bg-white rounded-full shadow-[0_0_10px_rgba(255,255,255,0.5)] relative">
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent to-white/50" />
+            </div>
+          </div>
+          <p className="text-xs text-teal-100 mt-2 font-bold">Dapatkan 50 poin lagi untuk naik ke Level 6</p>
+        </div>
+      </div>
+      
+      {/* Dekorasi Background */}
+      <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-2xl" />
+      <div className="absolute top-10 -left-10 w-32 h-32 bg-teal-400/20 rounded-full blur-xl" />
+    </div>
+  );
+
   return (
     <div 
       className="min-h-screen bg-slate-50/50" 
@@ -74,11 +154,18 @@ const Dashboard = async () => {
         <main className="flex-1 p-4 md:p-6 lg:p-8 max-w-[1600px] mx-auto">
           {/* Header Section */}
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-            <div>
+            <div className="w-full md:w-auto">
               <h1 className="text-2xl md:text-3xl font-bold text-slate-800">
                 ٱلسَّلَامُ عَلَيْكُمْ, <span className="text-teal-600">{user.name}</span>
               </h1>
               <p className="text-slate-500 mt-1">Siap menambah ilmu hari ini?</p>
+
+              {/* --- [MOBILE] CARD LEVEL --- */}
+              <div className="mt-6 xl:hidden block w-full">
+                <LevelCardContent />
+              </div>
+              {/* --------------------------- */}
+
             </div>
             <div className="hidden md:flex items-center gap-2 bg-white px-4 py-2 rounded-full border border-slate-200 shadow-sm">
               <Calendar className="w-4 h-4 text-slate-900" />
@@ -96,7 +183,6 @@ const Dashboard = async () => {
               
               {/* Stats Row */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                {/* Badge Stat */}
                 <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all group">
                   <div className="flex justify-between items-start mb-3">
                     <div className="p-2 bg-white border border-slate-200 rounded-xl group-hover:border-slate-400 transition-colors shadow-sm">
@@ -108,7 +194,6 @@ const Dashboard = async () => {
                   <div className="text-sm text-slate-500 font-bold">Badges Dikoleksi</div>
                 </div>
 
-                {/* Quiz Stat */}
                 <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all group">
                   <div className="flex justify-between items-start mb-3">
                     <div className="p-2 bg-white border border-slate-200 rounded-xl group-hover:border-slate-400 transition-colors shadow-sm">
@@ -120,7 +205,6 @@ const Dashboard = async () => {
                   <div className="text-sm text-slate-500 font-bold">Kuis Selesai</div>
                 </div>
 
-                {/* Streak Stat */}
                 <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all group">
                   <div className="flex justify-between items-start mb-3">
                     <div className="p-2 bg-white border border-slate-200 rounded-xl group-hover:border-slate-400 transition-colors shadow-sm">
@@ -133,11 +217,11 @@ const Dashboard = async () => {
                 </div>
               </div>
 
-              {/* Quick Actions (Icon Hitam Putih) */}
+              {/* Quick Actions */}
               <section>
                 <div className="flex items-center gap-2 mb-4">
                   <Sparkles className="w-5 h-5 text-slate-900" />
-                  <h2 className="text-lg font-bold text-slate-800">Akses Cepat</h2>
+                  <h2 className="text-lg font-bold text-slate-800">Fitur pintar</h2>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
                   {quickActions.map((action, idx) => {
@@ -170,16 +254,22 @@ const Dashboard = async () => {
                   </Link>
                 </div>
                 
+                {/* Updated Grid for News Items */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                   {[1, 2].map((item) => (
-                      <div key={item} className="flex gap-4 p-4 bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all cursor-pointer group">
+                   {newsItems.map((news) => (
+                      <div key={news.id} className="flex gap-4 p-4 bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all cursor-pointer group">
                         <div className="w-24 h-24 rounded-xl bg-slate-200 overflow-hidden shrink-0">
-                           <img src={`https://picsum.photos/200/200?random=${item}`} alt="News" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                           {/* Menggunakan ID acak agar gambar berbeda-beda */}
+                           <img src={`https://picsum.photos/200/200?random=${news.imageId}`} alt={news.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                         </div>
                         <div className="flex flex-col justify-center">
-                          <span className="text-xs font-bold text-teal-600 mb-1">Kegiatan</span>
-                          <h3 className="font-bold text-slate-800 leading-tight mb-2 group-hover:text-teal-600 transition-colors">Workshop Kepemimpinan Remaja Masjid 2024</h3>
-                          <span className="text-xs text-slate-400 font-bold">2 hari yang lalu</span>
+                          <span className="text-xs font-bold text-teal-600 mb-1">{news.category}</span>
+                          <h3 className="font-bold text-slate-800 leading-tight mb-2 text-sm md:text-base group-hover:text-teal-600 transition-colors line-clamp-2">
+                            {news.title}
+                          </h3>
+                          <span className="text-xs text-slate-400 font-bold flex items-center gap-1">
+                            <Calendar className="w-3 h-3" /> {news.date}
+                          </span>
                         </div>
                       </div>
                    ))}
@@ -190,52 +280,11 @@ const Dashboard = async () => {
             {/* RIGHT COLUMN */}
             <div className="xl:col-span-4 space-y-6">
               
-              {/* Level Card - MODIFIED */}
-              <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-teal-500 to-emerald-600 text-white p-6 shadow-lg shadow-teal-500/20">
-                <div className="relative z-10">
-                   {/* Bagian Badges */}
-                   <div className="mb-6">
-                      <p className="text-teal-100 text-sm font-bold mb-3">Status Pencapaian</p>
-                      
-                      <div className="flex flex-wrap items-center gap-3">
-                         {/* Pill 1: Level (Teal) - DIBUAT JAUH LEBIH BESAR */}
-                         <div className="bg-[#00D1C6] text-white px-6 py-2.5 rounded-full shadow-md border-2 border-white/30 transform hover:scale-105 transition-transform cursor-default">
-                            <span className="font-black text-2xl md:text-3xl tracking-wide">Level 5</span>
-                         </div>
-
-                         {/* Container untuk badge kecil disebelahnya */}
-                         <div className="flex flex-wrap gap-2">
-                            {/* Pill 2: Mashaallah (Orange) */}
-                            <div className="bg-amber-400 text-white px-3 py-1 rounded-full shadow-sm border border-white/20 h-fit">
-                                <span className="font-bold text-xs md:text-sm">Mashaallah</span>
-                            </div>
-
-                            {/* Pill 3: Peringkat (Cream) */}
-                            <div className="bg-[#FFF8D6] text-amber-900 px-3 py-1 rounded-full shadow-sm h-fit">
-                                <span className="font-bold text-xs md:text-sm">Peringkat #12</span>
-                            </div>
-                         </div>
-                      </div>
-                   </div>
-                   
-                   <div className="space-y-2 mt-8">
-                     <div className="flex justify-between text-sm font-bold text-teal-50">
-                       <span>Progress Level</span>
-                       <span>75%</span>
-                     </div>
-                     <div className="h-3 bg-black/20 rounded-full overflow-hidden">
-                       <div className="h-full w-3/4 bg-white rounded-full shadow-[0_0_10px_rgba(255,255,255,0.5)] relative">
-                          <div className="absolute inset-0 bg-gradient-to-r from-transparent to-white/50" />
-                       </div>
-                     </div>
-                     <p className="text-xs text-teal-100 mt-2 font-bold">Dapatkan 50 poin lagi untuk naik ke Level 6</p>
-                   </div>
-                </div>
-                
-                {/* Dekorasi Background */}
-                <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-2xl" />
-                <div className="absolute top-10 -left-10 w-32 h-32 bg-teal-400/20 rounded-full blur-xl" />
+              {/* --- [DESKTOP] CARD LEVEL --- */}
+              <div className="hidden xl:block">
+                <LevelCardContent />
               </div>
+              {/* ---------------------------- */}
 
               {/* Feature Cards Stack */}
               <div className="space-y-4">
