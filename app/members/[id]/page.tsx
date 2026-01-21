@@ -17,6 +17,9 @@ import {
   Target,
   Activity,
   Clock,
+  Trophy,
+  CheckCircle2,
+  Crosshair,
 } from "lucide-react";
 
 interface MemberDetail {
@@ -32,8 +35,19 @@ interface MemberDetail {
   joinDate: string;
   totalEvents: number;
   totalKajian: number;
-  achievements: Achievement[];
-  recentActivities: Activity[];
+  achievements: {
+    id: string;
+    title: string;
+    description: string;
+    date: string;
+  }[];
+  recentActivities: {
+    id: string;
+    type: "event" | "kajian" | "task";
+    title: string;
+    date: string;
+    points: number;
+  }[];
   stats: {
     eventsAttended: number;
     kajianAttended: number;
@@ -42,21 +56,8 @@ interface MemberDetail {
   };
 }
 
-interface Achievement {
-  id: string;
-  title: string;
-  description: string;
-  icon: string;
-  date: string;
-}
-
-interface Activity {
-  id: string;
-  type: "event" | "kajian" | "task";
-  title: string;
-  date: string;
-  points: number;
-}
+// ...existing code...
+// ...existing code...
 
 const MemberDetail = () => {
   const [member, setMember] = useState<MemberDetail | null>(null);
@@ -96,21 +97,18 @@ const MemberDetail = () => {
             id: "1",
             title: "Top Contributor",
             description: "Kontribusi terbanyak bulan ini",
-            icon: "🏆",
             date: "2024-01-15",
           },
           {
             id: "2",
             title: "Perfect Attendance",
             description: "Hadir di semua kajian bulan lalu",
-            icon: "⭐",
             date: "2023-12-31",
           },
           {
             id: "3",
             title: "Event Master",
             description: "Mengikuti 10+ event",
-            icon: "🎯",
             date: "2023-11-20",
           },
         ],
@@ -249,7 +247,7 @@ const MemberDetail = () => {
                       <h1 className="text-2xl font-black text-slate-800 mb-2">
                         {member.name}
                       </h1>
-                      <div className="inline-block px-4 py-2 rounded-full bg-gradient-to-r from-green-400 to-teal-500 text-white text-sm font-semibold mb-1">
+                      <div className="inline-block px-4 py-2 rounded-full bg-linear-to-r from-green-400 to-teal-500 text-white text-sm font-semibold mb-1">
                         {member.role}
                       </div>
                       <p className="text-slate-600 text-sm font-medium">
@@ -258,7 +256,7 @@ const MemberDetail = () => {
                     </div>
 
                     {/* Points Display */}
-                    <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl p-6 mb-6">
+                    <div className="bg-linear-to-br from-amber-50 to-orange-50 rounded-2xl p-6 mb-6">
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-sm text-slate-600 font-medium">
                           Total Poin
@@ -406,9 +404,13 @@ const MemberDetail = () => {
                     {member.achievements.map((achievement) => (
                       <div
                         key={achievement.id}
-                        className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-2xl p-5 hover:shadow-md transition-all duration-300 hover:-translate-y-1"
+                        className="bg-linear-to-br from-slate-50 to-slate-100 rounded-2xl p-5 hover:shadow-md transition-all duration-300 hover:-translate-y-1"
                       >
-                        <div className="text-4xl mb-3">{achievement.icon}</div>
+                        <div className="text-4xl mb-3">
+                          {achievement.title === 'Top Contributor' && <Trophy className="h-8 w-8 text-amber-500" />}
+                          {achievement.title === 'Perfect Attendance' && <CheckCircle2 className="h-8 w-8 text-yellow-500" />}
+                          {achievement.title === 'Event Master' && <Crosshair className="h-8 w-8 text-pink-500" />}
+                        </div>
                         <h3 className="font-bold text-slate-800 mb-2">
                           {achievement.title}
                         </h3>
