@@ -28,6 +28,7 @@ model User {
   address   String?  // Alamat (opsional) 
   bio       String?  // Bio (opsional)
   role      Role     @default(user) // Role: user, admin, instruktur
+  lastSeen  DateTime @default(now()) // Last active timestamp
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -36,8 +37,11 @@ model User {
   pengalaman     String?  // Pengalaman (hanya untuk instruktur)
 
   // Relations
-  newsArticles   News[]   @relation("authorNews")
-  schedules      Schedule[] @relation("instructorSchedules")
+  newsArticles              News[]   @relation("authorNews")
+  userConversations         ChatConversation[] @relation("userConversations")
+  instructorConversations   ChatConversation[] @relation("instructorConversations")
+  sentMessages              ChatMessage[] @relation("sentMessages")
+  schedules                 Schedule[] @relation("instructorSchedules")
 
   @@map("users")
 }
@@ -60,6 +64,46 @@ model News {
   @@map("news")
 }
 
+// Chat Conversation between User and Instructor
+model ChatConversation {
+  id             String   @id @default(cuid())
+  userId         String   // User yang memulai chat
+  instructorId   String   // Instruktur yang di-chat
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user           User     @relation("userConversations", fields: [userId], references: [id], onDelete: Cascade)
+  instructor     User     @relation("instructorConversations", fields: [instructorId], references: [id], onDelete: Cascade)
+  messages       ChatMessage[]
+
+  @@unique([userId, instructorId])
+  @@index([userId])
+  @@index([instructorId])
+  @@map("chat_conversations")
+}
+
+// Chat Messages
+model ChatMessage {
+  id             String   @id @default(cuid())
+  conversationId String
+  senderId       String
+  content        String   @db.Text
+  isRead         Boolean  @default(false)
+  readAt         DateTime? // When message was read
+  attachmentUrl  String?  // URL for uploaded files/images
+  attachmentType String?  // Type: image, file, etc
+  isEdited       Boolean  @default(false)
+  editedAt       DateTime?
+  isDeleted      Boolean  @default(false)
+  deletedAt      DateTime?
+  createdAt      DateTime @default(now())
+
+  conversation   ChatConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender         User     @relation("sentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId])
+  @@index([senderId])
+  @@map("chat_messages")
 enum ScheduleStatus {
   segera_hadir
   ongoing

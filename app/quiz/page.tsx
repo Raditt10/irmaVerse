@@ -1,7 +1,7 @@
 export default function QuizPage() {
   return (
-    <div>
-      <h1>Quiz (Coming Soon)</h1>
+    <div className="min-h-screen flex items-center justify-center">
+      <p className="text-slate-500">Halaman quiz dalam pengembangan</p>
     </div>
   );
 }

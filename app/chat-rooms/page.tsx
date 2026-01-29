@@ -1,7 +1,7 @@
 export default function ChatRoomsPage() {
   return (
-    <div>
-      <h1>Chat Rooms (Coming Soon)</h1>
+    <div className="min-h-screen flex items-center justify-center">
+      <p className="text-slate-500">Halaman chat rooms dalam pengembangan</p>
     </div>
   );
 }
