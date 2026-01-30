@@ -27,6 +27,7 @@ model User {
   notelp    String?  // Nomor telepon (opsional)
   address   String?  // Alamat (opsional) 
   bio       String?  // Bio (opsional)
+  avatar    String?  // URL foto profil (opsional)
   role      Role     @default(user) // Role: user, admin, instruktur
   lastSeen  DateTime @default(now()) // Last active timestamp
   createdAt DateTime @default(now())

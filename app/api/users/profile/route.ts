@@ -28,6 +28,7 @@ export async function GET(request: NextRequest) {
         notelp: true,
         address: true,
         bio: true,
+        avatar: true,
         createdAt: true,
       },
     });
@@ -126,6 +127,7 @@ export async function PATCH(request: NextRequest) {
         notelp: true,
         address: true,
         bio: true,
+        avatar: true,
         createdAt: true,
       },
     });

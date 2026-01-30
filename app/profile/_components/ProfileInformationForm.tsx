@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import {
   User,
@@ -13,6 +13,7 @@ import {
   Camera,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import ImageCropDialog from "./ImageCropDialog";
 
 interface UserProfile {
   id: string;
@@ -21,6 +22,7 @@ interface UserProfile {
   notelp: string;
   address: string;
   bio: string;
+  avatar: string | null;
   createdAt: string;
 }
 
@@ -32,6 +34,10 @@ const ProfileInformationForm = ({ stats, level, rank }: any) => {
   const [error, setError] = useState<string | null>(null);
   const [user, setUser] = useState<UserProfile | null>(null);
   const [editedUser, setEditedUser] = useState<UserProfile | null>(null);
+  const [showCropDialog, setShowCropDialog] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const avatarUrl = "https://api.dicebear.com/7.x/avataaars/svg?seed=Fatimah";
 
   // Fetch user data
@@ -73,10 +79,10 @@ const ProfileInformationForm = ({ stats, level, rank }: any) => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          name: editedUser.name,
-          notelp: editedUser.notelp,
-          address: editedUser.address,
-          bio: editedUser.bio,
+          name: editedUser.name || "",
+          notelp: editedUser.notelp || "",
+          address: editedUser.address || "",
+          bio: editedUser.bio || "",
         }),
       });
 
@@ -103,6 +109,87 @@ const ProfileInformationForm = ({ stats, level, rank }: any) => {
     }
     setIsEditing(false);
     setError(null);
+  };
+
+  const handleAvatarClick = () => {
+    if (isEditing && fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+    if (!allowedTypes.includes(file.type)) {
+      setError("Tipe file tidak didukung. Gunakan JPG, PNG, atau WebP");
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    const maxSize = 5 * 1024 * 1024;
+    if (file.size > maxSize) {
+      setError("Ukuran file terlalu besar. Maksimal 5MB");
+      return;
+    }
+
+    // Read file and show crop dialog
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const result = e.target?.result as string;
+      setSelectedImage(result);
+      setShowCropDialog(true);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleCropComplete = async (croppedImageBlob: Blob) => {
+    try {
+      setIsUploadingAvatar(true);
+      setError(null);
+
+      // Create form data
+      const formData = new FormData();
+      formData.append("avatar", croppedImageBlob, "avatar.jpg");
+
+      // Upload to server
+      const response = await fetch("/api/users/avatar", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Gagal mengupload avatar");
+      }
+
+      const data = await response.json();
+      
+      // Update local user state
+      if (user) {
+        const updatedUser = { ...user, avatar: data.avatarUrl };
+        setUser(updatedUser);
+        setEditedUser(updatedUser);
+      }
+
+      setShowCropDialog(false);
+      setSelectedImage(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Terjadi kesalahan");
+      console.error("Error uploading avatar:", err);
+    } finally {
+      setIsUploadingAvatar(false);
+    }
+  };
+
+  const handleCloseCropDialog = () => {
+    setShowCropDialog(false);
+    setSelectedImage(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   };
 
   if (isLoading) {
@@ -176,15 +263,31 @@ const ProfileInformationForm = ({ stats, level, rank }: any) => {
       <div className="flex flex-col sm:flex-row sm:items-center gap-6 mb-8">
         <div className="relative inline-block group">
           <Avatar className="h-24 w-24 border-4 border-white shadow-lg">
-            <AvatarImage src={avatarUrl} alt={user.name} />
+            <AvatarImage 
+              src={user.avatar || avatarUrl} 
+              alt={user.name} 
+            />
             <AvatarFallback className="bg-gradient-to-br from-emerald-500 to-cyan-500 text-white text-2xl font-bold">
               {user.name?.substring(0, 2).toUpperCase() || "??"}
             </AvatarFallback>
           </Avatar>
           {isEditing && (
-            <button className="absolute bottom-1 left-1.5 p-2 rounded-full bg-emerald-500 text-white shadow-lg ring-4 ring-white hover:bg-emerald-600 transition-colors">
-              <Camera className="h-4 w-4" />
-            </button>
+            <>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/jpg,image/png,image/webp"
+                onChange={handleFileSelect}
+                className="hidden"
+              />
+              <button
+                onClick={handleAvatarClick}
+                className="absolute bottom-1 left-1.5 p-2 rounded-full bg-emerald-500 text-white shadow-lg ring-4 ring-white hover:bg-emerald-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={isUploadingAvatar}
+              >
+                <Camera className="h-4 w-4" />
+              </button>
+            </>
           )}
         </div>
         <div className="space-y-2 w-full">
@@ -215,7 +318,7 @@ const ProfileInformationForm = ({ stats, level, rank }: any) => {
             {isEditing ? (
               <input
                 type="text"
-                value={editedUser.name}
+                value={editedUser.name ?? ""}
                 onChange={(e) =>
                   setEditedUser({ ...editedUser, name: e.target.value })
                 }
@@ -244,9 +347,9 @@ const ProfileInformationForm = ({ stats, level, rank }: any) => {
             {isEditing ? (
               <input
                 type="tel"
-                value={editedUser.notelp || ""}
+                value={editedUser.notelp ?? ""}
                 onChange={(e) =>
-                  setEditedUser({ ...editedUser, notelp: e.target.value })
+                  setEditedUser({ ...editedUser, notelp: e.target.value || "" })
                 }
                 className="w-full px-4 py-3 rounded-lg bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all"
                 disabled={isSaving}
@@ -266,9 +369,9 @@ const ProfileInformationForm = ({ stats, level, rank }: any) => {
             {isEditing ? (
               <input
                 type="text"
-                value={editedUser.address}
+                value={editedUser.address ?? ""}
                 onChange={(e) =>
-                  setEditedUser({ ...editedUser, address: e.target.value })
+                  setEditedUser({ ...editedUser, address: e.target.value || "" })
                 }
                 className="w-full px-4 py-3 rounded-lg bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all"
                 disabled={isSaving}
@@ -288,9 +391,9 @@ const ProfileInformationForm = ({ stats, level, rank }: any) => {
           </label>
           {isEditing ? (
             <textarea
-              value={editedUser.bio}
+              value={editedUser.bio ?? ""}
               onChange={(e) =>
-                setEditedUser({ ...editedUser, bio: e.target.value })
+                setEditedUser({ ...editedUser, bio: e.target.value || "" })
               }
               rows={4}
               className="w-full px-4 py-3 rounded-lg bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all resize-none disabled:opacity-50"
@@ -311,6 +414,15 @@ const ProfileInformationForm = ({ stats, level, rank }: any) => {
           <p className="px-4 py-3 rounded-lg bg-slate-50 text-slate-900">{joinDate}</p>
         </div>
       </div>
+
+      {/* Crop Dialog */}
+      {showCropDialog && selectedImage && (
+        <ImageCropDialog
+          imageSrc={selectedImage}
+          onCropComplete={handleCropComplete}
+          onClose={handleCloseCropDialog}
+        />
+      )}
     </div>
   );
 };
