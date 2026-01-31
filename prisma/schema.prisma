@@ -51,6 +51,7 @@ model User {
   instructorConversations   ChatConversation[] @relation("instructorConversations")
   sentMessages              ChatMessage[] @relation("sentMessages")
   schedules                 Schedule[] @relation("instructorSchedules")
+  competitions              Competition[] @relation("instructorCompetitions")
 
   @@map("users")
 }
@@ -141,4 +142,67 @@ model Schedule {
   @@index([date])
   @@index([status])
   @@map("schedules")
+}
+
+enum CompetitionCategory {
+  Tahfidz
+  Seni
+  Bahasa
+  Lainnya
+}
+
+enum CompetitionStatus {
+  upcoming
+  ongoing
+  finished
+}
+
+model Competition {
+  id                String              @id @default(cuid())
+  title             String
+  description       String              @db.LongText
+  date              DateTime            // Tanggal lomba
+  location          String
+  prize             String              // Hadiah pemenang (bisa format string atau JSON)
+  category          CompetitionCategory
+  thumbnailUrl      String?             // Thumbnail hasil upload
+  status            CompetitionStatus   @default(upcoming)
+  instructorId      String              // Relasi ke instruktur yang membuat
+  instructor        User                @relation("instructorCompetitions", fields: [instructorId], references: [id], onDelete: Cascade)
+  
+  // Detail tambahan
+  requirements      String?             @db.Text // JSON array requirements
+  judgingCriteria   String?             @db.Text // JSON array judging criteria
+  prizes            String?             @db.Text // JSON array detail hadiah per ranking
+  contactPerson     String?
+  contactNumber     String?
+  contactEmail      String?
+  maxParticipants   Int?
+  currentParticipants Int              @default(0)
+  
+  // Sub-jadwal kompetisi
+  schedules         CompetitionSchedule[]
+  
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  @@index([instructorId])
+  @@index([date])
+  @@index([category])
+  @@index([status])
+  @@map("competitions")
+}
+
+model CompetitionSchedule {
+  id             String      @id @default(cuid())
+  competitionId  String
+  competition    Competition @relation(fields: [competitionId], references: [id], onDelete: Cascade)
+  phase          String      // Nama fase (Pendaftaran, Babak Penyisihan, dll)
+  date           String      // Format tanggal (bisa range)
+  description    String?     @db.Text
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  @@index([competitionId])
+  @@map("competition_schedules")
 }

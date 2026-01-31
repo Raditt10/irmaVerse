@@ -1,10 +1,19 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
+import { useSession } from "next-auth/react";
 import DashboardHeader from "@/components/ui/DashboardHeader";
 import Sidebar from "@/components/ui/Sidebar";
 import ChatbotButton from "@/components/ui/ChatbotButton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { 
   ArrowLeft, 
   Calendar, 
@@ -12,8 +21,11 @@ import {
   Users,
   Clock,
   Mail,
-  Phone
+  Phone,
+  Edit,
+  Trash2
 } from "lucide-react";
+import { toast } from "sonner";
 
 import Image from "next/image";
 
@@ -42,15 +54,19 @@ interface Competition {
   status: "upcoming" | "ongoing" | "finished";
   participants?: number;
   max_participants?: number;
+  instructorId?: string;
 }
 
 const CompetitionDetail = () => {
   const [competition, setCompetition] = useState<Competition | null>(null);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const router = useRouter();
   const params = useParams();
   const competitionId = params.id as string;
+  const { data: session } = useSession();
 
   useEffect(() => {
     loadUser();
@@ -70,138 +86,80 @@ const CompetitionDetail = () => {
 
   const fetchCompetitionDetail = async () => {
     try {
-      const mockCompetitions: Competition[] = [
-        {
-          id: "1",
-          title: "Lomba Tahfidz Tingkat Nasional",
-          description: "Kompetisi menghafal Al-Quran tingkat nasional dengan standar internasional. Peserta akan dinilai dari kelancaran, makhraj, dan irama bacaan.",
-          date: "15 Des 2024",
-          location: "Balai Soekarno Kota Bandung",
-          prize: "Rp 10.000.000",
-          category: "Tahfidz",
-          image: "https://images.unsplash.com/photo-1585779034823-7e9ac8faec70?auto=format&fit=crop&w=1200&q=80",
-          requirements: [
-            "Telah menyelesaikan hafalan minimal 5 juz Al-Quran",
-            "Berusia 15-25 tahun",
-            "Belum pernah menjadi juara di kompetisi tahfidz nasional",
-            "Membawa kartu identitas asli",
-            "Surat rekomendasi dari lembaga keagamaan"
-          ],
-          timeline: [
-            { phase: "Pendaftaran", date: "1 - 30 November 2024" },
-            { phase: "Verifikasi Peserta", date: "1 - 10 Desember 2024" },
-            { phase: "Babak Penyisihan", date: "12 - 13 Desember 2024" },
-            { phase: "Babak Final", date: "15 Desember 2024" },
-            { phase: "Pengumuman Pemenang", date: "15 Desember 2024" }
-          ],
-          judging_criteria: [
-            "Kelancaran dan ketepatan bacaan (40%)",
-            "Makhorijul Huruf dan Tajweed (30%)",
-            "Irama dan Musikalitas (20%)",
-            "Penampilan dan Percaya Diri (10%)"
-          ],
-          prizes: [
-            { rank: "Juara 1", amount: "Rp 10.000.000" },
-            { rank: "Juara 2", amount: "Rp 7.500.000" },
-            { rank: "Juara 3", amount: "Rp 5.000.000" }
-          ],
-          contact_person: "Ustadz Ahmad Syahputra",
-          contact_number: "+62 812-3456-7890",
-          contact_email: "kompetisi@irmaverse.local",
-          status: "upcoming",
-          participants: 45,
-          max_participants: 50
-        },
-        {
-          id: "2",
-          title: "Kompetisi Kaligrafi Islam",
-          description: "Pameran dan kompetisi karya seni kaligrafi dengan berbagai gaya dan medium. Menampilkan keindahan seni tradisional Islam.",
-          date: "20 Des 2024",
-          location: "Gedung Seni Islam Nasional",
-          prize: "Rp 5.000.000",
-          category: "Seni",
-          image: "https://images.unsplash.com/photo-1545239351-1141bd82e8a6?auto=format&fit=crop&w=1200&q=80",
-          requirements: [
-            "Minimal 1 karya asli (tidak boleh plagiat)",
-            "Ukuran karya: 40x60 cm atau sesuai ketentuan",
-            "Medium: tinta, cat air, digital, atau lainnya",
-            "Mentransfer dokumen peserta asli",
-            "Karya akan disimpan untuk pameran di IRMA"
-          ],
-          timeline: [
-            { phase: "Pendaftaran & Pengumpulan Karya", date: "1 - 15 Desember 2024" },
-            { phase: "Seleksi Awal", date: "16 - 18 Desember 2024" },
-            { phase: "Penjurian Final", date: "19 Desember 2024" },
-            { phase: "Pembukaan Pameran", date: "20 Desember 2024" },
-            { phase: "Pengumuman Pemenang", date: "20 Desember 2024" }
-          ],
-          judging_criteria: [
-            "Orisinalitas dan Kreativitas (35%)",
-            "Teknik Eksekusi (30%)",
-            "Komposisi dan Estetika (20%)",
-            "Makna Spiritual (15%)"
-          ],
-          prizes: [
-            { rank: "Juara 1", amount: "Rp 5.000.000" },
-            { rank: "Juara 2", amount: "Rp 3.000.000" },
-            { rank: "Juara 3", amount: "Rp 2.000.000" }
-          ],
-          contact_person: "Ibu Siti Nurhaliza",
-          contact_number: "+62 812-3456-7891",
-          contact_email: "seni@irmaverse.local",
-          status: "upcoming",
-          participants: 32,
-          max_participants: 40
-        },
-        {
-          id: "3",
-          title: "Lomba Pidato Bahasa Arab",
-          description: "Kompetisi pidato menggunakan bahasa Arab dengan topik aktualisasi nilai-nilai Islam di era digital.",
-          date: "25 Des 2024",
-          location: "Aula Utama IRMA",
-          prize: "Rp 7.500.000",
-          category: "Bahasa",
-          image: "https://images.unsplash.com/photo-1509021436665-8f07dbf5bf1d?auto=format&fit=crop&w=1200&q=80",
-          requirements: [
-            "Menguasai bahasa Arab minimal tingkat menengah",
-            "Durasi pidato: 8-10 menit",
-            "Topik terkait nilai-nilai Islam kontemporer",
-            "Membawa draft pidato 1 hari sebelumnya",
-            "Berpenampilan formal dan sopan"
-          ],
-          timeline: [
-            { phase: "Pendaftaran", date: "1 - 20 Desember 2024" },
-            { phase: "Babak Penyisihan", date: "22 Desember 2024" },
-            { phase: "Babak Final", date: "25 Desember 2024" },
-            { phase: "Pengumuman Pemenang", date: "25 Desember 2024" }
-          ],
-          judging_criteria: [
-            "Pengucapan & Intonasi (25%)",
-            "Isi & Struktur Pidato (30%)",
-            "Kelancaran Berbicara (20%)",
-            "Penampilan & Kepribadian (25%)"
-          ],
-          prizes: [
-            { rank: "Juara 1", amount: "Rp 7.500.000" },
-            { rank: "Juara 2", amount: "Rp 5.000.000" },
-            { rank: "Juara 3", amount: "Rp 2.500.000" }
-          ],
-          contact_person: "Ustadz Mahmud Hassan",
-          contact_number: "+62 812-3456-7892",
-          contact_email: "bahasa@irmaverse.local",
-          status: "upcoming",
-          participants: 28,
-          max_participants: 35
-        }
-      ];
+      const response = await fetch(`/api/competitions/${competitionId}`);
+      
+      if (!response.ok) {
+        throw new Error("Failed to fetch competition");
+      }
 
-      const found = mockCompetitions.find(c => c.id === competitionId);
-      setCompetition(found || null);
+      const data = await response.json();
+      
+      // Format the data to match the component's expected structure
+      const formattedCompetition: Competition = {
+        id: data.id,
+        title: data.title,
+        description: data.description,
+        date: new Date(data.date).toLocaleDateString("id-ID", {
+          day: "numeric",
+          month: "short",
+          year: "numeric",
+        }),
+        location: data.location,
+        prize: data.prize,
+        category: data.category,
+        image: data.thumbnailUrl || "https://images.unsplash.com/photo-1585779034823-7e9ac8faec70?auto=format&fit=crop&w=1200&q=80",
+        requirements: data.requirements || [],
+        timeline: data.schedules?.map((s: any) => ({
+          phase: s.phase,
+          date: s.date,
+        })) || [],
+        judging_criteria: data.judgingCriteria || [],
+        prizes: data.prizes || [],
+        contact_person: data.contactPerson || data.instructor?.name || "",
+        contact_number: data.contactNumber || data.instructor?.notelp || "",
+        contact_email: data.contactEmail || data.instructor?.email || "",
+        status: data.status,
+        participants: data.currentParticipants,
+        max_participants: data.maxParticipants,
+        instructorId: data.instructorId,
+      };
+
+      setCompetition(formattedCompetition);
     } catch (error) {
-      console.error("Error loading competition:", error);
+      console.error("Error fetching competition:", error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleDeleteCompetition = async () => {
+    if (!competition) return;
+
+    setIsDeleting(true);
+    try {
+      const response = await fetch(`/api/competitions?id=${competition.id}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to delete competition");
+      }
+
+      toast.success("Perlombaan berhasil dihapus!");
+      router.push("/competitions");
+    } catch (error: any) {
+      console.error("Error deleting competition:", error);
+      toast.error(error.message || "Terjadi kesalahan saat menghapus perlombaan");
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteDialog(false);
+    }
+  };
+
+  const handleEditCompetition = () => {
+    if (!competition) return;
+    router.push(`/competitions/edit/${competition.id}`);
   };
 
   const getStatusBadge = (status: Competition["status"]) => {
@@ -531,11 +489,68 @@ const CompetitionDetail = () => {
                     </div>
                   </div>
                 </Card>
+
+                {/* Admin Actions - Only for Instructor who created this competition */}
+                {session?.user?.role === "instruktur" && 
+                 session?.user?.id === competition.instructorId && (
+                  <Card className="overflow-hidden border-slate-200 shadow-sm">
+                    <CardHeader className="bg-slate-50">
+                      <CardTitle className="text-lg font-bold text-slate-800">
+                        Kelola Perlombaan
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-4 space-y-3">
+                      <button
+                        onClick={handleEditCompetition}
+                        className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-semibold transition-colors"
+                      >
+                        <Edit className="h-4 w-4" />
+                        Edit Perlombaan
+                      </button>
+                      <button
+                        onClick={() => setShowDeleteDialog(true)}
+                        className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-red-500 hover:bg-red-600 text-white rounded-lg font-semibold transition-colors"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        Hapus Perlombaan
+                      </button>
+                    </CardContent>
+                  </Card>
+                )}
               </div>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Konfirmasi Hapus Perlombaan</DialogTitle>
+            <DialogDescription>
+              Apakah Anda yakin ingin menghapus perlombaan <strong>{competition?.title}</strong>?
+              Tindakan ini tidak dapat dibatalkan dan semua data terkait akan dihapus.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2">
+            <button
+              onClick={() => setShowDeleteDialog(false)}
+              disabled={isDeleting}
+              className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 font-semibold transition-colors"
+            >
+              Batal
+            </button>
+            <button
+              onClick={handleDeleteCompetition}
+              disabled={isDeleting}
+              className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-semibold transition-colors disabled:opacity-50"
+            >
+              {isDeleting ? "Menghapus..." : "Ya, Hapus"}
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
