@@ -3,6 +3,7 @@ import { useEffect, useState, useRef } from "react";
 import DashboardHeader from "@/components/ui/DashboardHeader";
 import Sidebar from "@/components/ui/Sidebar";
 import ChatbotButton from "@/components/ui/ChatbotButton";
+import Loading from "@/components/ui/Loading";
 import { 
   Star, 
   BookOpen, 
@@ -96,14 +97,6 @@ const Instructors = () => {
     return matchesSearch && matchesFilter;
   });
 
-  if (!session?.user?.id) {
-    return (
-      <div className="min-h-screen bg-[#FDFBF7] flex items-center justify-center">
-        <p className="text-slate-500 font-bold animate-pulse">Memuat...</p>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-[#FDFBF7]" style={{ fontFamily: "'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', cursive" }}>
       <DashboardHeader />
@@ -184,10 +177,7 @@ const Instructors = () => {
             </div>
 
             {loading ? (
-              <div className="text-center py-20">
-                <Sparkles className="h-10 w-10 text-teal-400 animate-spin mx-auto mb-4" />
-                <p className="text-slate-500 font-bold">Mencari instruktur...</p>
-              </div>
+                <Loading />
             ) : (
               <>
                 {filteredInstructors.length === 0 ? (

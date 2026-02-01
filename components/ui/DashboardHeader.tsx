@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import SearchBar from "@/components/ui/SearchBar";
-import { ScrollArea } from "@/components/ui/scroll-area"; // Pastikan Anda punya komponen ScrollArea atau ganti div biasa
+
 
 export default function DashboardHeader() {
   const router = useRouter();
@@ -72,7 +72,13 @@ export default function DashboardHeader() {
   });
 
   const defaultAvatarUrl = "https://api.dicebear.com/7.x/avataaars/svg?seed=Fatimah";
-  const userAvatar = session?.user?.avatar || defaultAvatarUrl;
+  // Gunakan avatar jika ada, jika tidak fallback ke default
+  // Pastikan userAvatar selalu string
+  let userAvatar: string = defaultAvatarUrl;
+  if (session?.user && typeof session.user === 'object' && 'avatar' in session.user) {
+    const avatarVal = (session.user as any).avatar;
+    if (typeof avatarVal === 'string') userAvatar = avatarVal || defaultAvatarUrl;
+  }
   const userName = session?.user?.name || session?.user?.email || "User";
   const userInitials = userName.substring(0, 2).toUpperCase();
 
@@ -188,7 +194,7 @@ export default function DashboardHeader() {
               <button className="flex items-center gap-2 h-10 px-2 rounded-lg hover:bg-green-100 transition-colors outline-none focus:ring-2 focus:ring-emerald-500/20">
                 <Avatar className="h-8 w-8 border border-slate-200">
                   <AvatarImage src={userAvatar} alt={userName} className="object-cover" />
-                  <AvatarFallback className="bg-gradient-to-br from-emerald-500 to-cyan-500 text-white text-xs font-bold">
+                  <AvatarFallback className="bg-linear-to-br from-emerald-500 to-cyan-500 text-white text-xs font-bold">
                     {userInitials}
                   </AvatarFallback>
                 </Avatar>
@@ -203,7 +209,7 @@ export default function DashboardHeader() {
                 <div className="flex items-center gap-3">
                   <Avatar className="h-10 w-10 border border-slate-100">
                     <AvatarImage src={userAvatar} alt={userName} className="object-cover" />
-                    <AvatarFallback className="bg-gradient-to-br from-emerald-500 to-cyan-500 text-white font-bold">
+                    <AvatarFallback className="bg-linear-to-br from-emerald-500 to-cyan-500 text-white font-bold">
                       {userInitials}
                     </AvatarFallback>
                   </Avatar>
