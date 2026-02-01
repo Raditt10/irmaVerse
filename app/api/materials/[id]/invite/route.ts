@@ -3,11 +3,11 @@ import { NextResponse, NextRequest } from "next/server"
 import crypto from "crypto"
 import { auth } from "@/lib/auth"
 
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await auth()
     const { userIds, invitedById } = await req.json()
-    const materialId = params.id
+    const { id: materialId } = await params
 
     if (!session || !session.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -28,18 +28,37 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       return NextResponse.json({ error: "Only instructors are allowed to invite users!" }, { status: 403 });
     }
 
-    await prisma.materialInvite.createMany({
-      data: userIds.map((userId: string) => ({
+    // Check which users are already invited
+    const existingInvites = await prisma.materialInvite.findMany({
+      where: {
         materialId,
-        invitedUserId: userId,
-        invitedById,
-        token: crypto.randomUUID(),
-        expiredAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
-      })),
-      skipDuplicates: true
-    })
+        invitedUserId: { in: userIds }
+      },
+      select: { invitedUserId: true }
+    });
 
-    return NextResponse.json({ success: true })
+    const alreadyInvitedIds = existingInvites.map(invite => invite.invitedUserId);
+    const newUserIds = userIds.filter((id: string) => !alreadyInvitedIds.includes(id));
+
+    // Invite only new users
+    if (newUserIds.length > 0) {
+      await prisma.materialInvite.createMany({
+        data: newUserIds.map((userId: string) => ({
+          materialId,
+          invitedUserId: userId,
+          invitedById,
+          token: crypto.randomUUID(),
+          expiredAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+        }))
+      })
+    }
+
+    return NextResponse.json({ 
+      success: true,
+      newInvites: newUserIds.length,
+      alreadyInvited: alreadyInvitedIds,
+      totalAttempted: userIds.length
+    })
   } catch (error) {
     console.error("Error inviting users to material:", error)
     return NextResponse.json(
@@ -49,7 +68,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   }
 }
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await auth();
     if (!session || !session.user) {
@@ -71,7 +90,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
       return NextResponse.json({ error: "Only instructors and admins are allowed to access this page!" }, { status: 403 });
     }
     const query = req.nextUrl.searchParams.get("q") || ""
-    const materialId = params.id
+    const { id: materialId } = await params
 
     const users = await prisma.user.findMany({
       where: {

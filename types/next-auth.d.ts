@@ -8,6 +8,7 @@ declare module "next-auth" {
       phone?: string | null;
       address?: string | null;
       bio?: string | null;
+      avatar?: string | null;
     } & DefaultSession["user"];
   }
 
@@ -19,6 +20,7 @@ declare module "next-auth" {
     notelp?: string | null;
     address?: string | null;
     bio?: string | null;
+    avatar?: string | null;
   }
 }
 

@@ -14,6 +14,7 @@ import {
   SearchX, 
   CalendarX // Import icon baru untuk empty state global
 } from "lucide-react";
+import AddButton from "@/components/ui/AddButton";
 import { useSession } from "next-auth/react";
 
 interface Schedule {
@@ -120,12 +121,11 @@ const Schedule = () => {
                 </p>
               </div>
               {session?.user?.role === "instruktur" && (
-                <button
+                <AddButton
+                  label="Tambahkan Event"
                   onClick={() => router.push("/schedule/create")}
-                  className="px-6 py-3 rounded-2xl bg-teal-400 text-white font-black border-2 border-teal-600 border-b-4 hover:bg-teal-500 active:border-b-2 active:translate-y-[2px] transition-all shadow-lg hover:shadow-teal-200"
-                >
-                  + Tambahkan Event
-                </button>
+                  color="teal"
+                />
               )}
             </div>
 

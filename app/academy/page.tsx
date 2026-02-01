@@ -1,3 +1,5 @@
+"use client";
+import React from "react";
 import Link from "next/link";
 import {
   Users,
@@ -23,54 +25,25 @@ import DashboardHeader from "@/components/ui/DashboardHeader";
 import ChatbotButton from "@/components/ui/ChatbotButton";
 
 export default function InstructorAcademy() {
-  // Static data for frontend preview only
+  // State untuk data dari API
+  const [stats, setStats] = React.useState<any>(null);
+  const [upcomingClasses, setUpcomingClasses] = React.useState<any[]>([]);
+  const [recentActivities, setRecentActivities] = React.useState<any[]>([]);
+  const [coursesOverview, setCoursesOverview] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState(true);
 
-  const stats = {
-    totalStudents: 156,
-    activeCourses: 8,
-    completedSessions: 45,
-    averageRating: 4.8,
-  };
-
-  const upcomingClasses = [
-    {
-      id: 1,
-      title: "Kajian Akhlak Islami",
-      time: "Senin, 10:00 - 11:30",
-      students: 28,
-      room: "Ruang Masjid",
-      status: "upcoming",
-    },
-    {
-      id: 2,
-      title: "Tahsin Al-Quran",
-      time: "Rabu, 14:00 - 15:30",
-      students: 35,
-      room: "Ruang Multimedia",
-      status: "upcoming",
-    },
-    {
-      id: 3,
-      title: "Fiqih Kontemporer",
-      time: "Jumat, 13:00 - 14:30",
-      students: 42,
-      room: "Aula Utama",
-      status: "pending",
-    },
-  ];
-
-  const recentActivities = [
-    { id: 1, title: "Materi baru ditambahkan ke Kajian Fiqih", time: "2 jam yang lalu" },
-    { id: 2, title: "15 siswa baru mendaftar ke kelas Anda", time: "5 jam yang lalu" },
-    { id: 3, title: "Sesi Kajian Akhlak selesai", time: "1 hari yang lalu" },
-    { id: 4, title: "Penilaian quiz Tafsir tersedia", time: "2 hari yang lalu" },
-  ];
-
-  const coursesOverview = [
-    { id: 1, title: "Kajian Akhlak Islami", students: 28, progress: 75, sessions: "8/12", rating: 4.9 },
-    { id: 2, title: "Tahsin Al-Quran", students: 35, progress: 60, sessions: "6/10", rating: 4.8 },
-    { id: 3, title: "Fiqih Kontemporer", students: 42, progress: 40, sessions: "4/10", rating: 4.7 },
-  ];
+  React.useEffect(() => {
+    fetch("/api/academy/overview")
+      .then((res) => res.json())
+      .then((data) => {
+        setStats(data.stats);
+        setUpcomingClasses(data.upcomingClasses);
+        setRecentActivities(data.recentActivities);
+        setCoursesOverview(data.coursesOverview);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, []);
 
   return (
     <div
@@ -107,7 +80,7 @@ export default function InstructorAcademy() {
                     <span className="text-xs font-semibold text-blue-600 bg-blue-500/10 px-3 py-1 rounded-full">+15</span>
                   </div>
                   <p className="text-slate-600 text-sm font-medium mb-1">Total Siswa</p>
-                  <p className="text-3xl font-bold text-slate-900">{stats.totalStudents}</p>
+                  <p className="text-3xl font-bold text-slate-900">{stats ? stats.totalStudents : 0}</p>
                 </div>
               </div>
 
@@ -120,7 +93,7 @@ export default function InstructorAcademy() {
                     <span className="text-xs font-semibold text-emerald-600 bg-emerald-500/10 px-3 py-1 rounded-full">Aktif</span>
                   </div>
                   <p className="text-slate-600 text-sm font-medium mb-1">Kajian Aktif</p>
-                  <p className="text-3xl font-bold text-slate-900">{stats.activeCourses}</p>
+                  <p className="text-3xl font-bold text-slate-900">{stats ? stats.activeCourses : 0}</p>
                 </div>
               </div>
 
@@ -133,7 +106,7 @@ export default function InstructorAcademy() {
                     <span className="text-xs font-semibold text-purple-600 bg-purple-500/10 px-3 py-1 rounded-full">Selesai</span>
                   </div>
                   <p className="text-slate-600 text-sm font-medium mb-1">Sesi Selesai</p>
-                  <p className="text-3xl font-bold text-slate-900">{stats.completedSessions}</p>
+                  <p className="text-3xl font-bold text-slate-900">{stats ? stats.completedSessions : 0}</p>
                 </div>
               </div>
 
@@ -146,7 +119,7 @@ export default function InstructorAcademy() {
                     <span className="text-xs font-semibold text-amber-600 bg-amber-500/10 px-3 py-1 rounded-full">Bagus</span>
                   </div>
                   <p className="text-slate-600 text-sm font-medium mb-1">Rating Rata-rata</p>
-                  <p className="text-3xl font-bold text-slate-900">⭐ {stats.averageRating}</p>
+                  <p className="text-3xl font-bold text-slate-900">⭐ {stats ? stats.averageRating : 0}</p>
                 </div>
               </div>
             </div>

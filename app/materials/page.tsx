@@ -5,8 +5,10 @@ import { useSession } from "next-auth/react";
 import DashboardHeader from "@/components/ui/DashboardHeader";
 import Sidebar from "@/components/ui/Sidebar";
 import ChatbotButton from "@/components/ui/ChatbotButton";
-import { Calendar, Clock, Search, BookOpen, Sparkles } from "lucide-react";
+import { Calendar, Clock, Search, BookOpen, Sparkles, Plus } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import AddButton from "@/components/ui/AddButton";
 
 interface Material {
   id: string;
@@ -104,11 +106,22 @@ const Materials = () => {
                 </h1>
                 <p className="text-slate-500 text-lg font-medium">
                   {isPrivileged 
-                    ? "Atur jadwal dan materi kajian untuk anggota 📝"
+                    ? "Atur jadwal dan materi kajian untuk anggota"
                     : "Ikuti kajian seru bareng teman-teman!"
                   }
                 </p>
               </div>
+              
+              {/* Tombol Buat Kajian untuk Instruktur/Admin */}
+              {isPrivileged && (
+                <AddButton
+                  label="Buat Kajian"
+                  onClick={() => router.push("/materials/create")}
+                  icon={<Plus className="h-5 w-5" />}
+                  color="emerald"
+                  hideIcon={false}
+                />
+              )}
             </div>
 
             {/* Filters */}

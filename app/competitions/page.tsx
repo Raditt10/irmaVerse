@@ -94,7 +94,7 @@ const Competitions = () => {
                   Info Perlombaan
                 </h1>
                 <p className="text-slate-500 text-lg font-medium">
-                  Tunjukkan bakatmu di ajang bergengsi ini! 🏆
+                  Tunjukkan bakatmu di ajang bergengsi ini!
                 </p>
               </div>
               {session?.user?.role === "instruktur" && (

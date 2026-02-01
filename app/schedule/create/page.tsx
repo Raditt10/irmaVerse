@@ -5,6 +5,8 @@ import { useSession } from "next-auth/react";
 import DashboardHeader from "@/components/ui/DashboardHeader";
 import Sidebar from "@/components/ui/Sidebar";
 import ChatbotButton from "@/components/ui/ChatbotButton";
+import DatePicker from "@/components/ui/DatePicker";
+import TimePicker from "@/components/ui/TimePicker";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -170,38 +172,22 @@ const CreateSchedule = () => {
 
                   {/* Date and Time */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="date" className="text-sm font-semibold text-slate-700">
-                        <Calendar className="inline h-4 w-4 mr-1" />
-                        Tanggal <span className="text-red-500">*</span>
-                      </Label>
-                      <Input
-                        id="date"
-                        name="date"
-                        type="date"
-                        value={formData.date}
-                        onChange={handleChange}
-                        className="w-full"
-                        required
-                      />
-                    </div>
+                    <DatePicker
+                      label="Tanggal Acara"
+                      value={formData.date}
+                      onChange={(date) =>
+                        setFormData({ ...formData, date })
+                      }
+                      placeholder="Pilih tanggal"
+                    />
 
-                    <div className="space-y-2">
-                      <Label htmlFor="time" className="text-sm font-semibold text-slate-700">
-                        <Clock className="inline h-4 w-4 mr-1" />
-                        Waktu <span className="text-red-500">*</span>
-                      </Label>
-                      <Input
-                        id="time"
-                        name="time"
-                        type="text"
-                        value={formData.time}
-                        onChange={handleChange}
-                        placeholder="Contoh: 14:00 WIB"
-                        className="w-full"
-                        required
-                      />
-                    </div>
+                    <TimePicker
+                      label="Waktu Acara"
+                      value={formData.time}
+                      onChange={(time) =>
+                        setFormData({ ...formData, time })
+                      }
+                    />
                   </div>
 
                   {/* Location */}

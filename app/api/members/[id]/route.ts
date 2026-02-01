@@ -1,7 +1,7 @@
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
 
-export async function GET(req) {
+export async function GET(req: NextRequest) {
   try {
     const url = new URL(req.url);
     const id = url.pathname.split("/").pop();
@@ -23,9 +23,9 @@ export async function GET(req) {
     // Dummy/empty for stats, achievements, recentActivities (bisa diisi jika sudah ada di DB)
     return NextResponse.json({
       ...user,
-      class: user.class || "-",
-      points: user.points || 0,
-      status: user.status || "Aktif",
+      class: "-",
+      points: 0,
+      status: "Aktif",
       totalEvents: 0,
       totalKajian: 0,
       stats: { eventsAttended: 0, kajianAttended: 0, tasksCompleted: 0, contributionRank: 0 },
