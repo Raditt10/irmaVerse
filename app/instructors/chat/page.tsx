@@ -2,7 +2,7 @@
 import React, { useEffect, useMemo, useRef, useState, useCallback, Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import DashboardHeader from "@/components/ui/DashboardHeader";
+import DashboardHeader from "@/components/ui/Header";
 import Sidebar from "@/components/ui/Sidebar";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";

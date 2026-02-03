@@ -19,8 +19,8 @@ import {
   Zap,
 } from "lucide-react";
 import Sidebar from "@/components/ui/Sidebar";
-import DashboardHeader from "@/components/ui/DashboardHeader";
-import ChatbotButton from "@/components/ui/ChatbotButton";
+import DashboardHeader from "@/components/ui/Header";
+import ChatbotButton from "@/components/ui/Chatbot";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 

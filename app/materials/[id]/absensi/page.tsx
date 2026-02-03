@@ -13,9 +13,9 @@ import {
   X, 
   ImageIcon 
 } from "lucide-react";
-import DashboardHeader from "@/components/ui/DashboardHeader";
+import DashboardHeader from "@/components/ui/Header";
 import Sidebar from "@/components/ui/Sidebar";
-import ChatbotButton from "@/components/ui/ChatbotButton";
+import ChatbotButton from "@/components/ui/Chatbot";
 import { Input } from "@/components/ui/input";
 import { useSession } from "next-auth/react";
 

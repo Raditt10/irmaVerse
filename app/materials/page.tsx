@@ -2,15 +2,15 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import DashboardHeader from "@/components/ui/DashboardHeader";
+import DashboardHeader from "@/components/ui/Header";
 import Sidebar from "@/components/ui/Sidebar";
-import ChatbotButton from "@/components/ui/ChatbotButton";
+import ChatbotButton from "@/components/ui/Chatbot";
 import CartoonNotification from "@/components/ui/CartoonNotification";
 import EmptyState from "@/components/ui/EmptyState";
 import CategoryFilter from "@/components/ui/CategoryFilter";
 import SearchInput from "@/components/ui/SearchInput";
 import MaterialInstructorActions from "@/components/ui/MaterialInstructorActions";
-import MaterialUserActions from "@/components/ui/MaterialUserActions";
+import MaterialUserActions from "@/components/ui/MaterialUserAbsen";
 import Loading from "@/components/ui/Loading";
 import SuccessDataFound from "@/components/ui/SuccessDataFound";
 import { Calendar, Clock, BookOpen, Plus } from "lucide-react";

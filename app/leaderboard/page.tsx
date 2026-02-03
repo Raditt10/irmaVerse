@@ -2,8 +2,8 @@ import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import Sidebar from "@/components/ui/Sidebar";
-import DashboardHeader from "@/components/ui/DashboardHeader";
-import ChatbotButton from "@/components/ui/ChatbotButton";
+import DashboardHeader from "@/components/ui/Header";
+import ChatbotButton from "@/components/ui/Chatbot";
 import {
   Trophy,
   Medal,

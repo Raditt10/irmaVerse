@@ -1,8 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
-import DashboardHeader from "@/components/ui/DashboardHeader";
+import DashboardHeader from "@/components/ui/Header";
 import Sidebar from "@/components/ui/Sidebar";
-import ChatbotButton from "@/components/ui/ChatbotButton";
+import ChatbotButton from "@/components/ui/Chatbot";
 import { ArrowRight, Calendar, Eye, Share2, Bookmark, Filter, Plus, Pencil, Trash2, Search, HelpCircle, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";

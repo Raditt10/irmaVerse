@@ -22,8 +22,8 @@ import {
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import Sidebar from "@/components/ui/Sidebar";
-import DashboardHeader from "@/components/ui/DashboardHeader";
-import ChatbotButton from "@/components/ui/ChatbotButton";
+import DashboardHeader from "@/components/ui/Header";
+import ChatbotButton from "@/components/ui/Chatbot";
 
 export default function AdminDashboard() {
   // Static data for frontend preview only

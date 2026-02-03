@@ -15,7 +15,7 @@ import {
   ArrowRight,
   Clock3,
 } from "lucide-react";
-import DashboardHeader from "@/components/ui/DashboardHeader";
+import DashboardHeader from "@/components/ui/Header";
 import Sidebar from "@/components/ui/Sidebar";
 import ProfileInformationForm from "./_components/ProfileInformationForm";
 
