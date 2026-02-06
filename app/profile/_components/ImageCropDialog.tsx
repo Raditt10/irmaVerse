@@ -2,7 +2,7 @@
 import { useState, useCallback } from "react";
 import Cropper from "react-easy-crop";
 import { Dialog } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 import { X, Upload } from "lucide-react";
 
 interface ImageCropDialogProps {

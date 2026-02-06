@@ -29,6 +29,6 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
     "**/*.mts"
-, "components/ui/MaterialUserAbsen.tsx"  ],
+, "components/ui/ButtonUserAbsenMaterial.tsx"  ],
   "exclude": ["node_modules"]
 }

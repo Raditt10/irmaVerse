@@ -11,7 +11,7 @@ interface EmptyStateProps {
 }
 
 export default function EmptyState({
-  icon = "calendar",
+  icon = "search",
   title,
   description,
   actionLabel,

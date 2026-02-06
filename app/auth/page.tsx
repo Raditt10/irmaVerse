@@ -2,11 +2,12 @@
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Input } from "@/components/ui/InputText";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/TabsLogin";
 import RememberMeCheckbox from "@/components/ui/RememberMeCheckbox";
+import SigninSubmitButton from "@/components/ui/SigninSubmitButton";
+import SignupSubmitButton from "@/components/ui/SignupSubmitButton";
 import { Loader2, Eye, EyeOff } from "lucide-react"; 
 
 // --- SUB-COMPONENT: Password Input dengan Toggle ---
@@ -176,9 +177,9 @@ const Auth = () => {
             <p className="text-slate-500 mb-8 text-center text-sm font-medium">Ayo lanjutkan perjalanan spiritualmu.</p>
             
             <Tabs defaultValue="signin" className="w-full">
-              <TabsList className="grid w-full grid-cols-2 mb-8 p-2 bg-gradient-to-b from-slate-100 to-slate-200 rounded-3xl">
-                <TabsTrigger value="signin" className="rounded-3xl py-3 px-4 font-black transition-all hover:scale-105 data-[state=active]:bg-emerald-500 data-[state=active]:text-white text-slate-600">Masuk</TabsTrigger>
-                <TabsTrigger value="signup" className="rounded-3xl py-3 px-4 font-black transition-all hover:scale-105 data-[state=active]:bg-emerald-500 data-[state=active]:text-white text-slate-600">Daftar</TabsTrigger>
+              <TabsList className="grid w-full grid-cols-2 mb-8 p-0.5 bg-slate-200 rounded-3xl gap-0.5">
+                <TabsTrigger value="signin" className="rounded-2xl py-3 px-4 font-black text-base transition-all hover:scale-105 data-[state=active]:bg-emerald-500 data-[state=active]:text-white data-[state=inactive]:bg-white data-[state=inactive]:text-slate-600 text-slate-600">Masuk</TabsTrigger>
+                <TabsTrigger value="signup" className="rounded-2xl py-3 px-4 font-black text-base transition-all hover:scale-105 data-[state=active]:bg-emerald-500 data-[state=active]:text-white data-[state=inactive]:bg-white data-[state=inactive]:text-slate-600 text-slate-600">Daftar</TabsTrigger>
               </TabsList>
 
               {/* === FORM SIGN IN === */}
@@ -214,9 +215,7 @@ const Auth = () => {
                     <a href="#" className="text-emerald-600 font-bold hover:text-emerald-700 hover:underline">Lupa sandi?</a>
                   </div>
 
-                  <Button type="submit" className="w-full rounded-xl py-6 text-base font-black bg-emerald-500 hover:bg-emerald-600 text-white transition-all border-2 border-emerald-600 mt-4" disabled={isLoading}>
-                    {isLoading ? <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Memproses...</> : "Masuk Sekarang"}
-                  </Button>
+                  <SigninSubmitButton isLoading={isLoading} />
                 </form>
               </TabsContent>
 
@@ -272,9 +271,7 @@ const Auth = () => {
                     />
                   </div>
 
-                  <Button type="submit" className="w-full rounded-xl py-6 text-base font-black bg-teal-500 hover:bg-teal-600 text-white transition-all border-2 border-teal-600 mt-4" disabled={isLoading}>
-                    {isLoading ? <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Mendaftarkan...</> : "Daftar Akun"}
-                  </Button>
+                  <SignupSubmitButton isLoading={isLoading} />
                 </form>
               </TabsContent>
             </Tabs>

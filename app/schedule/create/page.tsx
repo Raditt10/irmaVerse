@@ -8,7 +8,7 @@ import ChatbotButton from "@/components/ui/Chatbot";
 import CartoonNotification from "@/components/ui/CartoonNotification";
 import DatePicker from "@/components/ui/DatePicker";
 import TimePicker from "@/components/ui/TimePicker";
-import { Input } from "@/components/ui/input";
+import { Input } from "@/components/ui/InputText";
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar, MapPin, Clock, ArrowLeft, Upload, X, Save, Sparkles, Type } from "lucide-react";
 

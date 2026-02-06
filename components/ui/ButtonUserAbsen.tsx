@@ -1,5 +1,6 @@
 "use client";
 import { useRouter } from "next/navigation";
+import MaterialRecapButton from "./ButtonRecapMaterial";
 
 interface MaterialUserActionsProps {
   materialId: string;
@@ -32,12 +33,7 @@ export default function MaterialUserActions({
             .
           </span>
         </div>
-        <button
-          onClick={() => router.push(`/materials/${materialId}/recap`)}
-          className="w-full py-3 rounded-xl bg-cyan-400 text-white font-black border-2 border-cyan-600 border-b-4 hover:bg-cyan-500 active:border-b-2 active:translate-y-[2px] transition-all"
-        >
-          Lihat Rekapan
-        </button>
+        <MaterialRecapButton materialId={materialId} />
       </div>
     );
   }

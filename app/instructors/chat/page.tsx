@@ -1,10 +1,10 @@
 "use client";
 import React, { useEffect, useMemo, useRef, useState, useCallback, Suspense } from "react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import DashboardHeader from "@/components/ui/Header";
 import Sidebar from "@/components/ui/Sidebar";
-import { Input } from "@/components/ui/input";
+import { Input } from "@/components/ui/InputText";
 import { Textarea } from "@/components/ui/textarea";
 import Loading from "@/components/ui/Loading";
 import { useSearchParams, useRouter } from "next/navigation";

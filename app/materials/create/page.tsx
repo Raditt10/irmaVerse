@@ -7,12 +7,12 @@ import BackButton from "@/components/ui/BackButton";
 import ChatbotButton from "@/components/ui/Chatbot";
 import DatePicker from "@/components/ui/DatePicker";
 import TimePicker from "@/components/ui/TimePicker";
-import { Input } from "@/components/ui/input";
+import { Input } from "@/components/ui/InputText";
 import { Textarea } from "@/components/ui/textarea";
 import CategoryFilter from "@/components/ui/CategoryFilter";
 import SearchInput from "@/components/ui/SearchInput";
 import CartoonNotification from "@/components/ui/CartoonNotification";
-import CartoonConfirmDialog from "@/components/ui/CartoonConfirmDialog";
+import CartoonConfirmDialog from "@/components/ui/ConfirmDialog";
 import {
   Upload,
   X,

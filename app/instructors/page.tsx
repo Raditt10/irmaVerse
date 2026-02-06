@@ -138,6 +138,7 @@ const Instructors = () => {
                     ${isDropdownOpen 
                       ? 'border-teal-400 shadow-[0_4px_0_0_#34d399] translate-y-[-2px]' 
                       : 'border-slate-200 shadow-[0_4px_0_0_#e2e8f0] hover:border-teal-300'
+                      
                     }
                   `}
                 >

@@ -9,7 +9,7 @@ import CartoonNotification from "@/components/ui/CartoonNotification";
 import CustomDropdown from "@/components/ui/CustomDropdown";
 import DatePicker from "@/components/ui/DatePicker";
 import TimePicker from "@/components/ui/TimePicker";
-import { Input } from "@/components/ui/input";
+import { Input } from "@/components/ui/InputText";
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar, MapPin, ArrowLeft, Upload, X, Plus, Save, Sparkles, Trophy, Tag } from "lucide-react";
 

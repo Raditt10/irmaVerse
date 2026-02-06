@@ -1,7 +1,7 @@
 "use client";
 import { Trash2 } from "lucide-react";
 import { ReactNode, useState } from "react";
-import CartoonConfirmDialog from "./CartoonConfirmDialog";
+import CartoonConfirmDialog from "./ConfirmDialog";
 
 interface DeleteButtonProps {
   label?: string;
