@@ -7,7 +7,7 @@ export async function GET(req: NextRequest) {
   try {
     const session = await auth();
     const searchParams = req.nextUrl.searchParams;
-    const courseId = searchParams.get("courseId");
+    const courseId = searchParams.get("id");
 
     if (!session || !session.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -46,7 +46,7 @@ export async function GET(req: NextRequest) {
     } as const;
 
     const materials = await prisma.material.findMany({
-      where,
+      where: {id: courseId},
       include: {
         instructor: {
           select: { 

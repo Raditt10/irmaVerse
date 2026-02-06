@@ -6,8 +6,8 @@ import { auth } from "@/lib/auth"
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await auth()
-    const { userIds, invitedById } = await req.json()
-    const { id: materialId } = await params
+    const { userIds, instructorId } = await req.json()
+    const materialId = params.id
 
     if (!session || !session.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -32,10 +32,13 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const existingInvites = await prisma.materialInvite.findMany({
       where: {
         materialId,
-        invitedUserId: { in: userIds }
-      },
-      select: { invitedUserId: true }
-    });
+        invitedUserId: userId,
+        instructorId,
+        token: crypto.randomUUID(),
+        expiredAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+      })),
+      skipDuplicates: true
+    })
 
     const alreadyInvitedIds = existingInvites.map(invite => invite.invitedUserId);
     const newUserIds = userIds.filter((id: string) => !alreadyInvitedIds.includes(id));
@@ -46,7 +49,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         data: newUserIds.map((userId: string) => ({
           materialId,
           invitedUserId: userId,
-          invitedById,
+          instructorId,
           token: crypto.randomUUID(),
           expiredAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
         }))

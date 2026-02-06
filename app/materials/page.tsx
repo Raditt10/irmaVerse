@@ -31,7 +31,6 @@ const Materials = () => {
   const [filteredMaterials, setFilteredMaterials] = useState<Material[]>([]);
   const [selectedProgram, setSelectedProgram] = useState("Semua");
   const [selectedGrade, setSelectedGrade] = useState("Semua");
-  const [selectedInstructor, setSelectedInstructor] = useState("Semua");
   const [searchQuery, setSearchQuery] = useState("");
   const router = useRouter();
 
@@ -55,7 +54,7 @@ const Materials = () => {
 
   useEffect(() => {
     filterMaterials();
-  }, [materials, selectedProgram, selectedGrade, selectedInstructor, searchQuery]);
+  }, [materials, selectedProgram, selectedGrade, searchQuery]);
 
   const filterMaterials = async () => {
     const filtered = materials.filter((material) => {

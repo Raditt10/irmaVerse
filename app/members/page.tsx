@@ -40,12 +40,17 @@ const Members = () => {
   }, [toast]);
 
   const loadUser = async () => {
-    setUser({
-      id: "user-123",
-      full_name: "Rafaditya Syahputra",
-      email: "rafaditya@irmaverse.local",
-      avatar: "RS",
-    });
+    setLoading(true);
+    try {
+      const res = await fetch("/api/auth/me");
+      if (!res.ok) throw new Error("Gagal mengambil data pengguna");
+      const userData = await res.json();
+      setUser(userData);
+    } catch (error) {
+      console.error("Error loading user:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const fetchMembers = async () => {
@@ -74,11 +79,30 @@ const Members = () => {
     ? members.filter((m) => m.name.toLowerCase().includes(search.toLowerCase()))
     : members;
 
-  const handleAddFriend = (name: string) => {
+  const handleAddFriend = async (name: string) => {
+    setLoading(true);
+    try {
+      await fetch (`/api/friends/request`, {
+      method: "POST",
+      body: JSON.stringify({ friendName: name }),
+      headers: {
+        "Content-Type": "application/json"
+      }
+    });
+    setLoading(false);
     setToast({
       show: true,
       message: `Permintaan dikirim ke ${name}`,
     });
+    }
+    catch (error){
+      console.error("Error sending friend request:", error);
+      setLoading(false);
+      setToast({
+        show: true,
+        message: `Gagal mengirim permintaan ke ${name}.`,
+      });
+    }
   };
 
   if (!user) {

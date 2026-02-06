@@ -19,10 +19,9 @@ interface Toast {
   message: string;
   duration?: number;
 }
-
-export default function InvitePage() {
-  const params = useParams();
-  const matId = params?.matId as string;
+export default function InvitePage({ params }: { params: { matId: string } }) {
+  const param = useParams();
+  const matId = param?.matId as string;
   const router = useRouter();
   const { data: session } = useSession();
 
@@ -85,56 +84,15 @@ export default function InvitePage() {
   };
 
   const sendInvite = async () => {
-    if (selected.length === 0) {
-      showToast("error", "Pilih minimal 1 user untuk di-invite");
-      return;
-    }
-
-    try {
-      setLoading(true);
-      const res = await fetch(`/api/materials/${matId}/invite`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userIds: selected.map((u) => u.id),
-          invitedById: session?.user?.id,
-        }),
-      });
-
-      const data = await res.json();
-
-      if (res.ok) {
-        const newInvites = data.newInvites || 0;
-        const alreadyInvited = data.alreadyInvited?.length || 0;
-
-        if (newInvites > 0) {
-          showToast(
-            "success",
-            `${newInvites} user berhasil di-invite${
-              alreadyInvited > 0 ? `, ${alreadyInvited} user sudah di-invite sebelumnya` : ""
-            }`
-          );
-        } else if (alreadyInvited > 0) {
-          showToast(
-            "warning",
-            `Semua ${alreadyInvited} user sudah di-invite sebelumnya`
-          );
-        }
-
-        setSelected([]);
-        setTimeout(() => {
-          router.back();
-        }, 2000);
-      } else {
-        showToast("error", data.error || "Gagal mengirim invite");
-      }
-    } catch (error) {
-      console.error("Error sending invite:", error);
-      showToast("error", "Terjadi kesalahan saat mengirim invite");
-    } finally {
-      setLoading(false);
-    }
-  };
+    await fetch(`/api/materials/${matId}/invite`, {
+      method: "POST",
+      body: JSON.stringify({
+        userIds: selected.map(u => u.id),
+        instructorId: session?.user?.id
+      })
+    })
+    alert("Invite sent")
+  }
 
   return (
     <div

@@ -185,6 +185,8 @@ model Material {
   instructorId String
   nextCourseId String?
   participants String?
+  location     String?
+  capacity     Int
   date         DateTime   @default(now())
   startedAt    String?
 
@@ -202,6 +204,7 @@ model Material {
 model MaterialInvite {
   id           String       @id @default(cuid())
   materialId   String
+  userId       String
   instructorId String
   token        String       @unique
   status       InviteStatus @default(pending)
@@ -216,15 +219,42 @@ model MaterialInvite {
 }
 
 model CourseEnrollment {
-  id         String     @id @default(cuid())
-  materialId String
-  userId     String
-  role       CourseRole
-  enrolledAt DateTime   @default(now())
+  id                String     @id @default(cuid())
+  materialId        String
+  userId            String
+  date              DateTime
+  time              String
+  instructorArrival String
+  StartAt           DateTime
+  EndTime           DateTime
+  role              CourseRole
+  enrolledAt        DateTime   @default(now())
 
   material Material @relation(fields: [materialId], references: [id], onDelete: Cascade)
   user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([materialId, userId])
   @@index([userId])
+}
+
+model CourseSurvey {
+  id             String     @id @default(cuid())
+  courseEnrollId String
+  userId         String
+  rate           String
+  relevance      String
+  clarity        String
+  feedback       String?
+
+  user       User              @relation(fields: [userId], references: [id], onDelete: cascade)
+  course     CourseEnrollments @relation(fields: [courseEnrollId], references: [id], onDelete: cascade)
+}
+
+model Friendship {
+  id       String        @id @default(cuid())
+  user1    String
+  user2    String
+
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
 }
