@@ -5,6 +5,7 @@ import Sidebar from "@/components/ui/Sidebar";
 import ChatbotButton from "@/components/ui/Chatbot";
 import Loading from "@/components/ui/Loading";
 import SuccessDataFound from "@/components/ui/SuccessDataFound";
+import SearchInput from "@/components/ui/SearchInput";
 import { 
   Star, 
   BookOpen, 
@@ -120,12 +121,12 @@ const Instructors = () => {
 
             {/* Filter & Search Section */}
             <div className="mb-8 grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="md:col-span-2 relative group">
-                <input
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+              <div className="md:col-span-2">
+                <SearchInput
                   placeholder="Cari nama instruktur atau keahlian..."
-                  className="w-full rounded-2xl border-2 border-slate-200 bg-white px-5 py-4 shadow-[0_4px_0_0_#e2e8f0] focus:outline-none focus:border-teal-400 focus:shadow-[0_4px_0_0_#34d399] transition-all font-medium placeholder:text-slate-400"
+                  value={searchTerm}
+                  onChange={setSearchTerm}
+                  className="w-full"
                 />
               </div>
 

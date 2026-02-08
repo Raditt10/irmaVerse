@@ -1,6 +1,5 @@
 "use client";
 import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
-import { Button } from "@/components/ui/Button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import DashboardHeader from "@/components/ui/Header";
 import Sidebar from "@/components/ui/Sidebar";
@@ -585,7 +584,7 @@ const InstructorChatDashboard = () => {
               <div className="flex items-center justify-between flex-wrap gap-4">
                 <div>
                   <h1 className="text-2xl md:text-3xl font-black text-slate-800">
-                    Pesan Masuk
+                    Chat Anggota
                   </h1>
                   <p className="text-slate-500 text-sm mt-1">
                     Kelola percakapan dengan peserta didik
@@ -774,9 +773,9 @@ const InstructorChatDashboard = () => {
                           </p>
                         </div>
                       </div>
-                      <Button variant="ghost" size="icon">
+                      <button className="p-2 hover:bg-slate-100 rounded-lg transition-colors">
                         <MoreHorizontal className="h-5 w-5 text-slate-500" />
-                      </Button>
+                      </button>
                     </div>
 
                     {/* Messages Area */}
@@ -830,25 +829,21 @@ const InstructorChatDashboard = () => {
                                   <div className="flex items-end gap-2">
                                     {isCurrentUser && canEditOrDelete(message.createdAt) && !message.isDeleted && (
                                       <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
-                                        <Button
-                                          size="icon"
-                                          variant="ghost"
-                                          className="h-7 w-7 text-slate-400 hover:text-emerald-600"
+                                        <button
+                                          className="h-7 w-7 text-slate-400 hover:text-emerald-600 p-1 rounded-md hover:bg-slate-100 transition-colors"
                                           onClick={() => {
                                             setEditingMessageId(message.id);
                                             setEditingContent(message.content);
                                           }}
                                         >
                                           <Edit2 className="h-3.5 w-3.5" />
-                                        </Button>
-                                        <Button
-                                          size="icon"
-                                          variant="ghost"
-                                          className="h-7 w-7 text-slate-400 hover:text-red-600"
+                                        </button>
+                                        <button
+                                          className="h-7 w-7 text-slate-400 hover:text-red-600 p-1 rounded-md hover:bg-slate-100 transition-colors"
                                           onClick={() => handleDeleteMessage(message.id)}
                                         >
                                           <Trash2 className="h-3.5 w-3.5" />
-                                        </Button>
+                                        </button>
                                       </div>
                                     )}
                                     
@@ -872,24 +867,21 @@ const InstructorChatDashboard = () => {
                                             rows={2}
                                           />
                                           <div className="flex gap-2">
-                                            <Button
-                                              size="sm"
+                                            <button
                                               onClick={() => handleEditMessage(message.id)}
-                                              className="h-7 text-xs"
+                                              className="h-7 px-3 text-xs bg-white/20 hover:bg-white/30 text-white rounded-md transition-colors"
                                             >
                                               Simpan
-                                            </Button>
-                                            <Button
-                                              size="sm"
-                                              variant="ghost"
+                                            </button>
+                                            <button
                                               onClick={() => {
                                                 setEditingMessageId(null);
                                                 setEditingContent("");
                                               }}
-                                              className="h-7 text-xs"
+                                              className="h-7 px-3 text-xs hover:bg-white/20 text-white rounded-md transition-colors"
                                             >
                                               Batal
-                                            </Button>
+                                            </button>
                                           </div>
                                         </div>
                                       ) : (
@@ -986,11 +978,9 @@ const InstructorChatDashboard = () => {
                         }}
                         className="flex items-end gap-2"
                       >
-                        <Button
+                        <button
                           type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="shrink-0 text-slate-400 hover:text-slate-600"
+                          className="shrink-0 p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                           onClick={() => fileInputRef.current?.click()}
                           disabled={uploadingFile}
                         >
@@ -999,7 +989,7 @@ const InstructorChatDashboard = () => {
                           ) : (
                             <Paperclip className="h-5 w-5" />
                           )}
-                        </Button>
+                        </button>
                         <Textarea
                           placeholder="Tulis pesan..."
                           value={messageDraft}
@@ -1011,13 +1001,13 @@ const InstructorChatDashboard = () => {
                           className="flex-1 min-h-[44px] max-h-32 resize-none rounded-xl border-slate-200 focus:border-emerald-300 focus:ring-emerald-200"
                           rows={1}
                         />
-                        <Button
+                        <button
                           type="submit"
                           disabled={!messageDraft.trim()}
-                          className="shrink-0 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl h-11 px-4"
+                          className="shrink-0 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl h-11 px-4 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                         >
                           <Send className="h-5 w-5" />
-                        </Button>
+                        </button>
                       </form>
                     </div>
                   </>
@@ -1086,31 +1076,30 @@ const InstructorChatDashboard = () => {
                 disabled={uploadingFile}
               />
               <div className="flex gap-2">
-                <Button
+                <button
                   onClick={handleSendFile}
                   disabled={uploadingFile}
-                  className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl"
+                  className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl px-4 py-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {uploadingFile ? (
                     <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      <Loader2 className="h-4 w-4 animate-spin" />
                       Mengirim...
                     </>
                   ) : (
                     <>
-                      <Send className="h-4 w-4 mr-2" />
+                      <Send className="h-4 w-4" />
                       Kirim
                     </>
                   )}
-                </Button>
-                <Button
+                </button>
+                <button
                   onClick={handleCancelFilePreview}
                   disabled={uploadingFile}
-                  variant="outline"
-                  className="rounded-xl"
+                  className="px-4 py-2 rounded-xl border border-slate-300 hover:bg-slate-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Batal
-                </Button>
+                </button>
               </div>
             </div>
           </div>

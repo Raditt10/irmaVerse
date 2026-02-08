@@ -8,15 +8,8 @@ import CategoryFilter from "@/components/ui/CategoryFilter";
 import { ArrowRight, Calendar, Eye, Share2, Bookmark, Filter, Plus, Pencil, Trash2, Search, HelpCircle, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
-import { toast, Toaster } from "sonner";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
+import CartoonNotification from "@/components/ui/Notification";
 
 interface NewsItem {
   id: string;
@@ -79,6 +72,11 @@ const News = () => {
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedNewsId, setSelectedNewsId] = useState<string | null>(null);
+  const [notification, setNotification] = useState<{
+    type: "success" | "error" | "warning" | "info";
+    title: string;
+    message: string;
+  } | null>(null);
 
   useEffect(() => {
     fetchNews();
@@ -101,7 +99,11 @@ const News = () => {
       setFilteredNews(data);
     } catch (error: any) {
       console.error("Error fetching news:", error);
-      toast.error(`Gagal memuat berita: ${error.message}`);
+      setNotification({
+        type: "error",
+        title: "Gagal",
+        message: `Gagal memuat berita: ${error.message}`,
+      });
     } finally {
       setLoading(false);
     }
@@ -178,16 +180,28 @@ const News = () => {
 
       if (!response.ok) {
         const error = await response.json();
-        toast.error(`Error: ${error.error}`);
+        setNotification({
+          type: "error",
+          title: "Gagal",
+          message: error.error,
+        });
         return;
       }
 
-      toast.success("Berita berhasil dihapus!");
+      setNotification({
+        type: "success",
+        title: "Berhasil!",
+        message: "Berita berhasil dihapus!",
+      });
       setSelectedNewsId(null);
       fetchNews();
     } catch (error) {
       console.error("Error deleting news:", error);
-      toast.error("Gagal menghapus berita. Silakan coba lagi.");
+      setNotification({
+        type: "error",
+        title: "Gagal",
+        message: "Gagal menghapus berita. Silakan coba lagi.",
+      });
     }
   };
 
@@ -380,32 +394,27 @@ const News = () => {
       <ChatbotButton />
       
       {/* Delete Confirmation Dialog */}
-      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Hapus Berita</DialogTitle>
-            <DialogDescription>
-              Apakah Anda yakin ingin menghapus berita ini? Tindakan ini tidak dapat dibatalkan.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <button
-              onClick={() => setDeleteDialogOpen(false)}
-              className="px-4 py-2 rounded-lg border border-slate-300 text-slate-700 font-semibold hover:bg-slate-100 transition-colors"
-            >
-              Batal
-            </button>
-            <button
-              onClick={confirmDelete}
-              className="px-4 py-2 rounded-lg bg-red-500 text-white font-semibold hover:bg-red-600 transition-colors"
-            >
-              Hapus
-            </button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <ConfirmDialog
+        type="warning"
+        title="Hapus Berita"
+        message="Apakah Anda yakin ingin menghapus berita ini? Tindakan ini tidak dapat dibatalkan."
+        confirmText="Hapus"
+        cancelText="Batal"
+        isOpen={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+        onConfirm={confirmDelete}
+      />
 
-      <Toaster position="top-right" richColors />
+      {/* Notification */}
+      {notification && (
+        <CartoonNotification
+          type={notification.type}
+          title={notification.title}
+          message={notification.message}
+          duration={3000}
+          onClose={() => setNotification(null)}
+        />
+      )}
     </div>
   );
 };

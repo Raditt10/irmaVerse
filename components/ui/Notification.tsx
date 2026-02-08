@@ -8,7 +8,7 @@ interface CartoonNotificationProps {
   type: NotificationType;
   title: string;
   message: string;
-  duration?: number; // ms, 0 = don't auto-close
+  duration?: number; 
   onClose?: () => void;
 }
 
@@ -22,7 +22,7 @@ const CartoonNotification = ({
   const [isVisible, setIsVisible] = useState(true);
 
   useEffect(() => {
-    if (duration <= 0) return;
+    if (duration === 0) return;
 
     const timer = setTimeout(() => {
       setIsVisible(false);
