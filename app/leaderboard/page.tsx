@@ -64,10 +64,8 @@ const LeaderboardPage = async () => {
           <div className="text-center mb-12 space-y-3 relative">
             <div className="inline-block relative">
                 <h1 className="text-4xl md:text-5xl font-black text-slate-800 tracking-tight z-10 relative">
-                🏆 Hall of Fame
+                 Peringkat EXP
                 </h1>
-                {/* Dekorasi di belakang teks */}
-                <div className="absolute -bottom-2 -right-4 text-4xl animate-bounce">✨</div>
             </div>
             <p className="text-slate-500 font-bold text-lg">Pantau pencapaian terbaik minggu ini!</p>
           </div>
