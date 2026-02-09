@@ -55,6 +55,41 @@ export async function GET(
   }
 }
 
+export async function DELETE(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+
+    const competition = await prisma.competition.findUnique({
+      where: { id },
+    });
+
+    if (!competition) {
+      return NextResponse.json(
+        { error: "Competition not found" },
+        { status: 404 }
+      );
+    }
+
+    await prisma.competition.delete({
+      where: { id },
+    });
+
+    return NextResponse.json(
+      { message: "Competition deleted successfully" },
+      { status: 200 }
+    );
+  } catch (error: any) {
+    console.error("Error deleting competition:", error?.message || error);
+    return NextResponse.json(
+      { error: "Failed to delete competition", details: error?.message },
+      { status: 500 }
+    );
+  }
+}
+
 function getCompetitionStatus(date: Date): "upcoming" | "ongoing" | "finished" {
   const now = new Date();
   const competitionDate = new Date(date);

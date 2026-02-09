@@ -9,9 +9,10 @@ import CartoonNotification from "@/components/ui/Notification";
 import CustomDropdown from "@/components/ui/CustomDropdown";
 import DatePicker from "@/components/ui/DatePicker";
 import TimePicker from "@/components/ui/TimePicker";
+import DashedAddButton from "@/components/ui/DashedAddButton";
 import { Input } from "@/components/ui/InputText";
 import { Textarea } from "@/components/ui/textarea";
-import { Calendar, MapPin, ArrowLeft, Upload, X, Plus, Save, Sparkles, Trophy, Tag } from "lucide-react";
+import { Calendar, MapPin, ArrowLeft, Upload, X, Save, Sparkles, Trophy, Tag, Users } from "lucide-react";
 
 const CreateCompetition = () => {
   const router = useRouter();
@@ -49,6 +50,7 @@ const CreateCompetition = () => {
   const [schedules, setSchedules] = useState<{ phase: string; date: string; description: string }[]>([
     { phase: "", date: "", description: "" },
   ]);
+  const [winners, setWinners] = useState<{ rank: number; prize: string; benefits: string }[]>([]);
 
   // Redirect if not instructor
   if (status === "authenticated" && session?.user?.role !== "instruktur") {
@@ -70,6 +72,15 @@ const CreateCompetition = () => {
       ...prev,
       [name]: value,
     }));
+  };
+
+  const handleAddWinner = () => {
+    const nextRank = winners.length + 1;
+    setWinners([...winners, { rank: nextRank, prize: "", benefits: "" }]);
+  };
+
+  const handleDeleteWinner = (index: number) => {
+    setWinners(winners.filter((_, i) => i !== index));
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -120,7 +131,7 @@ const CreateCompetition = () => {
       setNotification({
         type: "warning",
         title: "Data Belum Lengkap",
-        message: "Mohon lengkapi semua field yang wajib diisi",
+        message: "Mohon lengkapi semua bagian yang wajib diisi",
       });
       return;
     }
@@ -134,6 +145,7 @@ const CreateCompetition = () => {
         prize: formData.prize,
         category: formData.category,
         thumbnailUrl: formData.thumbnailUrl || null,
+        winners: winners.filter(w => w.prize || w.benefits),
       };
 
       console.log("Sending payload:", payload);
@@ -199,7 +211,7 @@ const CreateCompetition = () => {
               <div>
                 <h1 className="text-2xl lg:text-4xl font-black text-slate-800 tracking-tight mb-2 flex items-center gap-2 lg:gap-3">
                   <Trophy className="h-6 w-6 lg:h-8 lg:w-8 text-amber-500" />
-                  Buat Kompetisi
+                  Buat Informasi Lomba
                 </h1>
                 <p className="text-slate-500 font-medium text-sm lg:text-lg">
                   Isi detail kompetisi dan upload gambar thumbnail.
@@ -286,32 +298,18 @@ const CreateCompetition = () => {
                         />
                       </div>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
-                      <div className="space-y-2">
-                        <label className="block text-xs lg:text-sm font-bold text-slate-600 ml-1">Hadiah Juara 1</label>
-                        <Input
-                          type="text"
-                          name="prize"
-                          required
-                          value={formData.prize}
-                          onChange={handleChange}
-                          placeholder="Contoh: Rp 1.000.000"
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <label className="flex text-xs lg:text-sm font-bold text-slate-600 ml-1 items-center gap-1">
-                          <MapPin className="h-4 w-4" /> Lokasi
-                        </label>
-                        <Input
-                          type="text"
-                          name="location"
-                          required
-                          value={formData.location}
-                          onChange={handleChange}
-                          placeholder="Contoh: Aula Utama IRMA"
-                        />
-                      </div>
+                    <div className="space-y-2">
+                      <label className="flex text-xs lg:text-sm font-bold text-slate-600 ml-1 items-center gap-1">
+                        <MapPin className="h-4 w-4" /> Lokasi
+                      </label>
+                      <Input
+                        type="text"
+                        name="location"
+                        required
+                        value={formData.location}
+                        onChange={handleChange}
+                        placeholder="Contoh: Aula Utama IRMA"
+                      />
                     </div>
                   </div>
                 </div>
@@ -319,7 +317,7 @@ const CreateCompetition = () => {
                 {/* Card Kontak */}
                 <div className="bg-white p-5 lg:p-8 rounded-3xl lg:rounded-[2.5rem] border-2 border-slate-200 shadow-[0_4px_0_0_#cbd5e1] lg:shadow-[0_8px_0_0_#cbd5e1]">
                   <h2 className="text-lg lg:text-xl font-black text-slate-700 mb-4 lg:mb-6 flex items-center gap-2">
-                    <Trophy className="h-5 w-5 lg:h-6 lg:w-6 text-amber-500" /> Kontak Person
+                    <Users className="h-5 w-5 lg:h-6 lg:w-6 text-blue-500" /> Kontak Person
                   </h2>
                   <div className="space-y-4 lg:space-y-6">
                     <div className="space-y-2">
@@ -356,6 +354,82 @@ const CreateCompetition = () => {
                         />
                       </div>
                     </div>
+                  </div>
+                </div>
+
+                {/* Card Info Juara */}
+                <div className="bg-white p-5 lg:p-8 rounded-3xl lg:rounded-[2.5rem] border-2 border-slate-200 shadow-[0_4px_0_0_#cbd5e1] lg:shadow-[0_8px_0_0_#cbd5e1]">
+                  <h2 className="text-lg lg:text-xl font-black text-slate-700 mb-4 lg:mb-6 flex items-center gap-2">
+                    <Trophy className="h-5 w-5 lg:h-6 lg:w-6 text-amber-500" /> Info Juara (Opsional)
+                  </h2>
+                  <p className="text-xs lg:text-sm text-slate-500 mb-4 lg:mb-6">Isi detail hadiah dan benefit untuk setiap juara. Bagian ini tidak wajib diisi.</p>
+
+                  <div className="space-y-6">
+                    {winners.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center py-8 text-center">
+                        <Trophy className="h-12 w-12 text-slate-300 mb-3" />
+                        <p className="text-slate-500 text-sm lg:text-base font-medium mb-4">
+                          Belum ada juara yang ditambahkan. Klik tombol di bawah untuk mulai menambah juara.
+                        </p>
+                      </div>
+                    ) : (
+                      winners.map((winner, index) => (
+                        <div key={index} className="bg-slate-50 p-4 lg:p-6 rounded-2xl border-2 border-slate-100 relative">
+                          <div className="flex items-center gap-2 mb-4">
+                            <Trophy className={`h-5 w-5 ${index === 0 ? "text-yellow-500" : index === 1 ? "text-slate-400" : "text-orange-400"}`} />
+                            <h3 className="font-bold text-slate-700">
+                              {index === 0 ? "🥇 Juara 1" : index === 1 ? "🥈 Juara 2" : index === 2 ? "🥉 Juara 3" : `Juara ${index + 1}`}
+                            </h3>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteWinner(index)}
+                              className="ml-auto px-3 py-1 rounded-lg bg-red-100 text-red-600 hover:bg-red-200 font-bold text-xs flex items-center gap-1 transition-all"
+                            >
+                              <X className="h-3 w-3" /> Hapus
+                            </button>
+                          </div>
+
+                          <div className="space-y-4">
+                            <div className="space-y-2">
+                              <label className="block text-xs lg:text-sm font-bold text-slate-600 ml-1">Hadiah</label>
+                              <Input
+                                type="text"
+                                value={winner.prize}
+                                onChange={(e) => {
+                                  const newWinners = [...winners];
+                                  newWinners[index].prize = e.target.value;
+                                  setWinners(newWinners);
+                                }}
+                                placeholder="Contoh: Rp 5.000.000"
+                              />
+                            </div>
+
+                            <div className="space-y-2">
+                              <label className="block text-xs lg:text-sm font-bold text-slate-600 ml-1">Benefit / Hadiah Tambahan</label>
+                              <Textarea
+                                value={winner.benefits}
+                                onChange={(e) => {
+                                  const newWinners = [...winners];
+                                  newWinners[index].benefits = e.target.value;
+                                  setWinners(newWinners);
+                                }}
+                                rows={3}
+                                placeholder={`Contoh untuk juara ${index + 1}: Uang tunai, piala, sertifikat, beasiswa, dll`}
+                                maxLength={300}
+                              />
+                              <p className="text-xs text-slate-500 ml-1">{winner.benefits.length}/300 karakter</p>
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    )}
+
+                    <DashedAddButton
+                      label="Tambah Juara"
+                      onClick={handleAddWinner}
+                      count={winners.length}
+                      emptyLabel="Tambah Juara Pertama"
+                    />
                   </div>
                 </div>
               </div>

@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { SessionProvider } from 'next-auth/react';
 import { SocketProvider } from '@/lib/socket';
 import InvitationNotifications from '@/components/ui/InvitationNotifications';
+import PageTransitionProvider from '@/components/ui/PageTransitionProvider';
 
 import "./globals.css";
 
@@ -34,6 +35,7 @@ export default function RootLayout({
       >
         <SessionProvider>
           <SocketProvider>
+            <PageTransitionProvider />
             <InvitationNotifications />
             {children}
           </SocketProvider>

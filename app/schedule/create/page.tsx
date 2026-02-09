@@ -6,6 +6,7 @@ import DashboardHeader from "@/components/ui/Header";
 import Sidebar from "@/components/ui/Sidebar";
 import ChatbotButton from "@/components/ui/Chatbot";
 import CartoonNotification from "@/components/ui/Notification";
+import Loading from "@/components/ui/Loading";
 import DatePicker from "@/components/ui/DatePicker";
 import TimePicker from "@/components/ui/TimePicker";
 import { Input } from "@/components/ui/InputText";
@@ -45,7 +46,7 @@ const CreateSchedule = () => {
   if (status === "loading") {
     return (
       <div className="min-h-screen bg-[#FDFBF7] flex items-center justify-center">
-        <p className="text-slate-500">Memuat...</p>
+        <Loading text="Memuat ..." size="lg" />
       </div>
     );
   }

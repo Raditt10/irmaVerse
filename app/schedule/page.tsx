@@ -163,10 +163,10 @@ const Schedule = () => {
             <div className="mb-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
               <div>
                 <h1 className="text-4xl font-black text-slate-800 tracking-tight mb-2">
-                  Event & Kegiatan
+                  Event IRMA
                 </h1>
                 <p className="text-slate-500 text-lg font-medium">
-                  Daftar event dan kegiatan rohani yang akan datang 
+                  Daftar event dan kegiatan rohani yang akan datang dan sedang berlangsung
                 </p>
               </div>
               {session?.user?.role === "instruktur" && (

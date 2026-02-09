@@ -229,7 +229,7 @@ const News = () => {
                 {session?.user?.role === "admin" && (
                   <Link
                     href="/news/create"
-                    className="flex items-center gap-2 px-6 py-3 rounded-lg bg-gradient-to-r from-teal-500 to-cyan-500 text-white font-semibold hover:from-teal-600 hover:to-cyan-600 transition-all duration-300 shadow-lg hover:shadow-xl"
+                    className="flex items-center gap-2 px-6 py-3 rounded-lg bg-linear-to-r from-teal-500 to-cyan-500 text-white font-semibold hover:from-teal-600 hover:to-cyan-600 transition-all duration-300 shadow-lg hover:shadow-xl"
                   >
                     <Plus className="h-5 w-5" />
                     Buat Berita

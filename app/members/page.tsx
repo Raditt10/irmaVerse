@@ -6,7 +6,7 @@ import Sidebar from "@/components/ui/Sidebar";
 import ChatbotButton from "@/components/ui/Chatbot";
 import Loading from "@/components/ui/Loading";
 import SearchInput from "@/components/ui/SearchInput";
-import { UserCircle2, UserPlus, Check, X } from "lucide-react";
+import { UserCircle2, UserPlus, Check, X, Sparkles, Search } from "lucide-react";
 
 interface Member {
   id: string;
