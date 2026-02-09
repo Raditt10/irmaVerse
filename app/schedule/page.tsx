@@ -15,8 +15,7 @@ import {
   Calendar, 
   MapPin, 
   Clock, 
-  Users, 
-  CalendarX
+  Users
 } from "lucide-react";
 import AddButton from "@/components/ui/AddButton";
 
@@ -90,7 +89,6 @@ const Schedule = () => {
   const filterSchedules = () => {
     let filtered = schedules;
 
-    // Filter by search query
     if (searchQuery) {
       filtered = filtered.filter(schedule =>
         schedule.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -98,7 +96,6 @@ const Schedule = () => {
       );
     }
 
-    // Filter by status
     if (selectedStatus !== "Semua") {
       filtered = filtered.filter(schedule => schedule.status === selectedStatus);
     }
@@ -303,15 +300,14 @@ const Schedule = () => {
                         )}
                       </div>
 
-                      {/* Button */}
+                      {/* Button: Label diubah jadi 'Detail' agar muat */}
                       <DetailButton
                         role={session?.user?.role as any}
                         onClick={() => router.push(`/schedule/${schedule.id}`)}
                         onEdit={() => router.push(`/schedule/${schedule.id}/edit`)}
                         onDelete={() => handleDeleteSchedule(schedule.id)}
-                        label="Lihat Detail"
+                        label="Detail"
                         editLabel="Edit"
-                        deleteLabel={deletingId === schedule.id ? "Menghapus..." : "Hapus"}
                       />
                     </div>
                   </div>

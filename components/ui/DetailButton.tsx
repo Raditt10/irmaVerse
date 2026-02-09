@@ -1,64 +1,108 @@
 "use client";
-import { Eye, Edit, Trash2 } from "lucide-react";
+import { Eye, Edit } from "lucide-react";
+import DeleteButton from "./DeleteButton";
 
 interface DetailButtonProps {
   onClick?: () => void;
   onEdit?: () => void;
   onDelete?: () => void;
   label?: string;
-  editLabel?: string;
-  deleteLabel?: string;
   className?: string;
   role?: "instruktur" | "admin" | "member" | null;
 }
 
-export default function DetailButton({ 
-  onClick, 
+export default function DetailButton({
+  onClick,
   onEdit,
   onDelete,
-  label = "Lihat Detail",
-  editLabel = "Edit",
-  deleteLabel = "Hapus",
+  label = "Detail",
   className = "",
   role,
 }: DetailButtonProps) {
   const isInstructor = role === "instruktur" || role === "admin";
 
-  // Instruktur/Admin: tampil dua button (Detail + Edit) + icon delete
+  // Base class untuk tombol utama (Detail)
+  const mainButtonClass = `
+    relative flex-1 flex items-center justify-center gap-2
+    py-3 px-4 rounded-2xl
+    font-black text-sm md:text-base
+    border-2 border-b-4 transition-all duration-200
+    active:border-b-2 active:translate-y-[2px]
+    shadow-sm whitespace-nowrap
+  `;
+
+  // Base class untuk tombol aksi icon-only (Edit & Delete)
+  // h-[52px] disesuaikan agar match dengan tinggi tombol detail yang punya py-3 + border
+  const actionIconClass = `
+    flex items-center justify-center
+    h-[52px] w-[52px] shrink-0
+    rounded-2xl border-2 border-b-4
+    active:border-b-2 active:translate-y-[2px]
+    transition-all duration-200 shadow-sm
+  `;
+
   if (isInstructor && onEdit && onClick) {
     return (
-      <div className="flex gap-3">
+      <div className={`flex items-center gap-2 w-full ${className}`}>
+        {/* TOMBOL DETAIL (UTAMA) */}
         <button
-          onClick={onClick}
-          className={`flex-1 py-3 rounded-xl bg-teal-400 text-white font-black border-2 border-teal-600 border-b-4 hover:bg-teal-500 active:border-b-2 active:translate-y-[2px] transition-all flex items-center justify-center gap-2 group/btn ${className}`}
+          onClick={(e) => {
+            e.stopPropagation();
+            onClick();
+          }}
+          className={`
+            ${mainButtonClass}
+            bg-teal-400 text-white border-teal-600 
+            hover:bg-teal-500 hover:shadow-teal-100
+          `}
         >
-          <Eye className="w-4 h-4" /> {label}
+          <Eye className="w-5 h-5 stroke-[2.5]" />
+          <span>{label}</span>
         </button>
+
+        {/* TOMBOL EDIT (ICON ONLY) */}
         <button
-          onClick={onEdit}
-          className={`flex-1 py-3 rounded-xl bg-emerald-400 text-white font-black border-2 border-emerald-600 border-b-4 hover:bg-emerald-500 active:border-b-2 active:translate-y-[2px] transition-all flex items-center justify-center gap-2 group/btn ${className}`}
+          onClick={(e) => {
+            e.stopPropagation();
+            onEdit();
+          }}
+          className={`
+            ${actionIconClass}
+            bg-emerald-400 text-white border-emerald-600 
+            hover:bg-emerald-500 hover:shadow-emerald-100
+          `}
+          title="Edit Data"
         >
-          <Edit className="w-4 h-4" /> {editLabel}
+          <Edit className="w-5 h-5 stroke-[2.5]" />
         </button>
+
+        {/* TOMBOL DELETE (ICON ONLY) */}
         {onDelete && (
-          <button
+          <DeleteButton
             onClick={onDelete}
-            className={`py-3 px-4 rounded-xl bg-red-500 text-white font-black border-2 border-red-600 border-b-4 hover:bg-red-600 active:border-b-2 active:translate-y-[2px] transition-all flex items-center justify-center group/btn ${className}`}
-          >
-            <Trash2 className="w-5 h-5" />
-          </button>
+            variant="icon-only"
+            className={`${actionIconClass} !p-0`} // Override padding bawaan DeleteButton
+            iconClassName="w-5 h-5 stroke-[2.5]"
+          />
         )}
       </div>
     );
   }
 
-  // Member: tampil Detail button saja
+  // TAMPILAN MEMBER (FULL WIDTH DETAIL)
   return (
     <button
-      onClick={onClick}
-      className={`w-full py-3 rounded-xl bg-teal-400 text-white font-black border-2 border-teal-600 border-b-4 hover:bg-teal-500 active:border-b-2 active:translate-y-[2px] transition-all flex items-center justify-center gap-2 group/btn ${className}`}
+      onClick={(e) => {
+        e.stopPropagation();
+        onClick && onClick();
+      }}
+      className={`
+        w-full ${mainButtonClass}
+        bg-teal-400 text-white border-teal-600 hover:bg-teal-500
+        py-3.5 text-base
+      `}
     >
-      <Eye className="w-4 h-4" /> {label}
+      <Eye className="w-5 h-5 stroke-[2.5]" /> {label}
     </button>
   );
 }

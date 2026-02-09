@@ -39,7 +39,7 @@ const Materials = () => {
   const [filteredMaterials, setFilteredMaterials] = useState<Material[]>([]);
   const [selectedProgram, setSelectedProgram] = useState("Semua");
   const [selectedGrade, setSelectedGrade] = useState("Semua");
-  const [selectedInstructor, setSelectedInstructor] = useState("Semua"); // Note: State ini ada tapi belum dipakai di filter UI, biarkan saja jika untuk pengembangan nanti
+  const [selectedInstructor, setSelectedInstructor] = useState("Semua");
   const [searchQuery, setSearchQuery] = useState("");
   const [notification, setNotification] = useState<{
     type: "success" | "error" | "warning" | "info";
@@ -57,7 +57,6 @@ const Materials = () => {
     },
   });
 
-  // Cek Role: Apakah Admin atau Instruktur?
   const isPrivileged = session?.user?.role === "instruktur" || session?.user?.role === "admin";
   const programCategories = ["Semua", "Program Wajib", "Program Ekstra", "Program Next Level"];
   const classCategories = ["Semua", "Kelas 10", "Kelas 11", "Kelas 12"];
@@ -94,7 +93,6 @@ const Materials = () => {
 
       const data = await res.json();
 
-      // Fetch attendance status for each material
       const materialsWithAttendance = await Promise.all(
         data.map(async (material: Material) => {
           try {
@@ -153,7 +151,6 @@ const Materials = () => {
     }
   };
 
-  // Get today's material for instructor
   const getTodayMaterial = () => {
     if (!isPrivileged || materials.length === 0) return null;
     const today = new Date();
@@ -188,7 +185,6 @@ const Materials = () => {
                 </p>
               </div>
 
-              {/* Tombol Buat Kajian untuk Instruktur/Admin */}
               {isPrivileged && (
                 <AddButton
                   label="Buat Kajian"
@@ -200,14 +196,12 @@ const Materials = () => {
               )}
             </div>
 
-            {/* --- LATEST MATERIAL CARD (FIXED LAYOUT) --- */}
+            {/* --- LATEST MATERIAL CARD (FIXED RESPONSIVE LAYOUT) --- */}
             {isPrivileged && getTodayMaterial() && (
               <div className="mb-10 bg-linear-to-br from-teal-50 to-cyan-50 rounded-[2.5rem] border-2 border-teal-200 p-6 lg:p-8 shadow-[0_4px_0_0_#cbd5e1] relative overflow-hidden group hover:border-teal-300 transition-all">
-                 {/* Background decoration */}
                  <div className="absolute top-0 right-0 -mt-4 -mr-4 w-32 h-32 bg-teal-100 rounded-full blur-3xl opacity-60" />
 
                 <div className="relative z-10">
-                  {/* Label Header */}
                   <div className="flex items-center gap-2 mb-5">
                     <div className="p-2 bg-white rounded-xl border border-teal-100 shadow-sm">
                         <Sparkles className="h-5 w-5 text-teal-500" strokeWidth={2.5} />
@@ -215,7 +209,6 @@ const Materials = () => {
                     <h2 className="text-lg font-black text-slate-800 tracking-tight">Jadwal Kajianmu Hari Ini</h2>
                   </div>
 
-                  {/* Content & Action Layout */}
                   <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 lg:gap-8">
                     
                     {/* KIRI: Informasi */}
@@ -241,8 +234,8 @@ const Materials = () => {
                       </div>
                     </div>
 
-                    {/* KANAN: Tombol Aksi */}
-                    <div className="flex items-center gap-3 w-full lg:w-auto shrink-0 mt-2 lg:mt-0">
+                    {/* KANAN: Tombol Aksi (FIXED: Sejajar Horizontal) */}
+                    <div className="flex flex-row items-center gap-3 w-full lg:w-auto shrink-0 mt-4 lg:mt-0">
                       <button
                         onClick={() => router.push(`/materials/${getTodayMaterial()?.id}/edit`)}
                         className="flex-1 lg:flex-none lg:w-36 flex justify-center items-center px-6 py-2.5 rounded-xl bg-teal-400 text-white font-bold border-2 border-teal-600 border-b-4 hover:bg-teal-500 hover:border-b-4 active:border-b-2 active:translate-y-0.5 transition-all"
@@ -250,12 +243,13 @@ const Materials = () => {
                         Edit
                       </button>
                       
-                      <div className="shrink-0">
+                      <div className="flex-1 lg:flex-none">
                         <DeleteButton
                           label="Hapus"
                           onClick={() => handleDeleteMaterial(getTodayMaterial()!.id)}
                           variant="with-label"
                           showConfirm={true}
+                          className="w-full lg:w-36 justify-center"
                         />
                       </div>
                     </div>
@@ -278,7 +272,6 @@ const Materials = () => {
                 />
               </div>
 
-              {/* Search Bar */}
               <SearchInput
                 placeholder="Cari materi / ustadz..."
                 value={searchQuery}
@@ -331,7 +324,6 @@ const Materials = () => {
                       key={material.id}
                       className="bg-white rounded-[2.5rem] border-2 border-slate-200 shadow-[0_8px_0_0_#cbd5e1] hover:border-emerald-400 hover:shadow-[0_8px_0_0_#34d399] transition-all duration-300 overflow-hidden group hover:-translate-y-2 flex flex-col h-full"
                     >
-                      {/* Thumbnail */}
                       <div className="relative h-52 overflow-hidden border-b-2 border-slate-100">
                         <img
                           src={material.thumbnailUrl}
@@ -340,14 +332,12 @@ const Materials = () => {
                         />
                         <div className="absolute inset-0 bg-linear-to-t from-black/50 to-transparent" />
 
-                        {/* Badge: Baru */}
                         {!material.isJoined && (
                           <span className="absolute top-4 right-4 bg-red-500 text-white text-[10px] font-black px-3 py-1 rounded-full border-2 border-white shadow-md animate-bounce">
                             BARU!
                           </span>
                         )}
 
-                        {/* Badge: Category */}
                         <div className="absolute top-4 left-4 flex flex-wrap gap-2">
                           <span className="px-3 py-1 rounded-lg bg-emerald-400 text-white text-xs font-bold border-2 border-emerald-600 shadow-[0_2px_0_0_#065f46]">
                             {material.category}
@@ -355,10 +345,8 @@ const Materials = () => {
                         </div>
                       </div>
 
-                      {/* Content */}
                       <div className="p-6 flex flex-col flex-1">
                         <div className="flex-1">
-                          {/* Class Badge Inline */}
                           {material.grade && (
                             <span className="inline-block px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-600 text-[10px] font-black border border-emerald-200 mb-2 uppercase tracking-wide">
                               {material.grade}
@@ -378,7 +366,6 @@ const Materials = () => {
                             </p>
                           </div>
 
-                          {/* Info Row */}
                           <div className="flex items-center gap-4 mb-6 bg-slate-50 p-3 rounded-2xl border border-slate-100">
                             <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500">
                               <Calendar className="h-4 w-4 text-emerald-400" />
@@ -402,7 +389,6 @@ const Materials = () => {
                           </div>
                         </div>
 
-                        {/* --- BUTTON ACTION DINAMIS --- */}
                         <div className="mt-auto">
                           {isPrivileged ? (
                             <MaterialInstructorActions
@@ -429,7 +415,6 @@ const Materials = () => {
       </div>
       <ChatbotButton />
 
-      {/* Notification */}
       {notification && (
         <CartoonNotification
           type={notification.type}

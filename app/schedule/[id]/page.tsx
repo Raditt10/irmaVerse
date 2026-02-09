@@ -5,10 +5,11 @@ import { useSession } from "next-auth/react";
 import DashboardHeader from "@/components/ui/Header";
 import Sidebar from "@/components/ui/Sidebar";
 import ChatbotButton from "@/components/ui/Chatbot";
+import ButtonEdit from "@/components/ui/ButtonEdit"; // Import ButtonEdit
+import DeleteButton from "@/components/ui/DeleteButton"; // Import DeleteButton
 import { 
   Calendar, 
   MapPin, 
-  User, 
   Clock, 
   ArrowLeft,
   Phone, 
@@ -42,6 +43,9 @@ const ScheduleDetail = () => {
   const router = useRouter();
   const params = useParams();
   const scheduleId = params.id as string;
+
+  // Cek apakah user adalah instruktur/admin
+  const isInstructor = session?.user?.role === "instruktur" || session?.user?.role === "admin";
 
   useEffect(() => {
     if (scheduleId) {
@@ -77,6 +81,21 @@ const ScheduleDetail = () => {
       console.error("Error loading schedule:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    try {
+        const response = await fetch(`/api/schedules/${scheduleId}`, {
+            method: "DELETE",
+        });
+
+        if (!response.ok) throw new Error("Gagal menghapus event");
+
+        router.push("/schedule"); // Redirect ke halaman list setelah hapus
+    } catch (error) {
+        console.error("Error deleting schedule:", error);
+        alert("Gagal menghapus event. Silakan coba lagi.");
     }
   };
 
@@ -149,8 +168,9 @@ const ScheduleDetail = () => {
         <div className="flex-1 px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
           <div className="max-w-6xl mx-auto space-y-8">
             
-            {/* --- HEADER NAVIGATION --- */}
-            <div className="flex items-center justify-between">
+            {/* --- HEADER NAVIGATION & ACTIONS --- */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                {/* Back Button */}
                 <button
                   onClick={() => router.back()}
                   className="self-start inline-flex items-center gap-2 px-3 py-2 lg:px-4 lg:py-2 rounded-xl bg-white border-2 border-slate-200 text-slate-500 font-bold hover:border-teal-400 hover:text-teal-600 hover:shadow-[0_4px_0_0_#cbd5e1] active:translate-y-0.5 active:shadow-none transition-all text-sm lg:text-base"
@@ -158,9 +178,33 @@ const ScheduleDetail = () => {
                   <ArrowLeft className="h-4 w-4 lg:h-5 lg:w-5" strokeWidth={3} />
                   Kembali
                 </button>
-                <button className="p-2 bg-white rounded-xl border-2 border-slate-200 text-slate-400 hover:text-teal-500 hover:border-teal-400 transition-all">
-                    <Share2 className="h-5 w-5" strokeWidth={2.5} />
-                </button>
+
+                {/* Right Side Actions: Edit, Delete, Share */}
+                <div className="flex items-center gap-3 self-end sm:self-auto">
+                    
+                    {/* Munculkan tombol Edit/Hapus HANYA untuk Instruktur/Admin */}
+                    {isInstructor && (
+                        <>
+                            <ButtonEdit 
+                                id={schedule.id} 
+                                basePath="/schedule" 
+                                className="!py-2 !px-4 !min-w-0 text-sm" // Override style sedikit biar fit di header
+                            />
+                            
+                            <DeleteButton 
+                                onClick={handleDelete}
+                                variant="icon-only"
+                                confirmTitle="Hapus Event?"
+                                confirmMessage="Event ini akan dihapus permanen. Lanjutkan?"
+                                className="!p-2.5 rounded-xl"
+                            />
+                        </>
+                    )}
+
+                    <button className="p-2.5 bg-white rounded-xl border-2 border-slate-200 text-slate-400 hover:text-teal-500 hover:border-teal-400 transition-all shadow-sm">
+                        <Share2 className="h-5 w-5" strokeWidth={2.5} />
+                    </button>
+                </div>
             </div>
 
             {/* --- HERO SECTION --- */}
@@ -239,7 +283,7 @@ const ScheduleDetail = () => {
                         <h3 className="text-2xl font-black text-slate-800">Detail Lengkap</h3>
                     </div>
                     <div className="prose prose-slate max-w-none">
-                        <p className="text-slate-600 font-medium leading-relaxed text-lg">
+                        <p className="text-slate-600 font-medium leading-relaxed text-lg whitespace-pre-line">
                             {schedule.fullDescription}
                         </p>
                     </div>
@@ -280,7 +324,6 @@ const ScheduleDetail = () => {
                       className="flex items-center p-1.5 pr-4 rounded-2xl bg-white border-2 border-emerald-200 hover:border-emerald-500 hover:bg-emerald-50 active:translate-y-[2px] transition-all group cursor-pointer"
                     >
                       <div className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center border-2 border-emerald-600 text-white shrink-0 group-hover:scale-105 transition-transform">
-                         {/* Fallback jika gambar WA tidak ada, pakai icon Phone */}
                          <Image src="/WhatsApp.svg.webp" alt="WA" width={24} height={24} className="w-6 h-6" onError={(e) => e.currentTarget.style.display='none'} />
                          <Phone className="w-5 h-5 hidden group-hover:block" /> 
                       </div>
@@ -342,6 +385,6 @@ const ScheduleDetail = () => {
       </div>
     </div>
   );
-};
+};  
 
 export default ScheduleDetail;
