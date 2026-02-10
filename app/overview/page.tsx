@@ -375,7 +375,7 @@ const Dashboard = () => {
                   
                   <div className="flex items-center gap-3 mb-3 relative z-10">
                     <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-md">
-                      <img src="/ci irma.jpg" alt="AI" className="w-full h-full object-cover" />
+                      <img src="/ciirma.webp" alt="AI" className="w-full h-full object-cover" />
                     </div>
                     <div>
                       <h4 className="font-black text-slate-800 text-base">Ci Irma AI</h4>
@@ -397,7 +397,7 @@ const Dashboard = () => {
                   <h4 className="font-black text-slate-800 mb-3 text-sm tracking-wide uppercase text-center bg-slate-100 rounded-lg py-1">Instruktur Pilihan</h4>
                   <div className="flex items-center gap-4 mb-4">
                     <div className="w-14 h-14 rounded-2xl bg-indigo-50 border-2 border-indigo-100 overflow-hidden shrink-0">
-                      <img src="/instruktur.jpg" alt="Instruktur" className="w-full h-full object-cover" />
+                      <img src="/instruktur.webp" alt="Instruktur" className="w-full h-full object-cover" />
                     </div>
                     <div>
                       <p className="text-base font-black text-slate-900">Ust. Ahmad</p>

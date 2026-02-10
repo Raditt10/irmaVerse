@@ -252,7 +252,7 @@ export default function Home() {
               
               {/* LOGO CARD */}
               <img 
-                src="/logo.png" 
+                src="/logo.webp" 
                 alt="IRMA Verse" 
                 className="h-10 w-10 sm:h-12 sm:w-12 object-contain drop-shadow-md" 
               />
@@ -313,7 +313,7 @@ export default function Home() {
               <div className="bg-white border-[3px] border-emerald-200 rounded-3xl shadow-[8px_8px_0px_0px_rgba(0,0,0,0.15)] p-4 max-w-[280px] sm:max-w-xs transform hover:scale-105 hover:-rotate-1 transition-all duration-300 cursor-pointer">
                 <div className="flex items-center gap-4">
                   <div className="p-2 bg-slate-50 rounded-2xl border-2 border-slate-100">
-                    <img src="/logo13.png" alt="SMKN 13" className="h-10 w-auto object-contain" />
+                    <img src="/logo13.webp" alt="SMKN 13" className="h-10 w-auto object-contain" />
                   </div>
                   <div>
                     <p className="text-[10px] font-extrabold text-emerald-600 uppercase tracking-tight">Platform Ekskul</p>
@@ -323,11 +323,10 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Hero Image Model Fixed: HIDDEN ON MOBILE (hidden lg:flex) */}
             <div className="relative mt-8 lg:mt-0 hidden lg:flex justify-center lg:justify-end">
                <div className="absolute inset-0 bg-emerald-400/20 blur-[80px] rounded-full pointer-events-none" />
                <img
-                src="/model.png"
+                src="/model.webp"
                 alt="Role model IRMA"
                 className="relative h-[300px] sm:h-[400px] lg:h-[600px] w-auto object-contain z-0 hover:scale-105 transition-transform duration-500"
                 style={{ 
@@ -554,7 +553,7 @@ export default function Home() {
             <div className="flex-1 flex flex-col gap-4 min-w-[220px]">
               <div className="flex items-center gap-3 mb-2">
                 <div className="w-14 h-14 rounded-2xl bg-linear-to-br from-emerald-500 to-cyan-500 flex items-center justify-center shadow-[4px_4px_0px_0px_rgba(0,0,0,0.2)] border-2 border-white/20">
-                  <img src="/logo.png" alt="IRMA" className="w-9 h-9 object-contain" />
+                  <img src="/logo.webp" alt="IRMA" className="w-9 h-9 object-contain" />
                 </div>
                 <div>
                   <div className="font-extrabold text-xl sm:text-2xl text-white drop-shadow-md">IRMAVerse</div>

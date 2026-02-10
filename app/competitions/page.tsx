@@ -143,7 +143,7 @@ const Competitions = () => {
             ) : filteredCompetitions.length === 0 ? (
               <EmptyState
                 icon={competitions.length === 0 ? "calendar" : "search"}
-                title={competitions.length === 0 ? "Belum Ada Lomba" : "Lomba Tidak Ditemukan"}
+                title={competitions.length === 0 ? "Belum Ada Informasi Lomba" : "Lomba Tidak Ditemukan"}
                 description={
                   competitions.length === 0
                     ? "Tidak ada kompetisi yang tersedia saat ini. Silakan kembali lagi kemudian."

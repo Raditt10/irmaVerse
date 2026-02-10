@@ -26,7 +26,7 @@ export default function AddButton({
   return (
     <button
       onClick={onClick}
-      className={`px-6 py-3 rounded-2xl font-black active:border-b-2 active:translate-y-[2px] active:shadow-none transition-all flex items-center justify-center gap-2 whitespace-nowrap h-fit md:justify-start ${colorClasses[color]} ${className}`}
+      className={`px-6 py-3 rounded-2xl font-black active:border-b-2 active:translate-y-0.5 active:shadow-none transition-all flex items-center justify-center gap-2 whitespace-nowrap h-fit md:justify-start ${colorClasses[color]} ${className}`}
     >
       {!hideIcon && icon}
       {label}

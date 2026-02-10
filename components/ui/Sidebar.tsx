@@ -21,30 +21,50 @@ import {
   ChevronDown,
 } from "lucide-react";
 
-// Custom scrollbar styles
+// Custom scrollbar styles - Cartoon Style
 const scrollbarStyles = `
   .sidebar-scrollbar::-webkit-scrollbar {
-    width: 6px;
+    width: 10px;
   }
   .sidebar-scrollbar::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  .sidebar-scrollbar::-webkit-scrollbar-thumb {
-    background: #cbd5e1;
+    background: linear-gradient(180deg, #f0fdf4 0%, #f0fdf4 100%);
     border-radius: 10px;
   }
-  .sidebar-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: #94a3b8;
+  .sidebar-scrollbar::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #10b981 0%, #14b8a6 100%);
+    border-radius: 10px;
+    border: 2px solid #059669;
+    box-shadow: 0 0 0 2px rgba(16,185,129,0.2);
   }
+  .sidebar-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, #059669 0%, #0d9488 100%);
+    border-color: #047857;
+  }
+  .sidebar-scrollbar::-webkit-scrollbar-thumb:active {
+    background: linear-gradient(180deg, #047857 0%, #065f46 100%);
+    box-shadow: inset 0 0 0 2px rgba(5,150,105,0.3);
+  }
+  
   .mobile-sidebar-scrollbar::-webkit-scrollbar {
-    width: 4px;
+    width: 8px;
   }
   .mobile-sidebar-scrollbar::-webkit-scrollbar-track {
-    background: transparent;
+    background: linear-gradient(180deg, #fefce8 0%, #fefce8 100%);
+    border-radius: 4px;
   }
   .mobile-sidebar-scrollbar::-webkit-scrollbar-thumb {
-    background: #cbd5e1; 
+    background: linear-gradient(180deg, #f59e0b 0%, #f97316 100%);
     border-radius: 4px;
+    border: 2px solid #ea580c;
+    box-shadow: 0 0 0 2px rgba(249,115,22,0.2);
+  }
+  .mobile-sidebar-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, #ea580c 0%, #c2410c 100%);
+    border-color: #b45309;
+  }
+  .mobile-sidebar-scrollbar::-webkit-scrollbar-thumb:active {
+    background: linear-gradient(180deg, #b45309 0%, #92400e 100%);
+    box-shadow: inset 0 0 0 2px rgba(217,119,6,0.3);
   }
 `;
 
@@ -313,11 +333,11 @@ const Sidebar = () => {
                 <div className="bg-white/80 backdrop-blur-md p-4 rounded-3xl border-2 border-white shadow-sm flex items-center justify-between">
                    <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-2xl flex items-center justify-center shadow-lg">
-                          <img src="/logo.png" alt="IRMA Logo" className="h-10 w-10 object-contain" />
+                          <img src="/logo.webp" alt="IRMA Logo" className="h-10 w-10 object-contain" />
                       </div>
                       <div>
                         <h2 className="text-lg font-black text-slate-800 leading-none">IRMA VERSE</h2>
-                        <p className="text-[10px] font-bold text-teal-600 uppercase tracking-widest mt-0.5">Sidebar</p>
+                        <p className="text-[10px] font-bold text-teal-600 uppercase tracking-widest mt-0.5">Aplikasi IRMA13</p>
                       </div>
                    </div>
                    <button

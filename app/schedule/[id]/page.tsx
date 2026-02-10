@@ -147,7 +147,7 @@ const ScheduleDetail = () => {
                 <p className="text-slate-500 font-medium mb-8 text-sm md:text-base px-4">Sepertinya event ini sudah dihapus atau link-nya salah.</p>
                 <button
                   onClick={() => router.push('/schedule')}
-                  className="px-6 py-3 bg-teal-400 text-white font-black rounded-xl md:rounded-2xl border-2 border-teal-600 shadow-[4px_4px_0_0_#0f766e] hover:translate-y-[2px] hover:shadow-none transition-all text-sm md:text-base"
+                  className="px-6 py-3 bg-teal-400 text-white font-black rounded-xl md:rounded-2xl border-2 border-teal-600 shadow-[4px_4px_0_0_#0f766e] hover:translate-y-0.5 hover:shadow-none transition-all text-sm md:text-base"
                 >
                   Kembali ke Jadwal
                 </button>
@@ -185,7 +185,7 @@ const ScheduleDetail = () => {
                             <ButtonEdit 
                                 id={schedule.id} 
                                 basePath="/schedule" 
-                                className="!py-2 !px-3 md:!px-4 !min-w-0 text-xs md:text-sm !h-10 md:!h-auto" 
+                                className="py-2! px-3! md:px-4! min-w-0! text-xs md:text-sm h-10! md:h-auto!" 
                             />
                             
                             <DeleteButton 
@@ -193,7 +193,7 @@ const ScheduleDetail = () => {
                                 variant="icon-only"
                                 confirmTitle="Hapus Event?"
                                 confirmMessage="Event ini akan dihapus permanen. Lanjutkan?"
-                                className="!p-2 md:!p-2.5 rounded-xl h-10 w-10 md:h-auto md:w-auto"
+                                className="p-2! md:p-2.5! rounded-xl h-10 w-10 md:h-auto md:w-auto"
                             />
                         </>
                     )}
@@ -212,7 +212,7 @@ const ScheduleDetail = () => {
                   alt={schedule.title}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/40 to-transparent" />
+                <div className="absolute inset-0 bg-linear-to-t from-slate-900/90 via-slate-900/40 to-transparent" />
                 
                 <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-8 md:p-10">
                   <div className="mb-3 md:mb-4">
@@ -239,7 +239,7 @@ const ScheduleDetail = () => {
                 {/* Info Cards Grid - Di HP grid 1 atau 2, Desktop grid 3 */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
                     {/* Date */}
-                    <div className="bg-white p-4 md:p-5 rounded-2xl md:rounded-[2rem] border-2 border-slate-200 shadow-[2px_2px_0_0_#cbd5e1] md:shadow-[4px_4px_0_0_#cbd5e1] flex flex-row sm:flex-col items-center gap-4 sm:gap-2 text-left sm:text-center hover:-translate-y-1 transition-transform">
+                    <div className="bg-white p-4 md:p-5 rounded-2xl md:rounded-4xl border-2 border-slate-200 shadow-[2px_2px_0_0_#cbd5e1] md:shadow-[4px_4px_0_0_#cbd5e1] flex flex-row sm:flex-col items-center gap-4 sm:gap-2 text-left sm:text-center hover:-translate-y-1 transition-transform">
                         <div className="w-10 h-10 md:w-12 md:h-12 bg-rose-100 rounded-full flex items-center justify-center border-2 border-rose-200 shrink-0">
                             <Calendar className="h-5 w-5 md:h-6 md:w-6 text-rose-500" />
                         </div>
@@ -253,7 +253,7 @@ const ScheduleDetail = () => {
 
                     {/* Time */}
                     {schedule.time && (
-                        <div className="bg-white p-4 md:p-5 rounded-2xl md:rounded-[2rem] border-2 border-slate-200 shadow-[2px_2px_0_0_#cbd5e1] md:shadow-[4px_4px_0_0_#cbd5e1] flex flex-row sm:flex-col items-center gap-4 sm:gap-2 text-left sm:text-center hover:-translate-y-1 transition-transform">
+                        <div className="bg-white p-4 md:p-5 rounded-2xl md:rounded-4xl border-2 border-slate-200 shadow-[2px_2px_0_0_#cbd5e1] md:shadow-[4px_4px_0_0_#cbd5e1] flex flex-row sm:flex-col items-center gap-4 sm:gap-2 text-left sm:text-center hover:-translate-y-1 transition-transform">
                             <div className="w-10 h-10 md:w-12 md:h-12 bg-amber-100 rounded-full flex items-center justify-center border-2 border-amber-200 shrink-0">
                                 <Clock className="h-5 w-5 md:h-6 md:w-6 text-amber-500" />
                             </div>
@@ -266,7 +266,7 @@ const ScheduleDetail = () => {
 
                     {/* Location */}
                     {schedule.location && (
-                        <div className="bg-white p-4 md:p-5 rounded-2xl md:rounded-[2rem] border-2 border-slate-200 shadow-[2px_2px_0_0_#cbd5e1] md:shadow-[4px_4px_0_0_#cbd5e1] flex flex-row sm:flex-col items-center gap-4 sm:gap-2 text-left sm:text-center hover:-translate-y-1 transition-transform">
+                        <div className="bg-white p-4 md:p-5 rounded-2xl md:rounded-4xl border-2 border-slate-200 shadow-[2px_2px_0_0_#cbd5e1] md:shadow-[4px_4px_0_0_#cbd5e1] flex flex-row sm:flex-col items-center gap-4 sm:gap-2 text-left sm:text-center hover:-translate-y-1 transition-transform">
                             <div className="w-10 h-10 md:w-12 md:h-12 bg-teal-100 rounded-full flex items-center justify-center border-2 border-teal-200 shrink-0">
                                 <MapPin className="h-5 w-5 md:h-6 md:w-6 text-teal-500" />
                             </div>
@@ -326,7 +326,7 @@ const ScheduleDetail = () => {
                       href="https://wa.me/6281234567890"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center p-1.5 pr-4 rounded-xl md:rounded-2xl bg-white border-2 border-emerald-200 hover:border-emerald-500 hover:bg-emerald-50 active:translate-y-[2px] transition-all group cursor-pointer w-full"
+                      className="flex items-center p-1.5 pr-4 rounded-xl md:rounded-2xl bg-white border-2 border-emerald-200 hover:border-emerald-500 hover:bg-emerald-50 active:translate-y-0.5 transition-all group cursor-pointer w-full"
                     >
                       <div className="w-9 h-9 md:w-10 md:h-10 bg-emerald-500 rounded-lg md:rounded-xl flex items-center justify-center border-2 border-emerald-600 text-white shrink-0 group-hover:scale-105 transition-transform">
                          <Image src="/WhatsApp.svg.webp" alt="WA" width={20} height={20} className="w-5 h-5 md:w-6 md:h-6" onError={(e) => e.currentTarget.style.display='none'} />
@@ -341,7 +341,7 @@ const ScheduleDetail = () => {
                     {/* Email Button */}
                     <a
                       href="mailto:instruktur@irmaverse.local"
-                      className="flex items-center p-1.5 pr-4 rounded-xl md:rounded-2xl bg-white border-2 border-blue-200 hover:border-blue-500 hover:bg-blue-50 active:translate-y-[2px] transition-all group cursor-pointer w-full"
+                      className="flex items-center p-1.5 pr-4 rounded-xl md:rounded-2xl bg-white border-2 border-blue-200 hover:border-blue-500 hover:bg-blue-50 active:translate-y-0.5 transition-all group cursor-pointer w-full"
                     >
                       <div className="w-9 h-9 md:w-10 md:h-10 bg-blue-500 rounded-lg md:rounded-xl flex items-center justify-center border-2 border-blue-600 text-white shrink-0 group-hover:scale-105 transition-transform">
                          <Mail className="w-4 h-4 md:w-5 md:h-5" strokeWidth={2.5} />
@@ -355,7 +355,7 @@ const ScheduleDetail = () => {
                     {/* Phone Button */}
                     <a
                       href="tel:+6281234567890"
-                      className="flex items-center p-1.5 pr-4 rounded-xl md:rounded-2xl bg-white border-2 border-slate-200 hover:border-slate-500 hover:bg-slate-50 active:translate-y-[2px] transition-all group cursor-pointer w-full"
+                      className="flex items-center p-1.5 pr-4 rounded-xl md:rounded-2xl bg-white border-2 border-slate-200 hover:border-slate-500 hover:bg-slate-50 active:translate-y-0.5 transition-all group cursor-pointer w-full"
                     >
                       <div className="w-9 h-9 md:w-10 md:h-10 bg-slate-700 rounded-lg md:rounded-xl flex items-center justify-center border-2 border-slate-800 text-white shrink-0 group-hover:scale-105 transition-transform">
                          <Phone className="w-4 h-4 md:w-5 md:h-5" strokeWidth={2.5} />
@@ -369,7 +369,7 @@ const ScheduleDetail = () => {
                 </div>
 
                 {/* Important Note */}
-                <div className="p-4 md:p-5 bg-amber-50 border-2 border-amber-200 rounded-2xl md:rounded-[2rem] shadow-sm">
+                <div className="p-4 md:p-5 bg-amber-50 border-2 border-amber-200 rounded-2xl md:rounded-4xl shadow-sm">
                   <div className="flex items-start gap-3">
                     <div className="mt-1">
                         <div className="w-1.5 h-1.5 md:w-2 md:h-2 bg-amber-500 rounded-full animate-ping"></div>

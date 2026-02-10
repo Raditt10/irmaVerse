@@ -61,9 +61,9 @@ const CustomDropdown = ({
             border-2 border-teal-400 
             shadow-[0_4px_0_0_#2dd4bf] 
             transition-all duration-200
-            active:translate-y-[2px] active:shadow-none
+            active:translate-y-0.5 active:shadow-none
             focus:outline-none
-            ${isOpen ? "translate-y-[2px] shadow-none border-teal-500" : ""}
+            ${isOpen ? "translate-y-0.5 shadow-none border-teal-500" : ""}
           `}
         >
           <span className={selectedOption ? "text-slate-700" : "text-slate-400"}>

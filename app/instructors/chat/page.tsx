@@ -24,7 +24,7 @@ import {
   Send,
   Search,
   MessageCircle,
-  UserPlus,
+  MessageSquarePlus,
   ArrowLeft,
   X,
   Edit2,
@@ -591,17 +591,17 @@ const ChatPage = () => {
       className="min-h-screen bg-[#FDFBF7]"
     >
       <DashboardHeader />
-      <div className="flex flex-col lg:flex-row">
+      <div className="flex flex-col lg:flex-row h-[calc(100vh-64px)]">
         <Sidebar />
-        <main className="w-full flex-1 px-4 sm:px-6 lg:px-8 py-6 md:py-8">
-          <div className="max-w-7xl mx-auto">
+        <main className="w-full flex-1 px-3 sm:px-4 lg:px-6 py-4 lg:py-5">
+          <div className="h-full flex flex-col">
             {/* Header */}
-            <div className="mb-6 flex items-center justify-between">
+            <div className="mb-3 lg:mb-4 flex items-center justify-between shrink-0">
               <div>
-                <h1 className="text-3xl font-black text-slate-800 tracking-tight">
+                <h1 className="text-2xl lg:text-3xl font-black text-slate-800 tracking-tight">
                   Chat Instruktur
                 </h1>
-                <p className="text-slate-500 font-bold text-sm mt-1">
+                <p className="text-slate-500 font-bold text-xs lg:text-sm mt-0.5 lg:mt-1">
                   Berkonsultasi langsung dengan instruktur pilihan Anda
                 </p>
               </div>
@@ -621,36 +621,36 @@ const ChatPage = () => {
             </div>
 
             {/* Chat Container - Kartun Style */}
-            <div className="rounded-[2.5rem] border-4 border-slate-200 bg-white shadow-[0_8px_0_0_#cbd5e1] overflow-hidden flex h-[calc(100vh-220px)] min-h-[500px]">
+            <div className="rounded-2xl lg:rounded-[2.5rem] border-3 lg:border-4 border-slate-200 bg-white shadow-[0_4px_0_0_#cbd5e1] lg:shadow-[0_8px_0_0_#cbd5e1] overflow-hidden flex flex-1 min-h-0">
               
               {/* Sidebar - Conversation List */}
               <div
                 className={`${
                   isMobileViewingChat ? "hidden" : "flex"
-                } lg:flex flex-col w-full lg:w-80 xl:w-96 border-r-4 border-slate-100 bg-slate-50/30`}
+                } lg:flex flex-col w-full lg:w-64 xl:w-80 border-r-3 lg:border-r-4 border-slate-100 bg-slate-50/30 min-h-0`}
               >
                 {/* Search & New Chat */}
-                <div className="p-5 border-b-2 border-slate-100 space-y-4">
+                <div className="p-3 lg:p-4 border-b-2 border-slate-100 space-y-3 shrink-0">
                   <div className="relative group">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-emerald-500 transition-colors" />
+                    <Search className="absolute left-3 lg:left-4 top-1/2 -translate-y-1/2 h-4 w-4 lg:h-5 lg:w-5 text-slate-400 group-focus-within:text-emerald-500 transition-colors" />
                     <Input
                       placeholder="Cari percakapan..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-12 bg-white border-2 border-slate-200 rounded-2xl h-12 focus:border-emerald-400 focus:shadow-[0_0_0_2px_#34d399] transition-all"
+                      className="pl-9 lg:pl-10 bg-white border-2 border-slate-200 rounded-xl lg:rounded-2xl h-10 lg:h-11 text-sm focus:border-emerald-400 focus:shadow-[0_0_0_2px_#34d399] transition-all"
                     />
                   </div>
                   <button
                     onClick={() => setShowNewChatModal(true)}
-                    className="w-full bg-emerald-400 hover:bg-emerald-500 text-white font-black rounded-2xl h-12 border-b-4 border-emerald-600 active:border-b-0 active:translate-y-1 transition-all"
+                    className="w-full bg-emerald-400 hover:bg-emerald-500 text-white font-black rounded-xl lg:rounded-2xl h-10 lg:h-11 border-b-3 lg:border-b-4 border-emerald-600 active:border-b-0 active:translate-y-1 transition-all text-sm flex items-center justify-center gap-1.5"
                   >
-                    <UserPlus className="h-5 w-5 mr-2" strokeWidth={3} />
+                    <MessageSquarePlus className="h-4 w-4 lg:h-5 lg:w-5" strokeWidth={3} />
                     Chat Baru
                   </button>
                 </div>
 
                 {/* Conversations List */}
-                <div className="flex-1 overflow-y-auto p-3 space-y-2">
+                <div className="flex-1 overflow-y-auto p-2 lg:p-3 space-y-2 min-h-0">
                   {filteredConversations.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full p-6 text-center">
                       <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mb-4 border-2 border-slate-200">
@@ -724,12 +724,12 @@ const ChatPage = () => {
               <div
                 className={`${
                   isMobileViewingChat ? "flex" : "hidden"
-                } lg:flex flex-col flex-1 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] bg-repeat`}
+                } lg:flex flex-col flex-1 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] bg-repeat min-h-0`}
               >
                 {selectedConversation ? (
                   <>
                     {/* Chat Header */}
-                    <div className="flex items-center justify-between border-b-2 border-slate-100 px-6 py-4 bg-white/90 backdrop-blur-md z-20">
+                    <div className="flex items-center justify-between border-b-2 border-slate-100 px-3 lg:px-6 py-3 lg:py-4 bg-white/90 backdrop-blur-md z-20 shrink-0">
                       <div className="flex items-center gap-4">
                         <button
                           onClick={() => setIsMobileViewingChat(false)}
@@ -783,7 +783,7 @@ const ChatPage = () => {
                     {/* Messages Area */}
                     <div
                       ref={messagesRef}
-                      className="flex-1 overflow-y-auto p-6 space-y-6"
+                      className="flex-1 overflow-y-auto px-3 lg:px-6 py-4 lg:py-6 space-y-4 lg:space-y-6 min-h-0"
                     >
                       {messagesLoading ? (
                         <div className="flex items-center justify-center h-full">
@@ -965,8 +965,8 @@ const ChatPage = () => {
                     </div>
 
                     {/* Message Input - Floating Style */}
-                    <div className="p-5 bg-white/80 backdrop-blur-sm relative z-20">
-                      <div className="bg-white rounded-4xl border-2 border-slate-200 shadow-lg p-2 flex items-end gap-2 focus-within:border-emerald-400 focus-within:shadow-[0_0_0_3px_rgba(52,211,153,0.2)] transition-all">
+                    <div className="p-3 lg:p-4 bg-white/80 backdrop-blur-sm relative z-20 shrink-0">
+                      <div className="bg-white rounded-2xl lg:rounded-4xl border-2 border-slate-200 shadow-lg p-1.5 lg:p-2 flex items-end gap-2 focus-within:border-emerald-400 focus-within:shadow-[0_0_0_3px_rgba(52,211,153,0.2)] transition-all">
                         <input
                           ref={fileInputRef}
                           type="file"
@@ -976,7 +976,7 @@ const ChatPage = () => {
                         />
                         <button
                           type="button"
-                          className="p-3 text-slate-400 hover:text-emerald-500 hover:bg-emerald-50 rounded-full transition-all disabled:opacity-50"
+                          className="p-2 lg:p-3 text-slate-400 hover:text-emerald-500 hover:bg-emerald-50 rounded-full transition-all disabled:opacity-50 shrink-0"
                           onClick={() => fileInputRef.current?.click()}
                           disabled={uploadingFile}
                         >
@@ -985,7 +985,7 @@ const ChatPage = () => {
                               <Loading size="sm" />
                             </div>
                           ) : (
-                            <Paperclip className="h-6 w-6" strokeWidth={2.5} />
+                            <Paperclip className="h-5 w-5 lg:h-6 lg:w-6" strokeWidth={2.5} />
                           )}
                         </button>
                         
@@ -997,16 +997,16 @@ const ChatPage = () => {
                             handleTyping();
                           }}
                           onKeyDown={handleKeyDown}
-                          className="flex-1 min-h-12 max-h-32 border-0 focus:ring-0 shadow-none resize-none py-3 text-slate-700 font-medium placeholder:text-slate-400 bg-transparent"
+                          className="flex-1 min-h-10 lg:min-h-12 max-h-28 lg:max-h-32 border-0 focus:ring-0 shadow-none resize-none py-2 lg:py-3 text-sm lg:text-base text-slate-700 font-medium placeholder:text-slate-400 bg-transparent"
                           rows={1}
                         />
                         
                         <button
                           onClick={handleSendMessage}
                           disabled={!messageDraft.trim()}
-                          className="p-3 bg-linear-to-r from-emerald-400 to-teal-400 text-white rounded-full shadow-[0_4px_0_0_#059669] hover:-translate-y-1 hover:shadow-[0_6px_0_0_#059669] active:translate-y-0 active:shadow-none transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none"
+                          className="p-2 lg:p-3 bg-linear-to-r from-emerald-400 to-teal-400 text-white rounded-full shadow-[0_3px_0_0_#059669] lg:shadow-[0_4px_0_0_#059669] hover:-translate-y-1 hover:shadow-[0_5px_0_0_#059669] lg:hover:shadow-[0_6px_0_0_#059669] active:translate-y-0 active:shadow-none transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none shrink-0"
                         >
-                          <Send className="h-5 w-5" strokeWidth={3} />
+                          <Send className="h-4 w-4 lg:h-5 lg:w-5" strokeWidth={3} />
                         </button>
                       </div>
                     </div>
@@ -1025,9 +1025,9 @@ const ChatPage = () => {
                     </p>
                     <button
                       onClick={() => setShowNewChatModal(true)}
-                      className="mt-6 bg-emerald-400 hover:bg-emerald-500 text-white font-black rounded-2xl h-12 px-8 border-b-4 border-emerald-600 active:border-b-0 active:translate-y-1 transition-all"
+                      className="mt-6 bg-emerald-400 hover:bg-emerald-500 text-white font-black rounded-2xl h-12 px-8 border-b-4 border-emerald-600 active:border-b-0 active:translate-y-1 transition-all flex items-center justify-center gap-2"
                     >
-                      <UserPlus className="h-5 w-5 mr-2" strokeWidth={3} />
+                      <MessageSquarePlus className="h-5 w-5" strokeWidth={3} />
                       Mulai Chat Baru
                     </button>
                   </div>

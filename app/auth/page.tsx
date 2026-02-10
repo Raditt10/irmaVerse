@@ -2,7 +2,8 @@
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/TabsLogin"; // Pastikan path ini sesuai, atau ganti dengan Radix UI standard
+import { Tabs, TabsContent } from "@radix-ui/react-tabs";
+import { AuthTabsList } from "./_components/TabsListAuth";
 import { Loader2, Eye, EyeOff, LogIn, UserPlus, Sparkles, ArrowRight } from "lucide-react"; 
 
 // --- SUB-COMPONENT: Password Input ---
@@ -164,7 +165,7 @@ const Auth = () => {
                 {/* Header */}
                 <div className="flex flex-col items-center gap-3 mb-8">
                     <div className="w-16 h-16 flex items-center justify-center rounded-2xl">
-                        <img src="/logo.png" alt="IRMA Logo" className="w-16 h-16 object-contain" />
+                        <img src="/logo.webp" alt="IRMA Logo" className="w-16 h-16 object-contain" />
                     </div>
                     <div className="text-center">
                         <h1 className="font-black text-2xl text-slate-800 tracking-tight">IRMA Verse</h1>
@@ -173,21 +174,7 @@ const Auth = () => {
                 </div>
             
                 <Tabs defaultValue="signin" className="w-full">
-                    {/* Custom Tabs List */}
-                    <TabsList className="grid w-full grid-cols-2 gap-2 mb-8 p-1 bg-slate-100 rounded-2xl border-2 border-slate-200 h-fit w-fit mx-auto">
-                        <TabsTrigger 
-                            value="signin" 
-                            className="flex-1 rounded-xl py-2 px-4 font-bold text-sm transition-all data-[state=active]:bg-white data-[state=active]:text-teal-600 data-[state=active]:shadow-sm data-[state=inactive]:text-slate-400 hover:text-slate-600 flex items-center justify-center"
-                        >
-                            Masuk
-                        </TabsTrigger>
-                        <TabsTrigger 
-                            value="signup" 
-                            className="flex-1 rounded-xl py-2 px-4 font-bold text-sm transition-all data-[state=active]:bg-white data-[state=active]:text-teal-600 data-[state=active]:shadow-sm data-[state=inactive]:text-slate-400 hover:text-slate-600 flex items-center justify-center"
-                        >
-                            Daftar
-                        </TabsTrigger>
-                    </TabsList>
+                    <AuthTabsList />
 
                     {/* === FORM SIGN IN === */}
                     <TabsContent value="signin" className="animate-in fade-in-50 zoom-in-95 duration-300 focus-visible:outline-none">
@@ -355,7 +342,7 @@ const Auth = () => {
 
                <div className="text-center relative z-10">
                   <span className="inline-block px-3 py-1 bg-amber-100 text-amber-700 text-xs font-black uppercase tracking-wider rounded-lg mb-3">
-                    Komunitas Islami
+                    Komunitas Islami SMKN 13 Bandung
                   </span>
                   <h3 className="text-3xl font-black text-slate-800 mb-3 leading-tight">
                     Belajar Agama Jadi <br/>
@@ -368,7 +355,7 @@ const Auth = () => {
             </div>
             
             <div className="flex items-center gap-4 text-slate-400 font-bold text-sm mx-auto">
-                <span>© 2024 IRMA Verse</span>
+                <span>© 2026 Syntax13</span>
                 <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
                 <a href="#" className="hover:text-teal-600 transition-colors">Bantuan</a>
                 <span className="w-1 h-1 bg-slate-300 rounded-full"></span>

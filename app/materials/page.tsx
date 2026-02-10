@@ -11,7 +11,7 @@ import EmptyState from "@/components/ui/EmptyState";
 import CategoryFilter from "@/components/ui/CategoryFilter";
 import SearchInput from "@/components/ui/SearchInput";
 import MaterialInstructorActions from "@/components/ui/AbsensiButton";
-import MaterialUserActions from "@/components/ui/ButtonUserAbsenMaterial";
+import MaterialUserActions from "@/app/materials/_components/ButtonUserAbsenMaterial";
 import Loading from "@/components/ui/Loading";
 import SuccessDataFound from "@/components/ui/SuccessDataFound";
 import { Calendar, Clock, Plus, Sparkles } from "lucide-react";

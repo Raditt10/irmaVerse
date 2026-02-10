@@ -11,7 +11,7 @@ export default function MaterialRecapButton({ materialId }: MaterialRecapButtonP
   return (
     <button
       onClick={() => router.push(`/materials/${materialId}/recap`)}
-      className="w-full py-3 rounded-xl bg-cyan-400 text-white font-black border-2 border-cyan-600 border-b-4 hover:bg-cyan-500 active:border-b-2 active:translate-y-[2px] transition-all"
+      className="w-full py-3 rounded-xl bg-cyan-400 text-white font-black border-2 border-cyan-600 border-b-4 hover:bg-cyan-500 active:border-b-2 active:translate-y-0.5 transition-all"
     >
       Lihat Rekapan
     </button>

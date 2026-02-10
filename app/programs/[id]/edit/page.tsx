@@ -211,7 +211,7 @@ const EditProgram = () => {
             <div className="flex flex-col gap-4 lg:gap-6 mb-6 lg:mb-8">
               <button
                 onClick={() => router.back()}
-                className="self-start inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white border-2 border-slate-200 text-slate-500 font-bold hover:border-teal-400 hover:text-teal-600 hover:shadow-[0_4px_0_0_#34d399] active:border-b-2 active:translate-y-0.5 transition-alladow-[0_4px_0_0_#cbd5e1] active:translate-y-[2px] active:shadow-none transition-all"
+                className="self-start inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white border-2 border-slate-200 text-slate-500 font-bold hover:border-teal-400 hover:text-teal-600 hover:shadow-[0_4px_0_0_#34d399] active:border-b-2 active:translate-y-0.5 active:shadow-none transition-all"
               >
   <ArrowLeft className="h-5 w-5 stroke-3" />
                 Kembali
@@ -534,7 +534,7 @@ const EditProgram = () => {
                   <button
                     type="submit"
                     disabled={submitting}
-                    className="w-full py-4 rounded-2xl bg-emerald-500 hover:bg-emerald-600 disabled:bg-slate-300 disabled:border-slate-400 text-white font-black text-base border-2 border-emerald-600 border-b-4 active:border-b-2 active:translate-y-0.5 transition-allorder-b-4 hover:border-b-4 active:border-b-2 active:translate-y-[2px] transition-all flex items-center justify-center gap-3 shadow-lg hover:shadow-emerald-200"
+                    className="w-full py-4 rounded-2xl bg-emerald-500 hover:bg-emerald-600 disabled:bg-slate-300 disabled:border-slate-400 text-white font-black text-base border-2 border-emerald-600 border-b-4 hover:border-b-4 active:border-b-2 active:translate-y-0.5 transition-all flex items-center justify-center gap-3 shadow-lg hover:shadow-emerald-200"
                   >
                     {submitting ? (
                         <>

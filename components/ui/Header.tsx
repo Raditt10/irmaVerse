@@ -132,7 +132,7 @@ export default function DashboardHeader() {
             <Menu className="h-5 w-5" strokeWidth={2.5} />
           </button>
           
-          <img src="/logo.png" alt="IRMA Verse" className="h-10 w-10 object-contain" />
+          <img src="/logo.webp" alt="IRMA Verse" className="h-10 w-10 object-contain" />
           
           <div className="block">
             <h2 className="text-base sm:text-lg font-bold text-emerald-600 leading-tight">
