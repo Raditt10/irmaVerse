@@ -105,6 +105,8 @@ const InstructorChatDashboard = () => {
   const [showFilePreview, setShowFilePreview] = useState(false);
   const [filePreviewUrl, setFilePreviewUrl] = useState<string | null>(null);
   const [fileCaption, setFileCaption] = useState("");
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deletingConversation, setDeletingConversation] = useState(false);
   
   const messagesRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -501,6 +503,42 @@ const InstructorChatDashboard = () => {
     }
   };
 
+  // Delete entire conversation
+  const handleDeleteConversation = async () => {
+    if (!selectedConversationId) return;
+
+    setDeletingConversation(true);
+    try {
+      const res = await fetch(`/api/chat/conversations/${selectedConversationId}`, {
+        method: "DELETE",
+      });
+
+      if (res.ok) {
+        // Remove from conversations list
+        setConversations((prev) =>
+          prev.filter((conv) => conv.id !== selectedConversationId)
+        );
+        setSelectedConversationId(null);
+        setMessages([]);
+        setShowDeleteConfirm(false);
+        setIsMobileViewingChat(false);
+
+        // Emit socket event
+        socket?.emit("conversation:delete", {
+          conversationId: selectedConversationId,
+        });
+      } else {
+        const error = await res.json();
+        alert(error.error || "Gagal menghapus percakapan");
+      }
+    } catch (error) {
+      console.error("Error deleting conversation:", error);
+      alert("Gagal menghapus percakapan");
+    } finally {
+      setDeletingConversation(false);
+    }
+  };
+
   // Send message
   const handleSendMessage = async () => {
     const content = messageDraft.trim();
@@ -560,7 +598,7 @@ const InstructorChatDashboard = () => {
 
   if (status === "loading" || loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 flex items-center justify-center">
+      <div className="min-h-screen bg-linear-to-br from-slate-50 via-white to-slate-100 flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-emerald-500" />
       </div>
     );
@@ -572,81 +610,58 @@ const InstructorChatDashboard = () => {
 
   return (
     <div
-      className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100"
+      className="min-h-screen bg-linear-to-br from-slate-50 via-white to-slate-100"
     >
       <DashboardHeader />
-      <div className="flex flex-col lg:flex-row">
+      <div className="flex flex-col lg:flex-row h-[calc(100vh-64px)]">
         <Sidebar />
-        <main className="w-full flex-1 px-4 sm:px-6 lg:px-8 py-6 md:py-8">
-          <div className="max-w-7xl mx-auto">
+        <main className="w-full flex-1 px-3 sm:px-4 lg:px-6 py-4 lg:py-5">
+          <div className="h-full flex flex-col">
             {/* Header */}
-            <div className="mb-6">
-              <div className="flex items-center justify-between flex-wrap gap-4">
-                <div>
-                  <h1 className="text-2xl md:text-3xl font-black text-slate-800">
-                    Chat Anggota
-                  </h1>
-                  <p className="text-slate-500 text-sm mt-1">
-                    Kelola percakapan dengan peserta didik
-                  </p>
-                </div>
-                <div className="flex items-center gap-3">
-                  {/* Stats */}
-                  <div className="flex items-center gap-4 bg-white rounded-xl px-4 py-2.5 border border-slate-200 shadow-sm">
-                    <div className="flex items-center gap-2">
-                      <Users className="h-4 w-4 text-slate-500" />
-                      <span className="text-sm font-semibold text-slate-700">
-                        {conversations.length} Percakapan
-                      </span>
-                    </div>
-                    {totalUnread > 0 && (
-                      <>
-                        <div className="w-px h-4 bg-slate-200" />
-                        <div className="flex items-center gap-2">
-                          <Inbox className="h-4 w-4 text-emerald-500" />
-                          <span className="text-sm font-semibold text-emerald-600">
-                            {totalUnread} Belum dibaca
-                          </span>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                  {/* Connection Status */}
-                  {isConnected ? (
-                    <span className="flex items-center gap-1.5 text-xs text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-200">
-                      <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-                      Terhubung
-                    </span>
-                  ) : (
-                    <span className="flex items-center gap-1.5 text-xs text-slate-500 bg-slate-100 px-3 py-1.5 rounded-full">
-                      <span className="w-2 h-2 bg-slate-400 rounded-full" />
-                      Menghubungkan...
-                    </span>
-                  )}
-                </div>
+            <div className="mb-3 lg:mb-4 flex items-center justify-between shrink-0">
+              <div>
+                <h1 className="text-2xl lg:text-3xl font-black text-slate-800 tracking-tight">
+                  Chat Anggota
+                </h1>
+                <p className="text-slate-500 font-bold text-xs lg:text-sm mt-0.5 lg:mt-1">
+                  Kelola percakapan dengan peserta didik
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                {isConnected ? (
+                  <span className="flex items-center gap-2 text-xs font-black text-emerald-600 bg-emerald-100 px-3 lg:px-4 py-1.5 lg:py-2 rounded-full border-2 border-emerald-200">
+                    <span className="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-pulse border border-white" />
+                    Terhubung
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-2 text-xs font-black text-slate-500 bg-slate-100 px-3 lg:px-4 py-1.5 lg:py-2 rounded-full border-2 border-slate-200">
+                    <span className="w-2.5 h-2.5 bg-slate-400 rounded-full" />
+                    Menghubungkan...
+                  </span>
+                )}
               </div>
             </div>
 
             {/* Chat Container */}
-            <div className="rounded-2xl border bg-white shadow-lg overflow-hidden flex h-[calc(100vh-220px)] min-h-[500px]">
+            <div className="rounded-2xl lg:rounded-3xl border-3 lg:border-4 border-slate-200 bg-white shadow-[0_4px_0_0_#cbd5e1] lg:shadow-[0_8px_0_0_#cbd5e1] overflow-hidden flex flex-1 min-h-0">
               {/* Sidebar - Conversation List */}
               <div
                 className={`${
                   isMobileViewingChat ? "hidden" : "flex"
-                } lg:flex flex-col w-full lg:w-80 xl:w-96 border-r border-slate-200`}
+                } lg:flex flex-col w-full lg:w-64 xl:w-80 border-r-3 lg:border-r-4 border-slate-100 bg-slate-50/30 min-h-0`}
               >
                 {/* Search */}
-                <div className="p-4 border-b border-slate-100">
+                <div className="p-3 lg:p-4 border-b-2 border-slate-100 shrink-0">
                   <SearchInput
                     placeholder="Cari peserta..."
                     value={searchTerm}
                     onChange={setSearchTerm}
-                    className="w-full"
+                    className="w-full rounded-xl lg:rounded-2xl border-2"
                   />
                 </div>
 
                 {/* Conversations List */}
-                <div className="flex-1 overflow-y-auto">
+                <div className="flex-1 overflow-y-auto p-2 lg:p-3 space-y-2 min-h-0">
                   {filteredConversations.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full p-6 text-center">
                       <Inbox className="h-12 w-12 text-slate-300 mb-3" />
@@ -665,14 +680,14 @@ const InstructorChatDashboard = () => {
                           setSelectedConversationId(conv.id);
                           setIsMobileViewingChat(true);
                         }}
-                        className={`w-full flex items-start gap-3 p-4 hover:bg-slate-50 transition-colors border-b border-slate-100 ${
+                        className={`w-full flex items-start gap-3 p-3 lg:p-4 rounded-2xl lg:rounded-3xl transition-all border-2 ${
                           selectedConversationId === conv.id
-                            ? "bg-emerald-50 border-l-4 border-l-emerald-500"
-                            : ""
+                            ? "bg-white border-emerald-400 shadow-[0_2px_0_0_#34d399] lg:shadow-[0_4px_0_0_#34d399] -translate-y-1 z-10"
+                            : "bg-white border-transparent hover:border-slate-200 hover:shadow-sm"
                         }`}
                       >
                         <div className="relative">
-                          <Avatar className="h-12 w-12">
+                          <Avatar className="h-12 w-12 border-2 border-slate-100 shadow-sm">
                             <AvatarImage
                               src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${conv.participant.name}`}
                               alt={conv.participant.name || ""}
@@ -682,16 +697,16 @@ const InstructorChatDashboard = () => {
                             </AvatarFallback>
                           </Avatar>
                           {isParticipantOnline(conv.participant.id) && (
-                            <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-500 border-2 border-white rounded-full" />
+                            <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-400 border-2 border-white rounded-full shadow-sm animate-pulse" />
                           )}
                         </div>
                         <div className="flex-1 min-w-0 text-left">
                           <div className="flex items-center justify-between">
-                            <p className="font-semibold text-slate-800 truncate">
+                            <p className="font-bold text-slate-800 truncate text-sm">
                               {conv.participant.name}
                             </p>
                             {conv.lastMessage && (
-                              <span className="text-xs text-slate-400">
+                              <span className="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full shrink-0 ml-2">
                                 {formatRelativeTime(conv.lastMessage.createdAt)}
                               </span>
                             )}
@@ -702,13 +717,13 @@ const InstructorChatDashboard = () => {
                               : "⚪ Offline"}
                           </p>
                           {conv.lastMessage && (
-                            <p className="text-sm text-slate-600 truncate mt-1">
+                            <p className="text-xs text-slate-500 truncate mt-1 font-medium">
                               {conv.lastMessage.content}
                             </p>
                           )}
                         </div>
                         {conv.unreadCount > 0 && (
-                          <span className="shrink-0 w-5 h-5 bg-emerald-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
+                          <span className="shrink-0 w-6 h-6 bg-red-500 text-white text-[10px] font-black rounded-full flex items-center justify-center border-2 border-white shadow-md">
                             {conv.unreadCount}
                           </span>
                         )}
@@ -722,12 +737,12 @@ const InstructorChatDashboard = () => {
               <div
                 className={`${
                   isMobileViewingChat ? "flex" : "hidden"
-                } lg:flex flex-col flex-1`}
+                } lg:flex flex-col flex-1 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] bg-repeat min-h-0`}
               >
                 {selectedConversation ? (
                   <>
                     {/* Chat Header */}
-                    <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3 bg-white">
+                    <div className="flex items-center justify-between border-b-2 border-slate-100 px-3 lg:px-6 py-3 lg:py-4 bg-white/90 backdrop-blur-md z-20 shrink-0">
                       <div className="flex items-center gap-3">
                         <button
                           onClick={() => setIsMobileViewingChat(false)}
@@ -736,7 +751,7 @@ const InstructorChatDashboard = () => {
                           <ArrowLeft className="h-5 w-5" />
                         </button>
                         <div className="relative">
-                          <Avatar className="h-10 w-10">
+                          <Avatar className="h-11 w-11 border-2 border-white shadow-md ring-2 ring-slate-100">
                             <AvatarImage
                               src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${selectedConversation.participant.name}`}
                               alt={selectedConversation.participant.name || ""}
@@ -748,14 +763,14 @@ const InstructorChatDashboard = () => {
                             </AvatarFallback>
                           </Avatar>
                           {isParticipantOnline(selectedConversation.participant.id) && (
-                            <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full" />
+                            <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-400 border-2 border-white rounded-full animate-bounce" />
                           )}
                         </div>
                         <div>
-                          <p className="font-semibold text-slate-800">
+                          <p className="font-black text-slate-800 text-lg leading-tight">
                             {selectedConversation.participant.name}
                           </p>
-                          <p className="text-xs text-slate-500">
+                          <p className="text-xs font-bold text-slate-500 flex items-center gap-1">
                             {isParticipantOnline(selectedConversation.participant.id) ? (
                               "Online"
                             ) : (
@@ -773,7 +788,9 @@ const InstructorChatDashboard = () => {
                           </p>
                         </div>
                       </div>
-                      <button className="p-2 hover:bg-slate-100 rounded-lg transition-colors">
+                      <button 
+                        onClick={() => setShowDeleteConfirm(true)}
+                        className="p-2 hover:bg-slate-100 rounded-lg transition-colors">
                         <MoreHorizontal className="h-5 w-5 text-slate-500" />
                       </button>
                     </div>
@@ -781,7 +798,7 @@ const InstructorChatDashboard = () => {
                     {/* Messages Area */}
                     <div
                       ref={messagesRef}
-                      className="flex-1 overflow-y-auto p-4 space-y-4 bg-gradient-to-b from-slate-50/50 to-white"
+                      className="flex-1 overflow-y-auto px-3 lg:px-6 py-4 lg:py-6 space-y-4 lg:space-y-6 min-h-0"
                     >
                       {messagesLoading ? (
                         <div className="flex items-center justify-center h-full">
@@ -807,8 +824,8 @@ const InstructorChatDashboard = () => {
                             return (
                               <React.Fragment key={message.id}>
                                 {showDate && (
-                                  <div className="flex items-center justify-center my-4">
-                                    <span className="text-xs text-slate-400 bg-white px-3 py-1 rounded-full border border-slate-200">
+                                  <div className="flex items-center justify-center my-4 lg:my-6">
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 bg-slate-100 px-3 lg:px-4 py-1 lg:py-1.5 rounded-full border-2 border-slate-200">
                                       {formatMessageDate(message.createdAt)}
                                     </span>
                                   </div>
@@ -828,34 +845,34 @@ const InstructorChatDashboard = () => {
                                 >
                                   <div className="flex items-end gap-2">
                                     {isCurrentUser && canEditOrDelete(message.createdAt) && !message.isDeleted && (
-                                      <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                                      <div className="opacity-0 group-hover:opacity-100 transition-opacity flex flex-col gap-1 mb-2">
                                         <button
-                                          className="h-7 w-7 text-slate-400 hover:text-emerald-600 p-1 rounded-md hover:bg-slate-100 transition-colors"
+                                          className="p-1.5 bg-white border border-slate-200 rounded-full hover:bg-emerald-50 hover:text-emerald-500 shadow-sm transition-colors"
                                           onClick={() => {
                                             setEditingMessageId(message.id);
                                             setEditingContent(message.content);
                                           }}
                                         >
-                                          <Edit2 className="h-3.5 w-3.5" />
+                                          <Edit2 className="h-3 w-3" />
                                         </button>
                                         <button
-                                          className="h-7 w-7 text-slate-400 hover:text-red-600 p-1 rounded-md hover:bg-slate-100 transition-colors"
+                                          className="p-1.5 bg-white border border-slate-200 rounded-full hover:bg-red-50 hover:text-red-500 shadow-sm transition-colors"
                                           onClick={() => handleDeleteMessage(message.id)}
                                         >
-                                          <Trash2 className="h-3.5 w-3.5" />
+                                          <Trash2 className="h-3 w-3" />
                                         </button>
                                       </div>
                                     )}
                                     
                                     <div
-                                      className={`max-w-[80%] sm:max-w-md rounded-2xl px-4 py-3 ${
+                                      className={`relative px-4 lg:px-5 py-3 lg:py-4 shadow-sm border-2 max-w-[85%] sm:max-w-md ${
                                         isCurrentUser
                                           ? message.isDeleted
-                                            ? "bg-slate-300 text-slate-600 italic"
-                                            : "bg-gradient-to-r from-emerald-500 to-emerald-600 text-white"
+                                            ? "bg-slate-100 border-slate-300 text-slate-500 italic rounded-2xl lg:rounded-3xl"
+                                            : "bg-linear-to-br from-emerald-400 to-teal-400 border-emerald-600 text-white rounded-3xl lg:rounded-4xl rounded-tr-none shadow-[2px_4px_0_0_#059669]"
                                           : message.isDeleted
-                                          ? "bg-slate-100 border border-slate-200 text-slate-500 italic"
-                                          : "bg-white border border-slate-200 text-slate-800"
+                                          ? "bg-slate-50 border-slate-200 text-slate-400 italic rounded-2xl lg:rounded-3xl"
+                                          : "bg-white border-slate-200 text-slate-800 rounded-3xl lg:rounded-4xl rounded-tl-none shadow-[2px_4px_0_0_#e2e8f0]"
                                       }`}
                                     >
                                       {editingMessageId === message.id ? (
@@ -963,7 +980,7 @@ const InstructorChatDashboard = () => {
                     </div>
 
                     {/* Message Input */}
-                    <div className="border-t border-slate-200 p-4 bg-white">
+                    <div className="p-3 lg:p-4 bg-white/80 backdrop-blur-sm relative z-20 shrink-0">
                       <input
                         ref={fileInputRef}
                         type="file"
@@ -971,57 +988,54 @@ const InstructorChatDashboard = () => {
                         onChange={handleFileSelect}
                         accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt"
                       />
-                      <form
-                        onSubmit={(e) => {
-                          e.preventDefault();
-                          handleSendMessage();
-                        }}
-                        className="flex items-end gap-2"
-                      >
+                      <div className="bg-white rounded-2xl lg:rounded-4xl border-2 border-slate-200 shadow-lg p-1.5 lg:p-2 flex items-end gap-2 focus-within:border-emerald-400 focus-within:shadow-[0_0_0_3px_rgba(52,211,153,0.2)] transition-all">
                         <button
                           type="button"
-                          className="shrink-0 p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="p-2 lg:p-3 text-slate-400 hover:text-emerald-500 hover:bg-emerald-50 rounded-full transition-all disabled:opacity-50 shrink-0"
                           onClick={() => fileInputRef.current?.click()}
                           disabled={uploadingFile}
                         >
                           {uploadingFile ? (
-                            <Loader2 className="h-5 w-5 animate-spin" />
+                            <div className="flex items-center justify-center">
+                              <Loader2 className="h-5 w-5 animate-spin" />
+                            </div>
                           ) : (
-                            <Paperclip className="h-5 w-5" />
+                            <Paperclip className="h-5 w-5 lg:h-6 lg:w-6" strokeWidth={2.5} />
                           )}
                         </button>
+                        
                         <Textarea
-                          placeholder="Tulis pesan..."
+                          placeholder="Ketik pesan..."
                           value={messageDraft}
                           onChange={(e) => {
                             setMessageDraft(e.target.value);
                             handleTyping();
                           }}
                           onKeyDown={handleKeyDown}
-                          className="flex-1 min-h-[44px] max-h-32 resize-none rounded-xl border-slate-200 focus:border-emerald-300 focus:ring-emerald-200"
+                          className="flex-1 min-h-10 lg:min-h-12 max-h-28 lg:max-h-32 border-0 focus:ring-0 shadow-none resize-none py-2 lg:py-3 text-sm lg:text-base text-slate-700 font-medium placeholder:text-slate-400 bg-transparent"
                           rows={1}
                         />
+                        
                         <button
-                          type="submit"
+                          onClick={handleSendMessage}
                           disabled={!messageDraft.trim()}
-                          className="shrink-0 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl h-11 px-4 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                          className="p-2 lg:p-3 bg-linear-to-r from-emerald-400 to-teal-400 text-white rounded-full shadow-[0_3px_0_0_#059669] lg:shadow-[0_4px_0_0_#059669] hover:-translate-y-1 hover:shadow-[0_5px_0_0_#059669] lg:hover:shadow-[0_6px_0_0_#059669] active:translate-y-0 active:shadow-none transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none shrink-0"
                         >
-                          <Send className="h-5 w-5" />
+                          <Send className="h-4 w-4 lg:h-5 lg:w-5" strokeWidth={3} />
                         </button>
-                      </form>
+                      </div>
                     </div>
                   </>
                 ) : (
                   <div className="flex flex-1 flex-col items-center justify-center p-6 text-center">
-                    <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mb-4">
-                      <Inbox className="h-10 w-10 text-emerald-500" />
+                    <div className="w-24 h-24 bg-emerald-50 rounded-4xl flex items-center justify-center mb-6 border-4 border-emerald-100 shadow-lg">
+                      <MessageCircle className="h-12 w-12 text-emerald-400" />
                     </div>
-                    <h2 className="text-xl font-semibold text-slate-800 mb-2">
+                    <h2 className="text-2xl font-black text-slate-800 mb-2">
                       Pilih Percakapan
                     </h2>
-                    <p className="text-slate-500 text-sm max-w-sm">
-                      Pilih percakapan dari daftar di sebelah kiri untuk memulai
-                      membalas pesan dari peserta didik
+                    <p className="text-slate-500 font-medium max-w-sm">
+                      Pilih percakapan dari daftar di sebelah kiri atau tunggu peserta didik memulai chat
                     </p>
                   </div>
                 )}
@@ -1033,72 +1047,119 @@ const InstructorChatDashboard = () => {
 
       {/* File Preview Modal */}
       {showFilePreview && selectedFile && filePreviewUrl && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
-            <div className="p-4 border-b border-slate-200 flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-slate-800">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-4xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col border-4 border-white shadow-2xl transform scale-100 animate-in fade-in zoom-in duration-200">
+            <div className="p-5 border-b-2 border-slate-100 flex items-center justify-between bg-slate-50">
+              <h3 className="text-lg font-black text-slate-800">
                 Preview File
               </h3>
               <button
                 onClick={handleCancelFilePreview}
-                className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+                className="p-2 hover:bg-slate-200 rounded-xl transition-colors"
                 disabled={uploadingFile}
               >
-                <X className="h-5 w-5 text-slate-500" />
+                <X className="h-6 w-6 text-slate-500" strokeWidth={3} />
               </button>
             </div>
             
-            <div className="flex-1 overflow-y-auto p-4">
+            <div className="flex-1 overflow-y-auto p-6 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]">
               {isImageFile(selectedFile.name) ? (
-                <img
-                  src={filePreviewUrl}
-                  alt="Preview"
-                  className="w-full h-auto rounded-lg"
-                />
+                <div className="p-2 bg-white rounded-2xl shadow-md">
+                  <img
+                    src={filePreviewUrl}
+                    alt="Preview"
+                    className="w-full h-auto rounded-xl border border-slate-200"
+                  />
+                </div>
               ) : (
-                <div className="flex flex-col items-center justify-center p-8 bg-slate-50 rounded-lg">
-                  <File className="h-16 w-16 text-slate-400 mb-4" />
-                  <p className="text-slate-700 font-medium">{selectedFile.name}</p>
-                  <p className="text-slate-500 text-sm mt-1">
+                <div className="flex flex-col items-center justify-center p-10 bg-white border-4 border-slate-200 border-dashed rounded-3xl">
+                  <File className="h-20 w-20 text-emerald-400 mb-4" />
+                  <p className="text-slate-800 font-bold text-lg">{selectedFile.name}</p>
+                  <p className="text-slate-500 font-medium bg-slate-100 px-3 py-1 rounded-full mt-2">
                     {formatFileSize(selectedFile.size)}
                   </p>
                 </div>
               )}
             </div>
 
-            <div className="p-4 border-t border-slate-200">
+            <div className="p-5 border-t-2 border-slate-100 bg-white">
               <Textarea
                 placeholder="Tambahkan caption (opsional)..."
                 value={fileCaption}
                 onChange={(e) => setFileCaption(e.target.value)}
-                className="mb-3 rounded-xl border-slate-200 focus:border-emerald-300 focus:ring-emerald-200"
+                className="mb-4 rounded-2xl border-2 border-slate-200 focus:border-emerald-400 focus:shadow-[0_0_0_2px_#34d399] resize-none"
                 rows={2}
                 disabled={uploadingFile}
               />
-              <div className="flex gap-2">
+              <div className="flex gap-3">
                 <button
                   onClick={handleSendFile}
                   disabled={uploadingFile}
-                  className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl px-4 py-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="flex-1 bg-emerald-400 hover:bg-emerald-500 text-white font-black rounded-xl h-12 border-b-4 border-emerald-600 active:border-b-0 active:translate-y-1 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {uploadingFile ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin" />
-                      Mengirim...
+                      <span>Mengirim...</span>
                     </>
                   ) : (
                     <>
-                      <Send className="h-4 w-4" />
-                      Kirim
+                      <Send className="h-5 w-5" strokeWidth={3} />
+                      <span>Kirim</span>
                     </>
                   )}
                 </button>
                 <button
                   onClick={handleCancelFilePreview}
                   disabled={uploadingFile}
-                  className="px-4 py-2 rounded-xl border border-slate-300 hover:bg-slate-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-6 py-3 rounded-xl border-2 border-slate-200 hover:bg-slate-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-bold"
                 >
                   Batal
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Conversation Confirmation Dialog */}
+      {showDeleteConfirm && selectedConversation && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-4xl w-full max-w-md shadow-2xl border-4 border-white transform scale-100 animate-in fade-in zoom-in duration-200">
+            <div className="p-6 border-b-2 border-slate-100">
+              <h3 className="text-xl font-black text-slate-800">
+                Hapus Percakapan
+              </h3>
+              <p className="text-slate-500 font-medium text-sm mt-1">
+                Yakin ingin menghapus percakapan dengan {selectedConversation.participant.name}?
+              </p>
+            </div>
+
+            <div className="p-6 bg-slate-50/50">
+              <p className="text-sm text-slate-600 mb-4">
+                Semua pesan dalam percakapan ini akan dihapus secara permanen dan tidak dapat dipulihkan.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowDeleteConfirm(false)}
+                  disabled={deletingConversation}
+                  className="flex-1 px-4 py-3 rounded-xl border-2 border-slate-200 hover:bg-slate-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-bold"
+                >
+                  Batal
+                </button>
+                <button
+                  onClick={handleDeleteConversation}
+                  disabled={deletingConversation}
+                  className="flex-1 bg-red-500 hover:bg-red-600 text-white font-black rounded-xl h-12 border-b-4 border-red-700 active:border-b-0 active:translate-y-1 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {deletingConversation ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span>Menghapus...</span>
+                    </>
+                  ) : (
+                    <span>Hapus Percakapan</span>
+                  )}
                 </button>
               </div>
             </div>

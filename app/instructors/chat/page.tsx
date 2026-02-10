@@ -32,14 +32,16 @@ import {
   Check,
   CheckCheck,
   File,
+  Loader2,
 } from "lucide-react";
 
-// ... (Interface definitions remain the same)
+// --- INTERFACES ---
 interface Instructor {
   id: string;
   name: string;
   email: string;
   bidangKeahlian?: string;
+  pengalaman?: string;
   hasConversation?: boolean;
   avatar?: string;
 }
@@ -81,9 +83,6 @@ interface ChatMessage {
 }
 
 const ChatPage = () => {
-  // ... (All logic, state, and useEffect hooks remain exactly the same)
-  // ... (Keep existing logic code here until the return statement)
-  
   const router = useRouter();
   const { data: session, status } = useSession({
     required: true,
@@ -121,6 +120,8 @@ const ChatPage = () => {
   const [showFilePreview, setShowFilePreview] = useState(false);
   const [filePreviewUrl, setFilePreviewUrl] = useState<string | null>(null);
   const [fileCaption, setFileCaption] = useState("");
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deletingConversation, setDeletingConversation] = useState(false);
   
   const messagesRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -128,10 +129,7 @@ const ChatPage = () => {
   const messageRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const searchParams = useSearchParams();
 
-  // ... (Insert all the existing useEffects and handlers here unchanged)
-  // To save space, assuming logic is identical to your provided code
-  // Only the JSX return is modified below.
-
+  // --- DATA FETCHING & SOCKETS (Logika sama persis) ---
   const fetchConversations = useCallback(async () => {
     try {
       const res = await fetch("/api/chat/conversations");
@@ -186,6 +184,7 @@ const ChatPage = () => {
       );
       if (existingConv) {
         setSelectedConversationId(existingConv.id);
+        setIsMobileViewingChat(true);
       }
     }
   }, [searchParams, conversations]);
@@ -352,13 +351,10 @@ const ChatPage = () => {
 
   const handleTyping = useCallback(() => {
     if (!selectedConversationId) return;
-    
     startTyping(selectedConversationId);
-    
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
     }
-    
     typingTimeoutRef.current = setTimeout(() => {
       stopTyping(selectedConversationId);
     }, 2000);
@@ -367,40 +363,31 @@ const ChatPage = () => {
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     if (file.size > 10 * 1024 * 1024) {
       alert("File terlalu besar! Maksimal 10MB");
       if (fileInputRef.current) fileInputRef.current.value = "";
       return;
     }
-
     setSelectedFile(file);
     setFilePreviewUrl(URL.createObjectURL(file));
     setFileCaption(messageDraft);
     setShowFilePreview(true);
-    
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const handleSendFile = async () => {
     if (!selectedFile || !selectedConversation || !session?.user) return;
-
     setUploadingFile(true);
     setShowFilePreview(false);
-
     try {
       const formData = new FormData();
       formData.append("file", selectedFile);
-
       const uploadRes = await fetch("/api/upload", {
         method: "POST",
         body: formData,
       });
-
       if (!uploadRes.ok) throw new Error("Upload failed");
-
       const { url } = await uploadRes.json();
-
       const res = await fetch(
         `/api/chat/conversations/${selectedConversationId}/messages`,
         {
@@ -413,10 +400,8 @@ const ChatPage = () => {
           }),
         }
       );
-
       if (res.ok) {
         const newMessage = await res.json();
-
         socket?.emit("message:send", {
           conversationId: selectedConversationId,
           senderId: session.user.id,
@@ -428,7 +413,6 @@ const ChatPage = () => {
           attachmentUrl: url,
           attachmentType: newMessage.attachmentType,
         });
-
         setFileCaption("");
         setSelectedFile(null);
         setFilePreviewUrl(null);
@@ -454,24 +438,20 @@ const ChatPage = () => {
 
   const handleEditMessage = async (messageId: string) => {
     if (!editingContent.trim()) return;
-
     try {
       const res = await fetch(`/api/chat/messages/${messageId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ content: editingContent.trim() }),
       });
-
       if (res.ok) {
         const updatedMessage = await res.json();
-
         socket?.emit("message:edit", {
           messageId,
           conversationId: selectedConversationId,
           newContent: updatedMessage.content,
           editedAt: updatedMessage.editedAt,
         });
-
         setEditingMessageId(null);
         setEditingContent("");
       } else {
@@ -486,15 +466,12 @@ const ChatPage = () => {
 
   const handleDeleteMessage = async (messageId: string) => {
     if (!confirm("Hapus pesan ini?")) return;
-
     try {
       const res = await fetch(`/api/chat/messages/${messageId}`, {
         method: "DELETE",
       });
-
       if (res.ok) {
         const deletedMessage = await res.json();
-
         socket?.emit("message:delete", {
           messageId,
           conversationId: selectedConversationId,
@@ -510,14 +487,42 @@ const ChatPage = () => {
     }
   };
 
+  const handleDeleteConversation = async () => {
+    if (!selectedConversationId) return;
+    setDeletingConversation(true);
+    try {
+      const res = await fetch(`/api/chat/conversations/${selectedConversationId}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        setConversations((prev) =>
+          prev.filter((conv) => conv.id !== selectedConversationId)
+        );
+        setSelectedConversationId(null);
+        setMessages([]);
+        setShowDeleteConfirm(false);
+        setIsMobileViewingChat(false);
+        socket?.emit("conversation:delete", {
+          conversationId: selectedConversationId,
+        });
+      } else {
+        const error = await res.json();
+        alert(error.error || "Gagal menghapus percakapan");
+      }
+    } catch (error) {
+      console.error("Error deleting conversation:", error);
+      alert("Gagal menghapus percakapan");
+    } finally {
+      setDeletingConversation(false);
+    }
+  };
+
   const handleSendMessage = async () => {
     const content = messageDraft.trim();
     if (!content || !selectedConversation || !session?.user) return;
-
     if (selectedConversationId) {
       stopTyping(selectedConversationId);
     }
-
     try {
       const res = await fetch(
         `/api/chat/conversations/${selectedConversationId}/messages`,
@@ -527,10 +532,8 @@ const ChatPage = () => {
           body: JSON.stringify({ content }),
         }
       );
-
       if (res.ok) {
         const newMessage = await res.json();
-        
         socket?.emit("message:send", {
           conversationId: selectedConversationId,
           senderId: session.user.id,
@@ -540,7 +543,6 @@ const ChatPage = () => {
           senderName: session.user.name,
           createdAt: newMessage.createdAt,
         });
-
         setMessageDraft("");
         fetchConversations();
       }
@@ -563,7 +565,6 @@ const ChatPage = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ instructorId }),
       });
-
       if (res.ok) {
         const conv = await res.json();
         await fetchConversations();
@@ -587,527 +588,364 @@ const ChatPage = () => {
   }
 
   return (
-    <div
-      className="min-h-screen bg-[#FDFBF7]"
-    >
-      <DashboardHeader />
-      <div className="flex flex-col lg:flex-row h-[calc(100vh-64px)]">
-        <Sidebar />
-        <main className="w-full flex-1 px-3 sm:px-4 lg:px-6 py-4 lg:py-5">
-          <div className="h-full flex flex-col">
-            {/* Header */}
-            <div className="mb-3 lg:mb-4 flex items-center justify-between shrink-0">
-              <div>
-                <h1 className="text-2xl lg:text-3xl font-black text-slate-800 tracking-tight">
-                  Chat Instruktur
-                </h1>
-                <p className="text-slate-500 font-bold text-xs lg:text-sm mt-0.5 lg:mt-1">
-                  Berkonsultasi langsung dengan instruktur pilihan Anda
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                {isConnected ? (
-                  <span className="flex items-center gap-2 text-xs font-black text-emerald-600 bg-emerald-100 px-4 py-2 rounded-full border-2 border-emerald-200 shadow-sm transform rotate-2">
-                    <span className="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-pulse border border-white" />
-                    Terhubung
-                  </span>
-                ) : (
-                  <span className="flex items-center gap-2 text-xs font-black text-slate-500 bg-slate-100 px-4 py-2 rounded-full border-2 border-slate-200">
-                    <span className="w-2.5 h-2.5 bg-slate-400 rounded-full" />
-                    Menghubungkan...
-                  </span>
-                )}
-              </div>
-            </div>
-
-            {/* Chat Container - Kartun Style */}
-            <div className="rounded-2xl lg:rounded-[2.5rem] border-3 lg:border-4 border-slate-200 bg-white shadow-[0_4px_0_0_#cbd5e1] lg:shadow-[0_8px_0_0_#cbd5e1] overflow-hidden flex flex-1 min-h-0">
-              
-              {/* Sidebar - Conversation List */}
-              <div
-                className={`${
-                  isMobileViewingChat ? "hidden" : "flex"
-                } lg:flex flex-col w-full lg:w-64 xl:w-80 border-r-3 lg:border-r-4 border-slate-100 bg-slate-50/30 min-h-0`}
-              >
-                {/* Search & New Chat */}
-                <div className="p-3 lg:p-4 border-b-2 border-slate-100 space-y-3 shrink-0">
-                  <div className="relative group">
-                    <Search className="absolute left-3 lg:left-4 top-1/2 -translate-y-1/2 h-4 w-4 lg:h-5 lg:w-5 text-slate-400 group-focus-within:text-emerald-500 transition-colors" />
-                    <Input
-                      placeholder="Cari percakapan..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-9 lg:pl-10 bg-white border-2 border-slate-200 rounded-xl lg:rounded-2xl h-10 lg:h-11 text-sm focus:border-emerald-400 focus:shadow-[0_0_0_2px_#34d399] transition-all"
-                    />
-                  </div>
-                  <button
-                    onClick={() => setShowNewChatModal(true)}
-                    className="w-full bg-emerald-400 hover:bg-emerald-500 text-white font-black rounded-xl lg:rounded-2xl h-10 lg:h-11 border-b-3 lg:border-b-4 border-emerald-600 active:border-b-0 active:translate-y-1 transition-all text-sm flex items-center justify-center gap-1.5"
-                  >
-                    <MessageSquarePlus className="h-4 w-4 lg:h-5 lg:w-5" strokeWidth={3} />
-                    Chat Baru
-                  </button>
-                </div>
-
-                {/* Conversations List */}
-                <div className="flex-1 overflow-y-auto p-2 lg:p-3 space-y-2 min-h-0">
-                  {filteredConversations.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center h-full p-6 text-center">
-                      <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mb-4 border-2 border-slate-200">
-                        <MessageCircle className="h-10 w-10 text-slate-300" />
-                      </div>
-                      <p className="text-slate-500 font-bold">Belum ada percakapan</p>
-                      <p className="text-slate-400 text-xs mt-1 font-medium">
-                        Mulai chat dengan instruktur
-                      </p>
-                    </div>
-                  ) : (
-                    filteredConversations.map((conv) => (
-                      <button
-                        key={conv.id}
-                        onClick={() => {
-                          setSelectedConversationId(conv.id);
-                          setIsMobileViewingChat(true);
-                        }}
-                        className={`w-full flex items-start gap-3 p-4 rounded-3xl transition-all border-2 ${
-                          selectedConversationId === conv.id
-                            ? "bg-white border-emerald-400 shadow-[0_4px_0_0_#34d399] -translate-y-1 z-10"
-                            : "bg-white border-transparent hover:border-slate-200 hover:shadow-sm"
-                        }`}
-                      >
-                        <div className="relative">
-                          <Avatar className="h-12 w-12 border-2 border-slate-100 shadow-sm">
-                            <AvatarImage
-                              src={conv.participant.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${conv.participant.name}`}
-                              alt={conv.participant.name || ""}
-                            />
-                            <AvatarFallback className="bg-emerald-100 text-emerald-600 font-bold">
-                              {conv.participant.name?.slice(0, 2).toUpperCase()}
-                            </AvatarFallback>
-                          </Avatar>
-                          {isParticipantOnline(conv.participant.id) && (
-                            <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-400 border-2 border-white rounded-full shadow-sm animate-pulse" />
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0 text-left">
-                          <div className="flex items-center justify-between">
-                            <p className="font-bold text-slate-800 truncate text-sm">
-                              {conv.participant.name}
-                            </p>
-                            {conv.lastMessage && (
-                              <span className="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">
-                                {formatRelativeTime(conv.lastMessage.createdAt)}
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-[10px] font-bold text-emerald-600 truncate uppercase tracking-wider mb-1">
-                            {conv.participant.bidangKeahlian || "Instruktur"}
-                          </p>
-                          {conv.lastMessage && (
-                            <p className="text-xs text-slate-500 truncate font-medium">
-                              {conv.lastMessage.content}
-                            </p>
-                          )}
-                        </div>
-                        {conv.unreadCount > 0 && (
-                          <span className="shrink-0 w-6 h-6 bg-red-500 text-white text-[10px] font-black rounded-full flex items-center justify-center border-2 border-white shadow-md transform -rotate-12">
-                            {conv.unreadCount}
-                          </span>
-                        )}
-                      </button>
-                    ))
-                  )}
-                </div>
-              </div>
-
-              {/* Chat Area */}
-              <div
-                className={`${
-                  isMobileViewingChat ? "flex" : "hidden"
-                } lg:flex flex-col flex-1 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] bg-repeat min-h-0`}
-              >
-                {selectedConversation ? (
-                  <>
-                    {/* Chat Header */}
-                    <div className="flex items-center justify-between border-b-2 border-slate-100 px-3 lg:px-6 py-3 lg:py-4 bg-white/90 backdrop-blur-md z-20 shrink-0">
-                      <div className="flex items-center gap-4">
-                        <button
-                          onClick={() => setIsMobileViewingChat(false)}
-                          className="lg:hidden p-2 -ml-2 text-slate-500 hover:text-slate-800 transition-colors bg-slate-100 rounded-full"
-                        >
-                          <ArrowLeft className="h-5 w-5" strokeWidth={3} />
-                        </button>
-                        <div className="relative">
-                          <Avatar className="h-11 w-11 border-2 border-white shadow-md ring-2 ring-slate-100">
-                            <AvatarImage
-                              src={selectedConversation.participant.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${selectedConversation.participant.name}`}
-                              alt={selectedConversation.participant.name || ""}
-                            />
-                            <AvatarFallback className="bg-emerald-100 text-emerald-600 font-black">
-                              {selectedConversation.participant.name
-                                ?.slice(0, 2)
-                                .toUpperCase()}
-                            </AvatarFallback>
-                          </Avatar>
-                          {isParticipantOnline(selectedConversation.participant.id) && (
-                            <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-400 border-2 border-white rounded-full animate-bounce" />
-                          )}
-                        </div>
-                        <div>
-                          <p className="font-black text-slate-800 text-lg leading-tight">
-                            {selectedConversation.participant.name}
-                          </p>
-                          <p className="text-xs font-bold text-slate-500 flex items-center gap-1">
-                            {isParticipantOnline(selectedConversation.participant.id) ? (
-                              <span className="text-emerald-500">Online</span>
-                            ) : (
-                              lastSeenMap.get(selectedConversation.participant.id) ? (
-                                `Terakhir dilihat ${formatRelativeTime(lastSeenMap.get(selectedConversation.participant.id)!)}`
-                              ) : (
-                                "Offline"
-                              )
-                            )}
-                            {currentTypingUsers.length > 0 && (
-                              <span className="text-emerald-500 bg-emerald-50 px-2 py-0.5 rounded-full ml-1 animate-pulse">
-                                mengetik...
-                              </span>
-                            )}
-                          </p>
-                        </div>
-                      </div>
-                      <button className="hover:bg-slate-100 rounded-xl p-2">
-                        <MoreHorizontal className="h-6 w-6 text-slate-400" />
-                      </button>
-                    </div>
-
-                    {/* Messages Area */}
-                    <div
-                      ref={messagesRef}
-                      className="flex-1 overflow-y-auto px-3 lg:px-6 py-4 lg:py-6 space-y-4 lg:space-y-6 min-h-0"
-                    >
-                      {messagesLoading ? (
-                        <div className="flex items-center justify-center h-full">
-                          <Loading />
-                        </div>
-                      ) : messages.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center h-full text-center p-6 opacity-60">
-                          <div className="w-24 h-24 bg-slate-100 rounded-3xl border-4 border-slate-200 border-dashed flex items-center justify-center mb-4 transform rotate-6">
-                            <MessageCircle className="h-12 w-12 text-slate-300" />
-                          </div>
-                          <p className="text-slate-500 font-bold text-lg">Belum ada pesan</p>
-                          <p className="text-slate-400 text-sm font-medium mt-1 bg-white px-3 py-1 rounded-full border border-slate-200 shadow-sm">
-                            Sapa instrukturmu sekarang! 👋
-                          </p>
-                        </div>
-                      ) : (
-                        <>
-                          {messages.map((message, index) => {
-                            const isCurrentUser = message.senderId === session?.user?.id;
-                            const showDate =
-                              index === 0 ||
-                              new Date(message.createdAt).toDateString() !==
-                                new Date(messages[index - 1].createdAt).toDateString();
-
-                            return (
-                              <React.Fragment key={message.id}>
-                                {showDate && (
-                                  <div className="flex items-center justify-center my-6">
-                                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 bg-slate-100 px-4 py-1.5 rounded-full border-2 border-slate-200">
-                                      {formatMessageDate(message.createdAt)}
-                                    </span>
-                                  </div>
-                                )}
-                                <div
-                                  ref={(el) => {
-                                    if (el) {
-                                      messageRefs.current.set(message.id, el);
-                                    } else {
-                                      messageRefs.current.delete(message.id);
-                                    }
-                                  }}
-                                  data-message-id={message.id}
-                                  className={`flex ${
-                                    isCurrentUser ? "justify-end" : "justify-start"
-                                  } group`}
-                                >
-                                  <div className={`flex items-end gap-3 max-w-[85%] sm:max-w-md ${isCurrentUser ? 'flex-row-reverse' : 'flex-row'}`}>
-                                    {/* Action Buttons */}
-                                    {isCurrentUser && canEditOrDelete(message.createdAt) && !message.isDeleted && (
-                                      <div className="opacity-0 group-hover:opacity-100 transition-opacity flex flex-col gap-1 mb-2">
-                                        <button
-                                          className="p-1.5 bg-white border border-slate-200 rounded-full hover:bg-emerald-50 hover:text-emerald-500 shadow-sm transition-colors"
-                                          onClick={() => {
-                                            setEditingMessageId(message.id);
-                                            setEditingContent(message.content);
-                                          }}
-                                        >
-                                          <Edit2 className="h-3 w-3" />
-                                        </button>
-                                        <button
-                                          className="p-1.5 bg-white border border-slate-200 rounded-full hover:bg-red-50 hover:text-red-500 shadow-sm transition-colors"
-                                          onClick={() => handleDeleteMessage(message.id)}
-                                        >
-                                          <Trash2 className="h-3 w-3" />
-                                        </button>
-                                      </div>
-                                    )}
-                                    
-                                    {/* Message Bubble */}
-                                    <div
-                                      className={`relative px-5 py-4 shadow-sm border-2 ${
-                                        isCurrentUser
-                                          ? message.isDeleted
-                                            ? "bg-slate-100 border-slate-300 text-slate-500 italic rounded-2xl"
-                                            : "bg-linear-to-br from-emerald-400 to-teal-400 border-emerald-600 text-white rounded-4xl rounded-tr-none shadow-[2px_4px_0_0_#059669]"
-                                          : message.isDeleted
-                                          ? "bg-slate-50 border-slate-200 text-slate-400 italic rounded-2xl"
-                                          : "bg-white border-slate-200 text-slate-800 rounded-4xl rounded-tl-none shadow-[2px_4px_0_0_#e2e8f0]"
-                                      }`}
-                                    >
-                                      {editingMessageId === message.id ? (
-                                        <div className="space-y-3 min-w-[200px]">
-                                          <Textarea
-                                            value={editingContent}
-                                            onChange={(e) => setEditingContent(e.target.value)}
-                                            className="text-sm bg-white/20 border-2 border-white/30 text-white placeholder-white/50 focus:border-white focus:ring-0 rounded-xl"
-                                            rows={2}
-                                          />
-                                          <div className="flex gap-2 justify-end">
-                                            <button
-                                              onClick={() => {
-                                                setEditingMessageId(null);
-                                                setEditingContent("");
-                                              }}
-                                              className="px-3 py-1 text-xs font-bold text-white/80 hover:bg-white/10 rounded-lg"
-                                            >
-                                              Batal
-                                            </button>
-                                            <button
-                                              onClick={() => handleEditMessage(message.id)}
-                                              className="px-3 py-1 text-xs font-bold bg-white text-emerald-600 rounded-lg shadow-sm hover:scale-105 transition-transform"
-                                            >
-                                              Simpan
-                                            </button>
-                                          </div>
-                                        </div>
-                                      ) : (
-                                        <>
-                                          {message.attachmentUrl && (
-                                            <div className="mb-3 overflow-hidden rounded-xl border-2 border-black/5">
-                                              {message.attachmentType === "image" ? (
-                                                <img
-                                                  src={message.attachmentUrl}
-                                                  alt="Attachment"
-                                                  className="max-w-full max-h-64 object-cover"
-                                                />
-                                              ) : (
-                                                <a
-                                                  href={message.attachmentUrl}
-                                                  target="_blank"
-                                                  rel="noopener noreferrer"
-                                                  className={`flex items-center gap-3 p-3 ${isCurrentUser ? 'bg-white/20 hover:bg-white/30' : 'bg-slate-50 hover:bg-slate-100'} transition-colors`}
-                                                >
-                                                  <div className="p-2 bg-white rounded-lg shadow-sm">
-                                                    <File className="h-5 w-5 text-emerald-500" />
-                                                  </div>
-                                                  <span className="text-sm font-bold underline decoration-wavy">File attachment</span>
-                                                </a>
-                                              )}
-                                            </div>
-                                          )}
-                                          {message.content && (
-                                            <p className="text-sm font-medium whitespace-pre-wrap leading-relaxed">
-                                              {message.content}
-                                            </p>
-                                          )}
-                                          <div className={`flex items-center gap-1.5 mt-2 justify-end opacity-80`}>
-                                            <p className="text-[10px] font-bold">
-                                              {formatTimeOnly(message.createdAt)}
-                                              {message.isEdited && " • diedit"}
-                                            </p>
-                                            {isCurrentUser && (
-                                              <span>
-                                                {message.isRead ? (
-                                                  <CheckCheck className="h-3.5 w-3.5" strokeWidth={3} />
-                                                ) : (
-                                                  <Check className="h-3.5 w-3.5" strokeWidth={3} />
-                                                )}
-                                              </span>
-                                            )}
-                                          </div>
-                                        </>
-                                      )}
-                                    </div>
-                                  </div>
-                                </div>
-                              </React.Fragment>
-                            );
-                          })}
-                          
-                          {/* Typing Indicator Bubble */}
-                          {currentTypingUsers.length > 0 && (
-                            <div className="flex justify-start">
-                              <div className="bg-white border-2 border-slate-200 rounded-4xl rounded-tl-none px-5 py-4 shadow-sm flex items-center gap-1.5">
-                                <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" />
-                                <div
-                                  className="w-2 h-2 bg-slate-400 rounded-full animate-bounce"
-                                  style={{ animationDelay: "0.1s" }}
-                                />
-                                <div
-                                  className="w-2 h-2 bg-slate-400 rounded-full animate-bounce"
-                                  style={{ animationDelay: "0.2s" }}
-                                />
-                              </div>
-                            </div>
-                          )}
-                        </>
-                      )}
-                    </div>
-
-                    {/* Message Input - Floating Style */}
-                    <div className="p-3 lg:p-4 bg-white/80 backdrop-blur-sm relative z-20 shrink-0">
-                      <div className="bg-white rounded-2xl lg:rounded-4xl border-2 border-slate-200 shadow-lg p-1.5 lg:p-2 flex items-end gap-2 focus-within:border-emerald-400 focus-within:shadow-[0_0_0_3px_rgba(52,211,153,0.2)] transition-all">
-                        <input
-                          ref={fileInputRef}
-                          type="file"
-                          className="hidden"
-                          onChange={handleFileSelect}
-                          accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt"
-                        />
-                        <button
-                          type="button"
-                          className="p-2 lg:p-3 text-slate-400 hover:text-emerald-500 hover:bg-emerald-50 rounded-full transition-all disabled:opacity-50 shrink-0"
-                          onClick={() => fileInputRef.current?.click()}
-                          disabled={uploadingFile}
-                        >
-                          {uploadingFile ? (
-                            <div className="flex items-center justify-center">
-                              <Loading size="sm" />
-                            </div>
-                          ) : (
-                            <Paperclip className="h-5 w-5 lg:h-6 lg:w-6" strokeWidth={2.5} />
-                          )}
-                        </button>
-                        
-                        <Textarea
-                          placeholder="Ketik pesan..."
-                          value={messageDraft}
-                          onChange={(e) => {
-                            setMessageDraft(e.target.value);
-                            handleTyping();
-                          }}
-                          onKeyDown={handleKeyDown}
-                          className="flex-1 min-h-10 lg:min-h-12 max-h-28 lg:max-h-32 border-0 focus:ring-0 shadow-none resize-none py-2 lg:py-3 text-sm lg:text-base text-slate-700 font-medium placeholder:text-slate-400 bg-transparent"
-                          rows={1}
-                        />
-                        
-                        <button
-                          onClick={handleSendMessage}
-                          disabled={!messageDraft.trim()}
-                          className="p-2 lg:p-3 bg-linear-to-r from-emerald-400 to-teal-400 text-white rounded-full shadow-[0_3px_0_0_#059669] lg:shadow-[0_4px_0_0_#059669] hover:-translate-y-1 hover:shadow-[0_5px_0_0_#059669] lg:hover:shadow-[0_6px_0_0_#059669] active:translate-y-0 active:shadow-none transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none shrink-0"
-                        >
-                          <Send className="h-4 w-4 lg:h-5 lg:w-5" strokeWidth={3} />
-                        </button>
-                      </div>
-                    </div>
-                  </>
-                ) : (
-                  <div className="flex flex-1 flex-col items-center justify-center p-6 text-center">
-                    <div className="w-24 h-24 bg-emerald-50 rounded-4xl flex items-center justify-center mb-6 border-4 border-emerald-100 transform rotate-3 shadow-lg">
-                      <MessageCircle className="h-12 w-12 text-emerald-400" />
-                    </div>
-                    <h2 className="text-2xl font-black text-slate-800 mb-2">
-                      Pilih Percakapan
-                    </h2>
-                    <p className="text-slate-500 font-medium max-w-sm">
-                      Pilih percakapan di sebelah kiri atau mulai chat baru dengan
-                      instruktur favoritmu!
-                    </p>
-                    <button
-                      onClick={() => setShowNewChatModal(true)}
-                      className="mt-6 bg-emerald-400 hover:bg-emerald-500 text-white font-black rounded-2xl h-12 px-8 border-b-4 border-emerald-600 active:border-b-0 active:translate-y-1 transition-all flex items-center justify-center gap-2"
-                    >
-                      <MessageSquarePlus className="h-5 w-5" strokeWidth={3} />
-                      Mulai Chat Baru
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </main>
+    // Gunakan 100dvh untuk handle browser mobile address bar
+    <div className="h-[100dvh] bg-[#FDFBF7] flex flex-col overflow-hidden">
+      
+      {/* Hide header & sidebar on mobile when viewing chat to maximize space */}
+      <div className={`${isMobileViewingChat ? 'hidden lg:block' : 'block'}`}>
+        <DashboardHeader />
       </div>
 
-      {/* File Preview Modal */}
-      {showFilePreview && selectedFile && filePreviewUrl && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-4xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col border-4 border-white shadow-2xl transform scale-100 animate-in fade-in zoom-in duration-200">
-            <div className="p-5 border-b-2 border-slate-100 flex items-center justify-between bg-slate-50">
-              <h3 className="text-lg font-black text-slate-800">
-                Preview File
-              </h3>
-              <button
-                onClick={handleCancelFilePreview}
-                className="p-2 hover:bg-slate-200 rounded-xl transition-colors"
-                disabled={uploadingFile}
-              >
-                <X className="h-6 w-6 text-slate-500" strokeWidth={3} />
-              </button>
+      <div className="flex flex-1 overflow-hidden">
+        {/* Hide main sidebar on mobile when viewing chat */}
+        <div className={`${isMobileViewingChat ? 'hidden lg:block' : 'hidden lg:block'} h-full shrink-0`}>
+           <Sidebar />
+        </div>
+
+        <main className={`w-full flex-1 flex flex-col ${isMobileViewingChat ? 'p-0' : 'p-4 lg:p-6'} overflow-hidden`}>
+          
+          {/* Page Title (Only visible on Desktop/Tablet or when List View on Mobile) */}
+          <div className={`${isMobileViewingChat ? 'hidden' : 'flex'} mb-4 items-center justify-between shrink-0 px-2 lg:px-0`}>
+            <div>
+              <h1 className="text-2xl lg:text-3xl font-black text-slate-800 tracking-tight">Chat Instruktur</h1>
+              <p className="text-slate-500 font-bold text-xs lg:text-sm mt-1">Konsultasi langsung dengan ahlinya</p>
             </div>
+            <div className="flex items-center gap-2">
+                {isConnected ? (
+                  <span className="flex items-center gap-2 text-[10px] lg:text-xs font-black text-emerald-600 bg-emerald-100 px-3 py-1.5 rounded-full border-2 border-emerald-200">
+                    <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+                    Online
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-2 text-[10px] lg:text-xs font-black text-slate-500 bg-slate-100 px-3 py-1.5 rounded-full border-2 border-slate-200">
+                    <span className="w-2 h-2 bg-slate-400 rounded-full" />
+                    Connecting...
+                  </span>
+                )}
+            </div>
+          </div>
+
+          {/* CHAT CONTAINER FRAME */}
+          <div className={`
+            flex flex-1 bg-white overflow-hidden shadow-sm
+            ${isMobileViewingChat ? 'fixed inset-0 z-40 rounded-none' : 'rounded-[2rem] border-4 border-slate-200 shadow-[0_8px_0_0_#cbd5e1]'}
+          `}>
             
-            <div className="flex-1 overflow-y-auto p-6 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]">
-              {isImageFile(selectedFile.name) ? (
-                <div className="p-2 bg-white rounded-2xl shadow-md rotate-1">
-                  <img
-                    src={filePreviewUrl}
-                    alt="Preview"
-                    className="w-full h-auto rounded-xl border border-slate-200"
+            {/* --- LIST CONVERSATIONS (SIDEBAR CHAT) --- */}
+            <div className={`
+              ${isMobileViewingChat ? 'hidden' : 'flex'} 
+              flex-col w-full lg:w-80 xl:w-96 border-r-0 lg:border-r-4 border-slate-100 bg-slate-50/30
+            `}>
+              {/* Search & New Chat Button */}
+              <div className="p-4 border-b-2 border-slate-100 space-y-3 bg-white">
+                <div className="relative group">
+                  <Search className="absolute left-3 lg:left-4 top-1/2 -translate-y-1/2 h-4 w-4 lg:h-5 lg:w-5 text-slate-400 group-focus-within:text-emerald-500 transition-colors" />
+                  <Input
+                    placeholder="Cari chat..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-9 lg:pl-11 bg-slate-50 border-2 border-slate-200 rounded-2xl h-12 focus:border-emerald-400 focus:bg-white transition-all"
                   />
                 </div>
+                <button
+                  onClick={() => setShowNewChatModal(true)}
+                  className="w-full bg-emerald-400 hover:bg-emerald-500 text-white font-black rounded-2xl h-12 border-b-4 border-emerald-600 active:border-b-0 active:translate-y-1 transition-all flex items-center justify-center gap-2"
+                >
+                  <MessageSquarePlus className="h-5 w-5" strokeWidth={3} />
+                  Chat Baru
+                </button>
+              </div>
+
+              {/* List */}
+              <div className="flex-1 overflow-y-auto p-3 space-y-2">
+                {filteredConversations.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center h-64 text-center">
+                    <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mb-4 border-2 border-slate-200">
+                      <MessageCircle className="h-10 w-10 text-slate-300" />
+                    </div>
+                    <p className="text-slate-500 font-bold">Belum ada percakapan</p>
+                  </div>
+                ) : (
+                  filteredConversations.map((conv) => (
+                    <button
+                      key={conv.id}
+                      onClick={() => {
+                        setSelectedConversationId(conv.id);
+                        setIsMobileViewingChat(true);
+                      }}
+                      className={`w-full flex items-start gap-3 p-4 rounded-2xl transition-all border-2 text-left ${
+                        selectedConversationId === conv.id
+                          ? "bg-white border-emerald-400 shadow-[0_4px_0_0_#34d399] z-10"
+                          : "bg-white border-transparent hover:border-slate-200 shadow-sm"
+                      }`}
+                    >
+                      <div className="relative shrink-0">
+                        <Avatar className="h-12 w-12 border-2 border-slate-100">
+                          <AvatarImage src={conv.participant.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${conv.participant.name}`} />
+                          <AvatarFallback>{conv.participant.name?.slice(0, 2)}</AvatarFallback>
+                        </Avatar>
+                        {isParticipantOnline(conv.participant.id) && (
+                          <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-400 border-2 border-white rounded-full shadow-sm animate-pulse" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex justify-between items-baseline mb-1">
+                          <p className="font-bold text-slate-800 truncate">{conv.participant.name}</p>
+                          {conv.lastMessage && (
+                            <span className="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full whitespace-nowrap ml-2">
+                              {formatRelativeTime(conv.lastMessage.createdAt)}
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex justify-between items-center">
+                           <p className="text-xs text-slate-500 truncate font-medium max-w-[85%]">
+                            {conv.lastMessage ? conv.lastMessage.content : <span className="italic opacity-70">Mulai percakapan...</span>}
+                          </p>
+                          {conv.unreadCount > 0 && (
+                            <span className="shrink-0 min-w-[1.25rem] h-5 bg-red-500 text-white text-[10px] font-black rounded-full flex items-center justify-center px-1">
+                              {conv.unreadCount}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </button>
+                  ))
+                )}
+              </div>
+            </div>
+
+            {/* --- ACTIVE CHAT WINDOW --- */}
+            <div className={`
+              ${isMobileViewingChat ? 'flex' : 'hidden lg:flex'} 
+              flex-col flex-1 bg-slate-50 relative w-full h-full
+            `}>
+              {selectedConversation ? (
+                <>
+                  {/* Active Chat Header */}
+                  <div className="flex items-center justify-between px-4 py-3 bg-white border-b-2 border-slate-100 shadow-sm z-20 shrink-0">
+                    <div className="flex items-center gap-3">
+                      <button 
+                        onClick={() => setIsMobileViewingChat(false)}
+                        className="lg:hidden p-2 -ml-2 rounded-full hover:bg-slate-100 text-slate-600"
+                      >
+                        <ArrowLeft className="h-6 w-6" strokeWidth={2.5} />
+                      </button>
+                      <div className="relative">
+                        <Avatar className="h-10 w-10 border-2 border-white shadow-sm ring-2 ring-slate-100">
+                          <AvatarImage src={selectedConversation.participant.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${selectedConversation.participant.name}`} />
+                          <AvatarFallback>{selectedConversation.participant.name?.slice(0, 2)}</AvatarFallback>
+                        </Avatar>
+                        {isParticipantOnline(selectedConversation.participant.id) && (
+                          <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-400 border-2 border-white rounded-full animate-pulse" />
+                        )}
+                      </div>
+                      <div>
+                        <h3 className="font-black text-slate-800 text-base leading-tight line-clamp-1">
+                          {selectedConversation.participant.name}
+                        </h3>
+                        <p className="text-xs font-bold text-slate-500 flex items-center gap-1">
+                          {isParticipantOnline(selectedConversation.participant.id) ? (
+                            <span className="text-emerald-500">Online</span>
+                          ) : (
+                            lastSeenMap.get(selectedConversation.participant.id) ? 
+                            `Last seen ${formatRelativeTime(lastSeenMap.get(selectedConversation.participant.id)!)}` : "Offline"
+                          )}
+                          {currentTypingUsers.length > 0 && (
+                            <span className="text-emerald-500 italic ml-1 animate-pulse">mengetik...</span>
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                    <button 
+                      onClick={() => setShowDeleteConfirm(true)}
+                      className="p-2 hover:bg-slate-100 rounded-full text-slate-400"
+                    >
+                      <MoreHorizontal className="h-6 w-6" />
+                    </button>
+                  </div>
+
+                  {/* Messages List Area */}
+                  <div 
+                    ref={messagesRef}
+                    className="flex-1 overflow-y-auto p-4 space-y-4 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] bg-slate-100/50"
+                  >
+                    {messagesLoading ? (
+                      <div className="flex justify-center pt-10"><Loading size="sm" /></div>
+                    ) : messages.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center h-full opacity-50">
+                        <MessageCircle className="h-16 w-16 text-slate-300 mb-2" />
+                        <p className="text-sm font-bold text-slate-400">Belum ada pesan</p>
+                      </div>
+                    ) : (
+                      messages.map((message, index) => {
+                        const isMe = message.senderId === session?.user?.id;
+                        const showDate = index === 0 || new Date(message.createdAt).toDateString() !== new Date(messages[index - 1].createdAt).toDateString();
+
+                        return (
+                          <React.Fragment key={message.id}>
+                            {showDate && (
+                              <div className="flex justify-center my-4">
+                                <span className="text-[10px] font-black text-slate-400 bg-white/80 border border-slate-200 px-3 py-1 rounded-full uppercase tracking-wider shadow-sm backdrop-blur-sm">
+                                  {formatMessageDate(message.createdAt)}
+                                </span>
+                              </div>
+                            )}
+                            <div 
+                              ref={(el) => { if(el) messageRefs.current.set(message.id, el) }}
+                              data-message-id={message.id}
+                              className={`flex w-full ${isMe ? 'justify-end' : 'justify-start'} group`}
+                            >
+                              <div className={`max-w-[85%] sm:max-w-[70%] flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
+                                
+                                {/* Edit/Delete Buttons (Desktop hover, Mobile tap hold maybe?) */}
+                                {isMe && canEditOrDelete(message.createdAt) && !message.isDeleted && (
+                                  <div className="hidden group-hover:flex gap-1 mb-1 transition-opacity">
+                                    <button onClick={() => { setEditingMessageId(message.id); setEditingContent(message.content); }} className="p-1 bg-white border border-slate-200 rounded-full shadow-sm text-slate-500 hover:text-emerald-500">
+                                      <Edit2 className="h-3 w-3" />
+                                    </button>
+                                    <button onClick={() => handleDeleteMessage(message.id)} className="p-1 bg-white border border-slate-200 rounded-full shadow-sm text-slate-500 hover:text-red-500">
+                                      <Trash2 className="h-3 w-3" />
+                                    </button>
+                                  </div>
+                                )}
+
+                                <div className={`
+                                  relative px-4 py-3 rounded-2xl shadow-sm border-2 text-sm md:text-base
+                                  ${isMe 
+                                    ? message.isDeleted ? 'bg-slate-100 border-slate-200 text-slate-400 italic' : 'bg-emerald-500 border-emerald-600 text-white rounded-tr-none shadow-[2px_3px_0_0_#047857]' 
+                                    : message.isDeleted ? 'bg-slate-100 border-slate-200 text-slate-400 italic' : 'bg-white border-slate-200 text-slate-800 rounded-tl-none shadow-[2px_3px_0_0_#cbd5e1]'
+                                  }
+                                `}>
+                                  {editingMessageId === message.id ? (
+                                    <div className="min-w-[200px]">
+                                      <Textarea 
+                                        value={editingContent} onChange={(e) => setEditingContent(e.target.value)} 
+                                        className="text-sm bg-white/20 text-white border-white/30 focus:ring-0 mb-2"
+                                      />
+                                      <div className="flex gap-2 justify-end">
+                                        <button onClick={() => setEditingMessageId(null)} className="text-xs text-white/80 font-bold px-2">Batal</button>
+                                        <button onClick={() => handleEditMessage(message.id)} className="text-xs bg-white text-emerald-600 font-bold px-3 py-1 rounded-lg">Simpan</button>
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <>
+                                      {message.attachmentUrl && (
+                                        <div className="mb-2 rounded-lg overflow-hidden border border-black/10 bg-black/5">
+                                          {message.attachmentType === 'image' ? (
+                                            <img src={message.attachmentUrl} alt="attachment" className="max-h-60 w-full object-cover" />
+                                          ) : (
+                                            <a href={message.attachmentUrl} target="_blank" className="flex items-center gap-2 p-3">
+                                              <File className="h-5 w-5" />
+                                              <span className="font-bold underline text-xs">Download File</span>
+                                            </a>
+                                          )}
+                                        </div>
+                                      )}
+                                      <p className="whitespace-pre-wrap leading-relaxed">{message.content}</p>
+                                    </>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-1 mt-1 px-1 opacity-70">
+                                  <span className="text-[10px] font-bold text-slate-500">{formatTimeOnly(message.createdAt)}</span>
+                                  {isMe && (
+                                    message.isRead ? <CheckCheck className="h-3 w-3 text-emerald-500" /> : <Check className="h-3 w-3 text-slate-400" />
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </React.Fragment>
+                        )
+                      })
+                    )}
+                  </div>
+
+                  {/* Input Area */}
+                  <div className="p-3 lg:p-4 bg-white border-t-2 border-slate-100 z-20 shrink-0">
+                    <div className="flex items-end gap-2 bg-slate-50 p-2 rounded-[1.5rem] border-2 border-slate-200 focus-within:border-emerald-400 focus-within:shadow-[0_0_0_2px_rgba(52,211,153,0.2)] transition-all">
+                      <button 
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={uploadingFile}
+                        className="p-2.5 text-slate-400 hover:text-emerald-500 hover:bg-emerald-50 rounded-full transition-all shrink-0"
+                      >
+                        {uploadingFile ? <Loader2 className="h-6 w-6 animate-spin" /> : <Paperclip className="h-6 w-6" strokeWidth={2.5} />}
+                        <input ref={fileInputRef} type="file" className="hidden" onChange={handleFileSelect} accept="image/*,.pdf,.doc,.docx" />
+                      </button>
+                      
+                      <Textarea
+                        value={messageDraft}
+                        onChange={(e) => { setMessageDraft(e.target.value); handleTyping(); }}
+                        onKeyDown={handleKeyDown}
+                        placeholder="Tulis pesan..."
+                        className="flex-1 bg-transparent border-none shadow-none focus-visible:ring-0 min-h-[44px] max-h-32 py-2.5 px-2 text-sm md:text-base font-medium text-slate-700 placeholder:text-slate-400 resize-none"
+                        rows={1}
+                      />
+                      
+                      <button 
+                        onClick={handleSendMessage}
+                        disabled={!messageDraft.trim() && !uploadingFile}
+                        className="p-2.5 bg-emerald-500 text-white rounded-full hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_3px_0_0_#047857] active:translate-y-[2px] active:shadow-none transition-all shrink-0"
+                      >
+                        <Send className="h-5 w-5" strokeWidth={3} />
+                      </button>
+                    </div>
+                  </div>
+                </>
               ) : (
-                <div className="flex flex-col items-center justify-center p-10 bg-white border-4 border-slate-200 border-dashed rounded-3xl">
-                  <File className="h-20 w-20 text-emerald-400 mb-4" />
-                  <p className="text-slate-800 font-bold text-lg">{selectedFile.name}</p>
-                  <p className="text-slate-500 font-medium bg-slate-100 px-3 py-1 rounded-full mt-2">
-                    {formatFileSize(selectedFile.size)}
+                <div className="flex flex-col items-center justify-center h-full p-8 text-center">
+                  <div className="w-28 h-28 bg-emerald-50 rounded-full flex items-center justify-center mb-6 border-4 border-emerald-100 animate-pulse">
+                    <MessageCircle className="h-14 w-14 text-emerald-400" />
+                  </div>
+                  <h2 className="text-2xl font-black text-slate-800 mb-2">Pilih Chat</h2>
+                  <p className="text-slate-500 font-medium max-w-xs">
+                    Pilih percakapan dari daftar atau mulai chat baru dengan instruktur.
                   </p>
+                  <button
+                    onClick={() => setShowNewChatModal(true)}
+                    className="mt-8 bg-emerald-400 hover:bg-emerald-500 text-white font-black rounded-2xl h-12 px-8 border-b-4 border-emerald-600 active:border-b-0 active:translate-y-1 transition-all flex items-center gap-2"
+                  >
+                    <MessageSquarePlus className="h-5 w-5" />
+                    Mulai Chat Baru
+                  </button>
                 </div>
               )}
             </div>
 
-            <div className="p-5 border-t-2 border-slate-100 bg-white">
-              <Textarea
-                placeholder="Tambahkan caption (opsional)..."
-                value={fileCaption}
-                onChange={(e) => setFileCaption(e.target.value)}
-                className="mb-4 rounded-2xl border-2 border-slate-200 focus:border-emerald-400 focus:shadow-[0_0_0_2px_#34d399] resize-none"
-                rows={2}
-                disabled={uploadingFile}
+          </div>
+        </main>
+      </div>
+
+      {/* --- MODALS (Optimized for Mobile) --- */}
+      
+      {/* File Preview Modal */}
+      {showFilePreview && selectedFile && filePreviewUrl && (
+        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-3xl w-full max-w-lg overflow-hidden border-4 border-white shadow-2xl flex flex-col max-h-[90dvh]">
+            <div className="p-4 border-b-2 border-slate-100 flex justify-between items-center bg-slate-50">
+              <h3 className="font-black text-slate-800">Preview File</h3>
+              <button onClick={handleCancelFilePreview} className="p-2 hover:bg-slate-200 rounded-full"><X className="h-5 w-5" /></button>
+            </div>
+            <div className="flex-1 overflow-auto p-4 bg-slate-100 flex items-center justify-center">
+              {isImageFile(selectedFile.name) ? (
+                <img src={filePreviewUrl} alt="Preview" className="max-w-full h-auto rounded-xl border-2 border-slate-200 shadow-md" />
+              ) : (
+                <div className="text-center p-8 bg-white rounded-2xl border-2 border-slate-200">
+                  <File className="h-16 w-16 text-emerald-500 mx-auto mb-2" />
+                  <p className="font-bold text-slate-700">{selectedFile.name}</p>
+                  <p className="text-xs text-slate-400">{formatFileSize(selectedFile.size)}</p>
+                </div>
+              )}
+            </div>
+            <div className="p-4 bg-white border-t-2 border-slate-100">
+              <Textarea 
+                value={fileCaption} onChange={(e) => setFileCaption(e.target.value)} 
+                placeholder="Tambah caption..." 
+                className="mb-3 rounded-xl border-2 border-slate-200" 
+                rows={1}
               />
-              <div className="flex gap-3">
-                <button
-                  onClick={handleSendFile}
-                  disabled={uploadingFile}
-                  className="flex-1 bg-emerald-400 hover:bg-emerald-500 text-white font-black rounded-xl h-12 border-b-4 border-emerald-600 active:border-b-0 active:translate-y-1 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {uploadingFile ? (
-                    <>
-                      <Loading size="sm" />
-                      <span className="ml-2">Mengirim...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Send className="h-5 w-5 mr-2" strokeWidth={3} />
-                      Kirim
-                    </>
-                  )}
-                </button>
-                <button
-                  onClick={handleCancelFilePreview}
-                  disabled={uploadingFile}
-                  className="rounded-xl h-12 font-bold border-2 border-slate-200 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Batal
+              <div className="flex gap-2">
+                <button onClick={handleCancelFilePreview} className="flex-1 py-3 font-bold text-slate-500 bg-slate-100 rounded-xl">Batal</button>
+                <button onClick={handleSendFile} disabled={uploadingFile} className="flex-1 py-3 font-bold text-white bg-emerald-500 rounded-xl shadow-[0_3px_0_0_#047857] active:translate-y-1 active:shadow-none">
+                  {uploadingFile ? 'Mengirim...' : 'Kirim'}
                 </button>
               </div>
             </div>
@@ -1117,60 +955,26 @@ const ChatPage = () => {
 
       {/* New Chat Modal */}
       {showNewChatModal && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-4xl w-full max-w-md max-h-[80vh] overflow-hidden border-4 border-white shadow-2xl animate-in fade-in slide-in-from-bottom-4">
-            <div className="p-5 border-b-2 border-slate-100 bg-emerald-50">
-              <div className="flex items-center justify-between">
-                <h3 className="text-xl font-black text-slate-800">
-                  Pilih Instruktur
-                </h3>
-                <button
-                  onClick={() => setShowNewChatModal(false)}
-                  className="p-2 hover:bg-white rounded-xl transition-colors shadow-sm"
-                >
-                  <X className="h-6 w-6 text-slate-500" strokeWidth={3} />
-                </button>
-              </div>
+        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-3xl w-full max-w-md max-h-[80dvh] flex flex-col overflow-hidden border-4 border-white shadow-2xl">
+            <div className="p-4 border-b-2 border-slate-100 bg-emerald-50 flex justify-between items-center shrink-0">
+              <h3 className="text-lg font-black text-slate-800">Pilih Instruktur</h3>
+              <button onClick={() => setShowNewChatModal(false)} className="p-2 hover:bg-white rounded-xl"><X className="h-5 w-5 text-slate-500" /></button>
             </div>
-            <div className="overflow-y-auto max-h-96 p-2">
+            <div className="overflow-y-auto p-2">
               {instructors.length === 0 ? (
-                <div className="p-8 text-center text-slate-500 font-medium">
-                  Tidak ada instruktur tersedia
-                </div>
+                <p className="text-center py-10 text-slate-400 font-medium">Tidak ada instruktur tersedia.</p>
               ) : (
-                instructors.map((instructor) => (
-                  <button
-                    key={instructor.id}
-                    onClick={() => startConversation(instructor.id)}
-                    className="w-full flex items-center gap-4 p-4 hover:bg-slate-50 transition-all rounded-2xl group border-2 border-transparent hover:border-slate-100 mb-1"
-                  >
-                    <div className="relative">
-                      <Avatar className="h-14 w-14 border-2 border-slate-100 shadow-sm group-hover:scale-105 transition-transform">
-                        <AvatarImage
-                          src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${instructor.name}`}
-                          alt={instructor.name || ""}
-                        />
-                        <AvatarFallback className="bg-amber-100 text-amber-600 font-black">
-                          {instructor.name?.slice(0, 2).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      {isParticipantOnline(instructor.id) && (
-                        <span className="absolute bottom-0 right-0 w-4 h-4 bg-emerald-400 border-2 border-white rounded-full" />
-                      )}
+                instructors.map(inst => (
+                  <button key={inst.id} onClick={() => startConversation(inst.id)} className="w-full flex items-center gap-3 p-3 mb-1 hover:bg-slate-50 rounded-2xl border-2 border-transparent hover:border-slate-100 transition-all text-left">
+                    <Avatar className="h-12 w-12 border-2 border-slate-100">
+                      <AvatarImage src={inst.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${inst.name}`} />
+                      <AvatarFallback>{inst.name.slice(0,2)}</AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="font-bold text-slate-800">{inst.name}</p>
+                      <p className="text-xs text-slate-500 font-medium">{inst.bidangKeahlian || 'Instruktur'}</p>
                     </div>
-                    <div className="flex-1 text-left">
-                      <p className="font-bold text-slate-800 text-lg group-hover:text-emerald-600 transition-colors">
-                        {instructor.name}
-                      </p>
-                      <p className="text-sm text-slate-500 font-medium">
-                        {instructor.bidangKeahlian || "Instruktur"}
-                      </p>
-                    </div>
-                    {instructor.hasConversation && (
-                      <span className="text-[10px] font-bold text-emerald-600 bg-emerald-100 px-3 py-1 rounded-full border border-emerald-200">
-                        Chat Ada
-                      </span>
-                    )}
                   </button>
                 ))
               )}
@@ -1178,17 +982,42 @@ const ChatPage = () => {
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-3xl w-full max-w-xs p-6 text-center border-4 border-white shadow-2xl">
+            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Trash2 className="h-8 w-8 text-red-500" />
+            </div>
+            <h3 className="text-xl font-black text-slate-800 mb-2">Hapus Chat?</h3>
+            <p className="text-sm text-slate-500 mb-6">Pesan yang dihapus tidak dapat dikembalikan lagi.</p>
+            <div className="flex flex-col gap-2">
+              <button 
+                onClick={handleDeleteConversation} 
+                disabled={deletingConversation}
+                className="w-full py-3 bg-red-500 text-white font-bold rounded-xl shadow-[0_3px_0_0_#991b1b] active:translate-y-1 active:shadow-none"
+              >
+                {deletingConversation ? 'Menghapus...' : 'Ya, Hapus'}
+              </button>
+              <button 
+                onClick={() => setShowDeleteConfirm(false)}
+                className="w-full py-3 text-slate-500 font-bold hover:bg-slate-100 rounded-xl"
+              >
+                Batal
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };
 
 export default function ChatPageWrapper() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-[#FDFBF7] flex items-center justify-center">
-        <Loading />
-      </div>
-    }>
+    <Suspense fallback={<div className="h-screen flex items-center justify-center bg-[#FDFBF7]"><Loading /></div>}>
       <ChatPage />
     </Suspense>
   );

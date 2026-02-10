@@ -12,7 +12,8 @@ import {
   MessageCircle, 
   SearchX, 
   RefreshCcw, 
-  ChevronDown
+  ChevronDown,
+  Heart
 } from "lucide-react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
@@ -35,10 +36,12 @@ interface Instructor {
 const Instructors = () => {
   const [instructors, setInstructors] = useState<Instructor[]>([]);
   const [loading, setLoading] = useState(true);
+  const [favoriteInstructorIds, setFavoriteInstructorIds] = useState<Set<string>>(new Set());
   
   // State untuk Search & Filter
   const [searchTerm, setSearchTerm] = useState("");
   const [specializationFilter, setSpecializationFilter] = useState("all");
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   
@@ -57,7 +60,22 @@ const Instructors = () => {
 
   useEffect(() => {
     fetchInstructors();
+    // Load favorites from localStorage on mount
+    const favoritesJson = localStorage.getItem("favoriteInstructors");
+    if (favoritesJson) {
+      try {
+        const favoriteIds = JSON.parse(favoritesJson);
+        setFavoriteInstructorIds(new Set(favoriteIds));
+      } catch (error) {
+        console.error("Error parsing favorites:", error);
+      }
+    }
   }, []);
+
+  // Save favorites to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem("favoriteInstructors", JSON.stringify(Array.from(favoriteInstructorIds)));
+  }, [favoriteInstructorIds]);
 
   const fetchInstructors = async () => {
     try {
@@ -90,13 +108,25 @@ const Instructors = () => {
   // Mendapatkan list spesialisasi unik untuk dropdown
   const uniqueSpecializations = ["all", ...Array.from(new Set(instructors.map(i => i.specialization)))];
 
+  // Toggle favorite instructor
+  const toggleFavorite = (instructorId: string) => {
+    const newFavorites = new Set(favoriteInstructorIds);
+    if (newFavorites.has(instructorId)) {
+      newFavorites.delete(instructorId);
+    } else {
+      newFavorites.add(instructorId);
+    }
+    setFavoriteInstructorIds(newFavorites);
+  };
+
   // Logic Filtering
   const filteredInstructors = instructors.filter((instructor) => {
     const matchesSearch = instructor.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
                           instructor.specialization.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesFilter = specializationFilter === "all" || instructor.specialization === specializationFilter;
+    const matchesFavorite = !showFavoritesOnly || favoriteInstructorIds.has(instructor.id);
     
-    return matchesSearch && matchesFilter;
+    return matchesSearch && matchesFilter && matchesFavorite;
   });
 
   return (
@@ -113,12 +143,29 @@ const Instructors = () => {
             <div className="mb-8 lg:mb-10 flex flex-col md:flex-row md:items-end justify-between gap-4">
               <div>
                 <h1 className="text-3xl lg:text-4xl font-black text-slate-800 tracking-tight mb-2">
-                  Daftar Instruktur
+                  {showFavoritesOnly ? "Instruktur Favorit" : "Daftar Instruktur"}
                 </h1>
                 <p className="text-slate-500 font-medium text-sm lg:text-lg">
-                  Para instruktur terbaik kami yang siap membimbing kamu! 
+                  {showFavoritesOnly 
+                    ? "Instruktur favorit yang telah kamu pilih" 
+                    : "Para instruktur terbaik kami yang siap membimbing kamu!"}
                 </p>
               </div>
+              <button
+                onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
+                className={`px-4 lg:px-6 py-3 rounded-2xl border-2 border-b-4 font-bold flex items-center gap-2 transition-all ${
+                  showFavoritesOnly
+                    ? 'bg-rose-400 border-rose-500 text-white shadow-lg hover:bg-rose-500 active:border-b-2 active:translate-y-0.5'
+                    : 'bg-white border-slate-200 text-slate-600 shadow-[0_4px_0_0_#e2e8f0] hover:border-rose-300 hover:text-rose-500 active:border-b-2 active:translate-y-0.5'
+                }`}
+              >
+                <Heart className={`h-5 w-5 ${
+                  showFavoritesOnly ? 'fill-white' : 'group-hover:fill-rose-500'
+                }`} strokeWidth={2.5} />
+                <span className="hidden sm:inline text-sm lg:text-base">
+                  {showFavoritesOnly ? "Semua Instruktur" : "Favorit"}
+                </span>
+              </button>
             </div>
 
             {/* Filter & Search Section */}
@@ -209,7 +256,7 @@ const Instructors = () => {
                 ) : (
                   <>
                     {/* ---- SUCCESS HEADER ---- */}
-                    {(searchTerm || specializationFilter !== "all") && (
+                    {(searchTerm || specializationFilter !== "all" || showFavoritesOnly) && (
                       <div className="mb-8">
                         <SuccessDataFound 
                           message={`Hore! Ditemukan ${filteredInstructors.length} instruktur yang cocok!`}
@@ -228,13 +275,28 @@ const Instructors = () => {
                               : 'border-slate-200 shadow-[0_8px_0_0_#cbd5e1] hover:border-emerald-400 hover:shadow-[0_8px_0_0_#34d399]'
                           }`}
                         >
-                          {/* Featured Badge */}
-                          {instructor.featured && (
-                            <div className="absolute top-5 right-5 z-10 bg-amber-400 text-white text-[10px] font-black px-3 py-1 rounded-full border-2 border-amber-500 shadow-sm flex items-center gap-1 animate-pulse">
-                              <Star className="w-3 h-3 fill-white" strokeWidth={3} />
-                              <span>POPULER</span>
-                            </div>
-                          )}
+                          {/* Featured Badge & Favorite Button */}
+                          <div className="absolute top-5 right-5 z-10 flex gap-2 items-center">
+                            {instructor.featured && (
+                              <div className="bg-amber-400 text-white text-[10px] font-black px-3 py-1 rounded-full border-2 border-amber-500 shadow-sm flex items-center gap-1 animate-pulse">
+                                <Star className="w-3 h-3 fill-white" strokeWidth={3} />
+                                <span>POPULER</span>
+                              </div>
+                            )}
+                            <button
+                              onClick={() => toggleFavorite(instructor.id)}
+                              className="bg-white border-2 border-slate-200 rounded-full p-2.5 shadow-md hover:bg-rose-50 hover:border-rose-300 transition-all hover:-translate-y-1"
+                            >
+                              <Heart 
+                                className={`h-5 w-5 transition-colors ${
+                                  favoriteInstructorIds.has(instructor.id)
+                                    ? 'fill-rose-500 text-rose-500'
+                                    : 'text-slate-400 hover:text-rose-400'
+                                }`} 
+                                strokeWidth={2.5} 
+                              />
+                            </button>
+                          </div>
 
                           <div className="p-6 md:p-8 flex-1 flex flex-col">
                             {/* Avatar Section */}

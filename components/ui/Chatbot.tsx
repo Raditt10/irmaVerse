@@ -9,10 +9,10 @@ const ChatbotButton = () => {
     <div className="fixed bottom-4 right-4 md:bottom-8 md:right-8 z-50 flex flex-col items-end gap-4" style={{ fontFamily: "'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', cursive" }}>
       
       {isOpen && (
-        <div className="w-[calc(100vw-32px)] md:w-[420px] h-[70vh] md:h-[600px] bg-gradient-to-b from-yellow-50 to-white rounded-4xl shadow-[0_16px_0_0_rgba(0,0,0,0.2)] border-4 border-emerald-500 flex flex-col overflow-hidden animate-in slide-in-from-bottom-5 zoom-in-95 duration-300 origin-bottom-right relative">
+        <div className="w-[calc(100vw-32px)] md:w-[420px] h-[70vh] md:h-[600px] bg-gradient-to-b from-emerald-50 to-white rounded-4xl shadow-[0_16px_0_0_rgba(0,0,0,0.2)] border-4 border-emerald-500 flex flex-col overflow-hidden animate-in slide-in-from-bottom-5 zoom-in-95 duration-300 origin-bottom-right relative">
           {/* Cartoon Corner Decoration */}
-          <div className="absolute -top-4 -right-4 w-12 h-12 bg-yellow-300 rounded-full border-4 border-white shadow-lg z-20" />
-          <div className="absolute -bottom-3 -left-3 w-10 h-10 bg-pink-300 rounded-full border-3 border-white shadow-md z-20" />
+          <div className="absolute -top-4 -right-4 w-12 h-12 bg-emerald-400 rounded-full border-4 border-white shadow-lg z-20" />
+          <div className="absolute -bottom-3 -left-3 w-10 h-10 bg-teal-400 rounded-full border-3 border-white shadow-md z-20" />
           
           {/* Header Chat */}
           <div className="bg-linear-to-r from-emerald-400 via-teal-400 to-cyan-400 p-6 flex items-center justify-between shrink-0 border-b-4 border-emerald-600 relative overflow-hidden shadow-[0_6px_0_0_rgba(0,0,0,0.1)]">
@@ -43,7 +43,7 @@ const ChatbotButton = () => {
           </div>
 
           {/* Chat Area */}
-          <div className="flex-1 p-5 overflow-y-auto flex flex-col gap-5 bg-gradient-to-b from-yellow-50 to-pink-50 relative">
+          <div className="flex-1 p-5 overflow-y-auto flex flex-col gap-5 bg-gradient-to-b from-emerald-50 to-cyan-50 relative">
             {/* Background Decor */}
             <div className="absolute inset-0 opacity-[0.02] bg-[radial-gradient(#000_1.5px,transparent_1.5px)] [background-size:20px_20px] pointer-events-none" />
 
@@ -149,8 +149,8 @@ const ChatbotButton = () => {
               </div>
               
               {/* Sparkle Decoration */}
-              <div className="absolute -top-2 -right-2 w-8 h-8 bg-yellow-300 rounded-full border-4 border-white shadow-sm flex items-center justify-center animate-bounce">
-                <Sparkles className="w-4 h-4 text-yellow-700 fill-yellow-700" />
+              <div className="absolute -top-2 -right-2 w-8 h-8 bg-emerald-400 rounded-full border-4 border-white shadow-sm flex items-center justify-center animate-bounce">
+                <Sparkles className="w-4 h-4 text-emerald-700 fill-emerald-700" />
               </div>
             </>
           )}

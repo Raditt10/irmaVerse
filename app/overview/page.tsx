@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   BookOpen,
@@ -24,6 +24,7 @@ import {
   Play,
   BookMarked,
   HelpCircle,
+  Heart,
 } from "lucide-react";
 import Sidebar from "@/components/ui/Sidebar";
 import DashboardHeader from "@/components/ui/Header";
@@ -57,7 +58,7 @@ const LevelCardContent = () => (
         <span>3000 XP</span>
       </div>
       <div className="h-5 bg-black/20 rounded-full overflow-hidden border-2 border-emerald-600/30 p-[2px]">
-        <div className="h-full bg-emerald-400 w-3/4 rounded-full shadow-[0_2px_0_0_#059669] relative relative">
+        <div className="h-full bg-emerald-400 w-3/4 rounded-full shadow-[0_2px_0_0_#059669] relative">
             {/* Kilau pada progress bar */}
             <div className="absolute top-0 right-2 w-2 h-full bg-white/40 rounded-full skew-x-[-20deg]" />
             <div className="absolute top-0 right-5 w-1 h-full bg-white/30 rounded-full skew-x-[-20deg]" />
@@ -81,6 +82,8 @@ const Dashboard = () => {
     }
   });
   const router = useRouter();
+  const [favoriteInstructors, setFavoriteInstructors] = useState<any[]>([]);
+  const [loadingInstructors, setLoadingInstructors] = useState(true);
 
   // Redirect non-user roles away from overview
   React.useEffect(() => {
@@ -92,6 +95,49 @@ const Dashboard = () => {
       }
     }
   }, [status, session, router]);
+
+  // Load favorite instructors
+  useEffect(() => {
+    const fetchInstructorsAndFavorites = async () => {
+      try {
+        const res = await fetch("/api/instructors");
+        if (!res.ok) throw new Error("Gagal mengambil data instruktur");
+        const data = await res.json();
+
+        const favoritesJson = localStorage.getItem("favoriteInstructors");
+        const favoriteIds = favoritesJson ? JSON.parse(favoritesJson) : [];
+
+        const favorites = data.filter((instructor: any) =>
+          favoriteIds.includes(instructor.id)
+        );
+        setFavoriteInstructors(favorites);
+      } catch (error) {
+        console.error("Error loading favorites:", error);
+      } finally {
+        setLoadingInstructors(false);
+      }
+    };
+
+    if (status === "authenticated") {
+      fetchInstructorsAndFavorites();
+    }
+  }, [status]);
+    
+  // Random button colors for quizzes
+  const quizButtonColors = [
+    { bg: "bg-emerald-400", border: "border-emerald-600", shadow: "shadow-[0_4px_0_0_#10b981]", hover: "hover:bg-emerald-500" },
+    { bg: "bg-teal-400", border: "border-teal-600", shadow: "shadow-[0_4px_0_0_#14b8a6]", hover: "hover:bg-teal-500" },
+    { bg: "bg-cyan-400", border: "border-cyan-600", shadow: "shadow-[0_4px_0_0_#0891b2]", hover: "hover:bg-cyan-500" },
+    { bg: "bg-blue-400", border: "border-blue-600", shadow: "shadow-[0_4px_0_0_#2563eb]", hover: "hover:bg-blue-500" },
+    { bg: "bg-indigo-400", border: "border-indigo-600", shadow: "shadow-[0_4px_0_0_#4f46e5]", hover: "hover:bg-indigo-500" },
+    { bg: "bg-purple-400", border: "border-purple-600", shadow: "shadow-[0_4px_0_0_#7c3aed]", hover: "hover:bg-purple-500" },
+    { bg: "bg-pink-400", border: "border-pink-600", shadow: "shadow-[0_4px_0_0_#db2777]", hover: "hover:bg-pink-500" },
+    { bg: "bg-rose-400", border: "border-rose-600", shadow: "shadow-[0_4px_0_0_#e11d48]", hover: "hover:bg-rose-500" },
+  ];
+
+  const getRandomButtonColor = (index: number) => {
+    return quizButtonColors[index % quizButtonColors.length];
+  };
     
   const stats = {
     totalPoints: 2450,
@@ -312,17 +358,12 @@ const Dashboard = () => {
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {upcomingQuizzes.map((quiz) => (
-                    <div key={quiz.id} className="bg-white p-4 rounded-[2rem] border-2 border-slate-100 hover:border-amber-300 hover:shadow-[0_6px_0_0_#fcd34d] hover:-translate-y-1 transition-all group">
+                  {upcomingQuizzes.map((quiz, index) => {
+                    const buttonColor = getRandomButtonColor(index);
+                    return (
+                    <div key={quiz.id} className="bg-white p-4 rounded-[2rem] border-2 border-slate-100 hover:border-slate-300 hover:shadow-[0_4px_0_0_#cbd5e1] hover:-translate-y-1 transition-all group">
                       <div className="flex items-start justify-between mb-3">
-                        <h3 className="font-bold text-slate-800 text-sm group-hover:text-amber-600 transition-colors">{quiz.title}</h3>
-                        <span className={`text-xs font-black px-2 py-1 rounded-lg border ${
-                          quiz.difficulty === "Mudah" ? "bg-emerald-50 text-emerald-600 border-emerald-200" :
-                          quiz.difficulty === "Sedang" ? "bg-amber-50 text-amber-600 border-amber-200" :
-                          "bg-rose-50 text-rose-600 border-rose-200"
-                        }`}>
-                          {quiz.difficulty}
-                        </span>
+                        <h3 className="font-bold text-slate-800 text-sm">{quiz.title}</h3>
                       </div>
                       
                       <div className="space-y-2">
@@ -334,11 +375,12 @@ const Dashboard = () => {
                         </p>
                       </div>
                       
-                      <button className="w-full mt-4 py-2 bg-slate-900 text-white text-xs font-black rounded-xl hover:bg-slate-800 hover:scale-105 transition-all">
+                      <button className={`w-full mt-4 py-3 text-white text-xs font-black rounded-2xl h-12 flex items-center justify-center transition-all border-b-4 active:border-b-0 active:translate-y-1 ${buttonColor.bg} ${buttonColor.border} ${buttonColor.shadow} ${buttonColor.hover} hover:shadow-lg`}>
                         Mulai Kuis
                       </button>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </section>
             </div>
@@ -363,7 +405,7 @@ const Dashboard = () => {
                     <h4 className="font-black text-slate-800 text-lg">Misi Harian</h4>
                     <p className="text-xs text-slate-500 font-bold">Selesaikan 2 Kuis</p>
                   </div>
-                  <button className="px-4 py-2 bg-slate-900 text-white text-xs font-black rounded-xl hover:bg-slate-700 hover:scale-105 transition-all">
+                  <button className="px-6 py-2.5 bg-emerald-400 text-white text-xs font-black rounded-2xl h-11 border-b-4 border-emerald-600 hover:bg-emerald-500 hover:shadow-[0_4px_0_0_#10b981] active:border-b-0 active:translate-y-1 transition-all shadow-[0_4px_0_0_#059669]">
                     Mulai
                   </button>
                 </div>
@@ -392,21 +434,47 @@ const Dashboard = () => {
                   </button>
                 </div>
 
-                {/* Instruktur Promo */}
-                <div className="bg-white p-5 rounded-[2rem] border-2 border-slate-100 shadow-sm hover:border-indigo-200 transition-colors">
-                  <h4 className="font-black text-slate-800 mb-3 text-sm tracking-wide uppercase text-center bg-slate-100 rounded-lg py-1">Instruktur Pilihan</h4>
-                  <div className="flex items-center gap-4 mb-4">
-                    <div className="w-14 h-14 rounded-2xl bg-indigo-50 border-2 border-indigo-100 overflow-hidden shrink-0">
-                      <img src="/instruktur.webp" alt="Instruktur" className="w-full h-full object-cover" />
+                {/* Instruktur Favoritmu */}
+                <div className="bg-white p-5 rounded-[2rem] border-2 border-slate-100 shadow-sm">
+                  <h4 className="font-black mb-4 text-sm tracking-wide uppercase text-center bg-rose-50 rounded-lg py-1 border border-rose-100 text-rose-600 flex items-center justify-center gap-2">
+                    <Heart className="w-4 h-4 fill-rose-500 text-rose-500" /> Instruktur Favoritmu
+                  </h4>
+                  
+                  {loadingInstructors ? (
+                    <div className="text-center py-6">
+                      <p className="text-xs text-slate-400 font-bold">Memuat...</p>
                     </div>
-                    <div>
-                      <p className="text-base font-black text-slate-900">Ust. Ahmad</p>
-                      <p className="text-xs text-indigo-500 font-bold bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-100 inline-block mt-1">Fiqih & Ibadah</p>
+                  ) : favoriteInstructors.length === 0 ? (
+                    <div className="text-center py-6">
+                      <p className="text-xs text-slate-500 font-bold mb-4">Belum ada instruktur favorit</p>
+                      <Link href="/instructors" className="w-full py-2 bg-rose-400 text-white text-xs font-black rounded-xl hover:bg-rose-500 transition-all inline-block">
+                        Tambah Favorit
+                      </Link>
                     </div>
-                  </div>
-                  <button className="w-full py-3 bg-slate-900 text-white text-sm font-black rounded-2xl shadow-lg hover:bg-slate-800 hover:shadow-xl hover:-translate-y-1 transition-all">
-                    Jadwalkan Konsultasi
-                  </button>
+                  ) : (
+                    <div className="space-y-3">
+                      {favoriteInstructors.slice(0, 3).map((instructor) => (
+                        <div key={instructor.id} className="flex items-center gap-3 p-3 rounded-2xl bg-rose-50 border border-rose-100 hover:border-rose-300 hover:bg-rose-100 transition-all group cursor-pointer">
+                          <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0 border-2 border-rose-200">
+                            <img 
+                              src={instructor.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${instructor.name}`}
+                              alt={instructor.name} 
+                              className="w-full h-full object-cover" 
+                            />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-black text-slate-900 truncate">{instructor.name}</p>
+                            <p className="text-xs text-rose-600 font-bold truncate">{instructor.bidangKeahlian || instructor.specialization || 'Umum'}</p>
+                          </div>
+                        </div>
+                      ))}
+                      {favoriteInstructors.length > 3 && (
+                        <Link href="/instructors" className="w-full py-2.5 bg-slate-900 text-white text-xs font-black rounded-xl hover:bg-slate-800 transition-all text-center block">
+                          Lihat Semua ({favoriteInstructors.length})
+                        </Link>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* Program Aktif */}
