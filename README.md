@@ -1,70 +1,149 @@
-# IRMA-Verse
+# Irma Verse
 
-IRMA-Verse adalah sebuah platform ekstrakurikuler Ikatan Remaja Masjid di SMK 13 Bandung. Platform ini dirancang untuk mendukung kegiatan remaja masjid dengan fitur-fitur seperti berita, pembelajaran, jadwal kajian, chatbot, dan lainnya yang akan ditambahkan di masa depan.
+![Next.js](https://img.shields.io/badge/Next.js-000000?style=flat&logo=next.js&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat&logo=typescript&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=flat&logo=tailwind-css&logoColor=white)
+![Prisma](https://img.shields.io/badge/Prisma-2D3748?style=flat&logo=prisma&logoColor=white)
+![Socket.io](https://img.shields.io/badge/Socket.io-010101?style=flat&logo=socket.io&logoColor=white)
 
-## Fitur Utama
+**Irma Verse** adalah platform web komprehensif yang dirancang untuk kebutuhan edukasi dan komunitas. Aplikasi ini mengintegrasikan *Learning Management System* (LMS) dengan fitur sosial interaktif, memungkinkan pengguna untuk belajar, berkompetisi, dan berinteraksi secara *real-time*.
 
-- **Berita**: Menyediakan informasi terkini terkait kegiatan remaja masjid.
-- **Pembelajaran**: Materi pembelajaran yang relevan untuk anggota.
-- **Jadwal Kajian**: Informasi jadwal kajian rutin dan acara lainnya.
-- **Chatbot**: Asisten virtual untuk menjawab pertanyaan umum.
-- **Dan lainnya**: Fitur tambahan akan dikembangkan sesuai kebutuhan.
+## 📌 Deskripsi Project
+Sistem ini dibangun untuk memfasilitasi interaksi antara instruktur dan siswa/member melalui berbagai fitur unggulan:
+* **Akademi Digital:** Manajemen materi pembelajaran, jadwal kelas, dan presensi otomatis.
+* **Kompetisi:** Platform untuk mengadakan dan mengelola lomba atau event.
+* **Interaksi Real-time:** Ruang obrolan (Chat Rooms) dan diskusi langsung antara instruktur dan member.
+* **Informasi Terpusat:** Portal berita dan pengumuman kegiatan.
 
-## Instalasi dan Pengembangan
+## 🛠️ Tech Stack
+Project ini menggunakan teknologi modern *full-stack* berbasis TypeScript:
 
-Ikuti langkah-langkah berikut untuk menjalankan proyek ini di lingkungan pengembangan:
+* **Framework:** [Next.js 14](https://nextjs.org/) (App Router)
+* **Language:** TypeScript
+* **Styling:** Tailwind CSS & Shadcn UI
+* **Database:** MySQL
+* **ORM:** Prisma
+* **Authentication:** NextAuth.js (Auth.js)
+* **Real-time Engine:** Socket.io (Custom Server)
+* **Package Manager:** PNPM
 
-### Prasyarat
+## 🚀 Fitur Utama
 
-Pastikan Anda telah menginstal:
-- [Node.js](https://nodejs.org) (disarankan versi terbaru LTS)
-- [PostgreSQL](https://www.postgresql.org) untuk database
+### 🎓 Academy & Learning
+* **Manajemen Materi:** Instruktur dapat mengunggah dan menyusun materi pelajaran.
+* **Jadwal & Presensi:** Kalender kegiatan dan sistem absensi digital.
+* **Quiz & Penilaian:** (Opsional/Planned) Fitur evaluasi pembelajaran.
 
-### Langkah Instalasi
+### 🏆 Kompetisi & Event
+* **Listing Kompetisi:** Daftar lomba yang tersedia beserta detail pendaftarannya.
+* **Leaderboard:** Papan peringkat untuk memacu semangat kompetisi member.
 
-1. Clone repository ini:
+### 💬 Sosial & Komunikasi
+* **Real-time Chat:** Fitur kirim pesan instan antar pengguna atau dalam grup.
+* **Pengumuman (News):** Portal berita terbaru seputar komunitas.
+* **Profil Pengguna:** Kustomisasi profil, avatar, dan status kehadiran (*online/offline*).
 
-   ```bash
-   git clone https://github.com/Raditt10/IRMA-Verse.git
-   cd IRMA-Verse
-   ```
+### 🛡️ Admin & Instruktur
+* **Dashboard Statistik:** Ringkasan data pengguna, materi, dan aktivitas.
+* **Manajemen User:** Kontrol penuh atas data member dan hak akses.
 
-2. Instal dependensi:
+## 📁 Struktur Folder
+Gambaran struktur direktori utama project (Next.js App Router):
 
-   ```bash
-   pnpm install
-   # atau
-   npm install
-   ```
+```text
+irma-verse/
+├── app/                   # Halaman dan API Routes (Next.js App Router)
+│   ├── academy/           # Halaman modul akademi
+│   ├── admin/             # Dashboard khusus admin
+│   ├── api/               # Backend API endpoints
+│   ├── auth/              # Halaman login/register
+│   ├── chat-rooms/        # Interface chat
+│   ├── competitions/      # Halaman kompetisi
+│   └── materials/         # Halaman materi pelajaran
+├── components/            # Komponen UI Reusable (Buttons, Cards, Modals)
+│   ├── ui/                # Komponen dasar (Shadcn/Custom)
+├── lib/                   # Utilitas, konfigurasi Prisma, Auth, & Socket
+├── prisma/                # Skema database & file migrasi
+├── public/                # Aset statis (Gambar, Suara notifikasi)
+├── server.ts              # Konfigurasi custom server (untuk Socket.io)
+└── package.json           # Dependensi project
 
-3. Konfigurasi database:
-   - Salin file `.env.example` menjadi `.env`.
-   - Atur variabel lingkungan sesuai dengan konfigurasi database PostgreSQL Anda.
+```
 
-4. Jalankan migrasi Prisma untuk mengatur skema database:
+## ⚙️ Instalasi & Setup
 
-   ```bash
-   npx prisma migrate dev
-   ```
+Pastikan Anda sudah menginstal **Node.js** dan **PNPM**.
 
-5. Jalankan server pengembangan:
+1. **Clone Repository**
+```bash
+git clone [https://github.com/raditt10/irma-verse.git](https://github.com/raditt10/irma-verse.git)
+cd irma-verse
 
-   ```bash
-   pnpm dev
-   # atau
-   npm run dev
-   ```
+```
 
-6. Buka [http://localhost:3000](http://localhost:3000) di browser Anda untuk melihat hasilnya.
 
-## Kontribusi
+2. **Instal Dependensi**
+```bash
+pnpm install
 
-Kami menyambut kontribusi dari siapa pun! Jika Anda ingin menambahkan fitur atau memperbaiki bug, silakan buat pull request atau buka issue di repository ini.
+```
 
-## Lisensi
 
-Proyek ini dilisensikan di bawah [MIT License](LICENSE).
+3. **Konfigurasi Environment**
+Buat file `.env` di root folder dan sesuaikan variabel berikut:
+```env
+DATABASE_URL="mysql://user:password@localhost:3306/db_irmaverse"
+NEXTAUTH_SECRET="rahasia_anda_disini"
+NEXTAUTH_URL="http://localhost:3000"
+# Tambahkan variabel lain jika diperlukan (misal: Cloudinary/Uploadthing)
+
+```
+
+
+4. **Setup Database (Prisma)**
+Jalankan migrasi untuk membuat tabel di database MySQL Anda:
+```bash
+npx prisma generate
+npx prisma migrate dev --name init
+
+```
+
+
+*(Opsional)* Jalankan seeder untuk data awal:
+```bash
+npx prisma db seed
+
+```
+
+
+5. **Jalankan Project**
+Karena menggunakan custom server untuk Socket.io, gunakan perintah:
+```bash
+pnpm dev
+
+```
+
+
+Akses aplikasi di `http://localhost:3000`.
+
+## 🤝 Kontribusi
+
+Ingin berkontribusi? Silakan ikuti langkah standar GitHub Flow:
+
+1. Fork repository.
+2. Buat branch fitur (`git checkout -b fitur-baru`).
+3. Commit perubahan (`git commit -m 'Menambah fitur X'`).
+4. Push ke branch (`git push origin fitur-baru`).
+5. Buat Pull Request.
+
+## 📄 Lisensi
+
+Hak cipta sepenuhnya milik pengembang.
 
 ---
 
-Dukungan Anda sangat berarti bagi pengembangan IRMA-Verse. Terima kasih telah menjadi bagian dari perjalanan ini!
+*Dikembangkan oleh [Raditt10]*
+
+```
+
+```
