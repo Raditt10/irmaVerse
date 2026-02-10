@@ -138,4 +138,4 @@ Ingin berkontribusi? Silakan ikuti langkah standar GitHub Flow:
 
 ## 📄 Lisensi
 
-Hak cipta sepenuhnya milik pengembang.
+Hak cipta sepenuhnya milik pengembang Syntax13.
