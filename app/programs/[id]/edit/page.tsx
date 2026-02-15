@@ -5,7 +5,7 @@ import DashboardHeader from "@/components/ui/Header";
 import Sidebar from "@/components/ui/Sidebar";
 import ChatbotButton from "@/components/ui/Chatbot";
 import DatePicker from "@/components/ui/DatePicker";
-import CartoonNotification from "@/components/ui/Notification";
+import Toast from "@/components/ui/Toast"; // Import Toast
 import {
   Type,
   Calendar,
@@ -14,7 +14,7 @@ import {
   BookOpen,
   Sparkles,
   Plus,
-  Trash2
+  Trash2,
 } from "lucide-react";
 
 interface Program {
@@ -47,12 +47,12 @@ const EditProgram = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
-  // Notification State
-  const [notification, setNotification] = useState<{
-    type: "success" | "error" | "warning" | "info";
-    title: string;
+  // Ganti Notification dengan Toast State
+  const [toast, setToast] = useState<{
+    show: boolean;
     message: string;
-  } | null>(null);
+    type: "success" | "error";
+  }>({ show: false, message: "", type: "success" });
 
   const [formData, setFormData] = useState({
     title: "",
@@ -70,6 +70,12 @@ const EditProgram = () => {
     benefits: [] as string[],
   });
 
+  // Helper Toast
+  const showToast = (message: string, type: "success" | "error") => {
+    setToast({ show: true, message, type });
+    setTimeout(() => setToast((prev) => ({ ...prev, show: false })), 3000);
+  };
+
   // Fetch program data
   useEffect(() => {
     if (programId) {
@@ -81,7 +87,7 @@ const EditProgram = () => {
     try {
       setLoading(true);
       
-      // Mock data
+      // Mock data fetching (Replace with API call)
       const mockPrograms: Program[] = [
         {
           id: "1",
@@ -136,11 +142,7 @@ const EditProgram = () => {
       });
     } catch (err: any) {
       console.error(err);
-      setNotification({
-        type: "error",
-        title: "Gagal Memuat Data",
-        message: err.message || "Tidak bisa memuat data program",
-      });
+      showToast(err.message || "Tidak bisa memuat data program", "error");
     } finally {
       setLoading(false);
     }
@@ -160,29 +162,19 @@ const EditProgram = () => {
     e.preventDefault();
 
     if (!formData.title || !formData.description) {
-      setNotification({
-        type: "warning",
-        title: "Data Tidak Lengkap",
-        message: "Harap isi semua field yang diperlukan",
-      });
+      showToast("Harap isi semua field yang diperlukan", "error");
       return;
     }
 
     setSubmitting(true);
     try {
+      // Simulasi API call
       await new Promise((resolve) => setTimeout(resolve, 1500));
-      setNotification({
-        type: "success",
-        title: "Berhasil!",
-        message: "Program berhasil diperbarui. Mengalihkan...",
-      });
+      
+      showToast("Program berhasil diperbarui. Mengalihkan...", "success");
       setTimeout(() => router.push("/programs"), 2000);
     } catch (error: any) {
-      setNotification({
-        type: "error",
-        title: "Gagal Memperbarui",
-        message: error.message || "Terjadi kesalahan saat memperbarui program",
-      });
+      showToast(error.message || "Terjadi kesalahan saat memperbarui program", "error");
     } finally {
       setSubmitting(false);
     }
@@ -213,7 +205,7 @@ const EditProgram = () => {
                 onClick={() => router.back()}
                 className="self-start inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white border-2 border-slate-200 text-slate-500 font-bold hover:border-teal-400 hover:text-teal-600 hover:shadow-[0_4px_0_0_#34d399] active:border-b-2 active:translate-y-0.5 active:shadow-none transition-all"
               >
-  <ArrowLeft className="h-5 w-5 stroke-3" />
+                <ArrowLeft className="h-5 w-5 stroke-3" />
                 Kembali
               </button>
               <div>
@@ -396,10 +388,6 @@ const EditProgram = () => {
                           {idx + 1}
                         </span>
                         
-                        {/* PERBAIKAN UTAMA: 
-                           min-w-0 agar input bisa mengecil (shrink) 
-                           flex-1 agar input mengambil sisa ruang 
-                        */}
                         <input
                           type="text"
                           value={item}
@@ -556,16 +544,13 @@ const EditProgram = () => {
       </div>
       <ChatbotButton />
 
-      {/* Notification */}
-      {notification && (
-        <CartoonNotification
-          type={notification.type}
-          title={notification.title}
-          message={notification.message}
-          duration={4000}
-          onClose={() => setNotification(null)}
-        />
-      )}
+      {/* Toast Notification */}
+      <Toast
+        show={toast.show}
+        message={toast.message}
+        type={toast.type}
+        onClose={() => setToast((prev) => ({ ...prev, show: false }))}
+      />
     </div>
   );
 };

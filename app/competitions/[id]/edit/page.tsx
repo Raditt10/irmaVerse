@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/InputText";
 import { Textarea } from "@/components/ui/textarea";
 import { ArrowLeft, Upload, X, Plus } from "lucide-react";
-import { toast } from "sonner";
+import Toast from "@/components/ui/Toast"; // Import Toast
 
 const EditCompetition = () => {
   const router = useRouter();
@@ -20,6 +20,13 @@ const EditCompetition = () => {
   const [fetchingData, setFetchingData] = useState(true);
   const [uploadingImage, setUploadingImage] = useState(false);
   
+  // Toast State
+  const [toast, setToast] = useState<{
+    show: boolean;
+    message: string;
+    type: "success" | "error";
+  }>({ show: false, message: "", type: "success" });
+
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -43,7 +50,12 @@ const EditCompetition = () => {
     { phase: "", date: "", description: "" },
   ]);
 
-  // Fetch existing competition data
+  // Helper Toast
+  const showToast = (message: string, type: "success" | "error") => {
+    setToast({ show: true, message, type });
+    setTimeout(() => setToast((prev) => ({ ...prev, show: false })), 3000);
+  };
+
   useEffect(() => {
     if (competitionId) {
       fetchCompetitionData();
@@ -61,14 +73,12 @@ const EditCompetition = () => {
 
       const data = await response.json();
 
-      // Check if user is the owner
       if (session?.user?.id !== data.instructorId && session?.user?.role !== "admin") {
-        toast.error("Anda tidak memiliki akses untuk mengedit perlombaan ini");
-        router.push("/competitions");
+        showToast("Anda tidak memiliki akses untuk mengedit perlombaan ini", "error");
+        setTimeout(() => router.push("/competitions"), 2000);
         return;
       }
 
-      // Format date to YYYY-MM-DD for input[type="date"]
       const dateObj = new Date(data.date);
       const formattedDate = dateObj.toISOString().split('T')[0];
 
@@ -100,14 +110,13 @@ const EditCompetition = () => {
       );
     } catch (error: any) {
       console.error("Error fetching competition:", error);
-      toast.error("Gagal memuat data perlombaan");
-      router.push("/competitions");
+      showToast("Gagal memuat data perlombaan", "error");
+      setTimeout(() => router.push("/competitions"), 2000);
     } finally {
       setFetchingData(false);
     }
   };
 
-  // Redirect if not instructor
   if (status === "authenticated" && session?.user?.role !== "instruktur") {
     router.push("/competitions");
     return null;
@@ -152,10 +161,9 @@ const EditCompetition = () => {
         ...prev,
         thumbnailUrl: data.url,
       }));
-      toast.success("Gambar berhasil diunggah");
+      showToast("Gambar berhasil diunggah", "success");
     } catch (error: any) {
-      console.error("Error uploading image:", error);
-      toast.error("Gagal mengunggah gambar");
+      showToast("Gagal mengunggah gambar", "error");
     } finally {
       setUploadingImage(false);
     }
@@ -164,9 +172,8 @@ const EditCompetition = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validation
     if (!formData.title || !formData.description || !formData.date || !formData.location || !formData.prize || !formData.category) {
-      toast.error("Mohon lengkapi semua field yang wajib diisi");
+      showToast("Mohon lengkapi semua field yang wajib diisi", "error");
       return;
     }
 
@@ -184,9 +191,7 @@ const EditCompetition = () => {
 
       const response = await fetch("/api/competitions", {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
 
@@ -196,11 +201,11 @@ const EditCompetition = () => {
       }
 
       const data = await response.json();
-      toast.success("Perlombaan berhasil diperbarui!");
-      router.push(`/competitions/${data.id}`);
+      showToast("Perlombaan berhasil diperbarui!", "success");
+      setTimeout(() => router.push(`/competitions/${data.id}`), 1500);
+
     } catch (error: any) {
-      console.error("Error updating competition:", error);
-      toast.error(error.message || "Terjadi kesalahan saat memperbarui perlombaan");
+      showToast(error.message || "Terjadi kesalahan saat memperbarui perlombaan", "error");
     } finally {
       setLoading(false);
     }
@@ -603,6 +608,14 @@ const EditCompetition = () => {
         </div>
       </div>
       <ChatbotButton />
+
+      {/* Toast Notification */}
+      <Toast
+        show={toast.show}
+        message={toast.message}
+        type={toast.type}
+        onClose={() => setToast((prev) => ({ ...prev, show: false }))}
+      />
     </div>
   );
 };

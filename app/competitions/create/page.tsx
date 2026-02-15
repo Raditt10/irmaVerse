@@ -5,14 +5,14 @@ import { useSession } from "next-auth/react";
 import DashboardHeader from "@/components/ui/Header";
 import Sidebar from "@/components/ui/Sidebar";
 import ChatbotButton from "@/components/ui/Chatbot";
-import CartoonNotification from "@/components/ui/Notification";
 import CustomDropdown from "@/components/ui/CustomDropdown";
 import DatePicker from "@/components/ui/DatePicker";
 import TimePicker from "@/components/ui/TimePicker";
 import DashedAddButton from "@/components/ui/DashedAddButton";
 import { Input } from "@/components/ui/InputText";
 import { Textarea } from "@/components/ui/textarea";
-import { Calendar, MapPin, ArrowLeft, Upload, X, Save, Sparkles, Trophy, Tag, Users } from "lucide-react";
+import { Calendar, MapPin, ArrowLeft, Upload, X, Save, Sparkles, Trophy, Tag, Users, Plus } from "lucide-react";
+import Toast from "@/components/ui/Toast";
 
 const CreateCompetition = () => {
   const router = useRouter();
@@ -20,12 +20,11 @@ const CreateCompetition = () => {
   const [loading, setLoading] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   
-  // Notification State
-  const [notification, setNotification] = useState<{
-    type: "success" | "error" | "warning" | "info";
-    title: string;
+  const [toast, setToast] = useState<{
+    show: boolean;
     message: string;
-  } | null>(null);
+    type: "success" | "error";
+  }>({ show: false, message: "", type: "success" });
   
   const [formData, setFormData] = useState({
     title: "",
@@ -33,7 +32,7 @@ const CreateCompetition = () => {
     date: "",
     time: "",
     location: "",
-    prize: "",
+    prize: "", // Hadiah Utama (Opsional jika Juara 1 diisi)
     category: "Tahfidz" as "Tahfidz" | "Seni" | "Bahasa" | "Lainnya",
     thumbnailUrl: "",
     contactPerson: "",
@@ -42,17 +41,15 @@ const CreateCompetition = () => {
     maxParticipants: "",
   });
 
-  const [requirements, setRequirements] = useState<string[]>([""]);
-  const [judgingCriteria, setJudgingCriteria] = useState<string[]>([""]);
-  const [prizes, setPrizes] = useState<{ rank: string; amount: string }[]>([
-    { rank: "", amount: "" },
+  const [winners, setWinners] = useState<{ rank: number; prize: string; benefits: string }[]>([
+    { rank: 1, prize: "", benefits: "" } // Default ada Juara 1
   ]);
-  const [schedules, setSchedules] = useState<{ phase: string; date: string; description: string }[]>([
-    { phase: "", date: "", description: "" },
-  ]);
-  const [winners, setWinners] = useState<{ rank: number; prize: string; benefits: string }[]>([]);
 
-  // Redirect if not instructor
+  const showToast = (message: string, type: "success" | "error") => {
+    setToast({ show: true, message, type });
+    setTimeout(() => setToast((prev) => ({ ...prev, show: false })), 3000);
+  };
+
   if (status === "authenticated" && session?.user?.role !== "instruktur") {
     router.push("/competitions");
     return null;
@@ -106,18 +103,9 @@ const CreateCompetition = () => {
         ...prev,
         thumbnailUrl: data.url,
       }));
-      setNotification({
-        type: "success",
-        title: "Berhasil!",
-        message: "Gambar berhasil diunggah",
-      });
+      showToast("Gambar berhasil diunggah", "success");
     } catch (error: any) {
-      console.error("Error uploading image:", error);
-      setNotification({
-        type: "error",
-        title: "Gagal Mengunggah",
-        message: "Gagal mengunggah gambar",
-      });
+      showToast("Gagal mengunggah gambar", "error");
     } finally {
       setUploadingImage(false);
     }
@@ -126,15 +114,38 @@ const CreateCompetition = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validation
-    if (!formData.title || !formData.description || !formData.date || !formData.location || !formData.prize || !formData.category) {
-      setNotification({
-        type: "warning",
-        title: "Data Belum Lengkap",
-        message: "Mohon lengkapi semua bagian yang wajib diisi",
-      });
+    // --- LOGIKA PENENTUAN HADIAH UTAMA ---
+    // Cek apakah hadiah diisi di "Informasi Dasar" ATAU di "Juara 1"
+    const finalPrize = formData.prize.trim() || winners[0]?.prize?.trim() || "";
+
+    // --- VALIDASI SPESIFIK ---
+    if (!formData.title.trim()) {
+      showToast("Judul kompetisi belum diisi!", "error");
       return;
     }
+    if (!formData.category) {
+      showToast("Kategori kompetisi belum dipilih!", "error");
+      return;
+    }
+    if (!formData.description.trim()) {
+      showToast("Deskripsi kompetisi belum diisi!", "error");
+      return;
+    }
+    if (!formData.date) {
+      showToast("Tanggal kompetisi belum dipilih!", "error");
+      return;
+    }
+    if (!formData.location.trim()) {
+      showToast("Lokasi kompetisi belum diisi!", "error");
+      return;
+    }
+    
+    // Validasi Hadiah: Harus ada isinya di salah satu tempat
+    if (!finalPrize) {
+      showToast("Hadiah utama/Juara 1 belum diisi!", "error");
+      return;
+    }
+    // -------------------------
 
     setLoading(true);
     try {
@@ -142,13 +153,11 @@ const CreateCompetition = () => {
         title: formData.title,
         description: formData.description,
         date: formData.date,
-        prize: formData.prize,
+        prize: finalPrize, // Gunakan hadiah yang sudah divalidasi
         category: formData.category,
         thumbnailUrl: formData.thumbnailUrl || null,
         winners: winners.filter(w => w.prize || w.benefits),
       };
-
-      console.log("Sending payload:", payload);
 
       const response = await fetch("/api/competitions", {
         method: "POST",
@@ -158,35 +167,23 @@ const CreateCompetition = () => {
         body: JSON.stringify(payload),
       });
 
-      console.log("Response status:", response.status, "ok:", response.ok);
-
       if (!response.ok) {
         let errorData: any = {};
         try {
           errorData = await response.json();
         } catch (e) {
           const text = await response.text();
-          console.error("Response text:", text);
           errorData = { error: text || `HTTP ${response.status}` };
         }
-        console.error("API Error Details:", errorData, "Status:", response.status);
         throw new Error((errorData as any)?.details || (errorData as any)?.error || `HTTP ${response.status}: Failed to create competition`);
       }
 
       const data = await response.json();
-      setNotification({
-        type: "success",
-        title: "Berhasil!",
-        message: "Perlombaan berhasil dibuat. Redirecting...",
-      });
+      showToast("Perlombaan berhasil dibuat. Mengalihkan...", "success");
       setTimeout(() => router.push(`/competitions/${data.id}`), 2000);
     } catch (error: any) {
       console.error("Error creating competition:", error);
-      setNotification({
-        type: "error",
-        title: "Gagal Membuat Perlombaan",
-        message: error.message || "Terjadi kesalahan saat membuat perlombaan",
-      });
+      showToast(error.message || "Terjadi kesalahan saat membuat perlombaan", "error");
     } finally {
       setLoading(false);
     }
@@ -269,6 +266,13 @@ const CreateCompetition = () => {
                       />
                       <p className="text-xs text-slate-500 ml-1">{formData.description.length}/200 karakter</p>
                     </div>
+
+                    {/* HAPUS INPUT HADIAH DISINI AGAR TIDAK BINGUNG */}
+                    {/* <div className="space-y-2">
+                         <label className="block text-xs lg:text-sm font-bold text-slate-600 ml-1">Hadiah Utama</label>
+                         <Input ... />
+                        </div> 
+                    */}
                   </div>
                 </div>
 
@@ -360,69 +364,60 @@ const CreateCompetition = () => {
                 {/* Card Info Juara */}
                 <div className="bg-white p-5 lg:p-8 rounded-3xl lg:rounded-[2.5rem] border-2 border-slate-200 shadow-[0_4px_0_0_#cbd5e1] lg:shadow-[0_8px_0_0_#cbd5e1]">
                   <h2 className="text-lg lg:text-xl font-black text-slate-700 mb-4 lg:mb-6 flex items-center gap-2">
-                    <Trophy className="h-5 w-5 lg:h-6 lg:w-6 text-amber-500" /> Info Juara (Opsional)
+                    <Trophy className="h-5 w-5 lg:h-6 lg:w-6 text-amber-500" /> Info Juara
                   </h2>
-                  <p className="text-xs lg:text-sm text-slate-500 mb-4 lg:mb-6">Isi detail hadiah dan benefit untuk setiap juara. Bagian ini tidak wajib diisi.</p>
+                  <p className="text-xs lg:text-sm text-slate-500 mb-4 lg:mb-6">Isi detail hadiah dan benefit untuk setiap juara.</p>
 
                   <div className="space-y-6">
-                    {winners.length === 0 ? (
-                      <div className="flex flex-col items-center justify-center py-8 text-center">
-                        <Trophy className="h-12 w-12 text-slate-300 mb-3" />
-                        <p className="text-slate-500 text-sm lg:text-base font-medium mb-4">
-                          Belum ada juara yang ditambahkan. Klik tombol di bawah untuk mulai menambah juara.
-                        </p>
-                      </div>
-                    ) : (
-                      winners.map((winner, index) => (
-                        <div key={index} className="bg-slate-50 p-4 lg:p-6 rounded-2xl border-2 border-slate-100 relative">
-                          <div className="flex items-center gap-2 mb-4">
-                            <Trophy className={`h-5 w-5 ${index === 0 ? "text-yellow-500" : index === 1 ? "text-slate-400" : "text-orange-400"}`} />
-                            <h3 className="font-bold text-slate-700">
-                              {index === 0 ? "🥇 Juara 1" : index === 1 ? "🥈 Juara 2" : index === 2 ? "🥉 Juara 3" : `Juara ${index + 1}`}
-                            </h3>
-                            <button
-                              type="button"
-                              onClick={() => handleDeleteWinner(index)}
-                              className="ml-auto px-3 py-1 rounded-lg bg-red-100 text-red-600 hover:bg-red-200 font-bold text-xs flex items-center gap-1 transition-all"
-                            >
-                              <X className="h-3 w-3" /> Hapus
-                            </button>
+                    {winners.map((winner, index) => (
+                      <div key={index} className="bg-slate-50 p-4 lg:p-6 rounded-2xl border-2 border-slate-100 relative">
+                        <div className="flex items-center gap-2 mb-4">
+                          <Trophy className={`h-5 w-5 ${index === 0 ? "text-yellow-500" : index === 1 ? "text-slate-400" : "text-orange-400"}`} />
+                          <h3 className="font-bold text-slate-700">
+                            {index === 0 ? "🥇 Juara 1" : index === 1 ? "🥈 Juara 2" : index === 2 ? "🥉 Juara 3" : `Juara ${index + 1}`}
+                          </h3>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteWinner(index)}
+                            className="ml-auto px-3 py-1 rounded-lg bg-red-100 text-red-600 hover:bg-red-200 font-bold text-xs flex items-center gap-1 transition-all"
+                          >
+                            <X className="h-3 w-3" /> Hapus
+                          </button>
+                        </div>
+
+                        <div className="space-y-4">
+                          <div className="space-y-2">
+                            <label className="block text-xs lg:text-sm font-bold text-slate-600 ml-1">Hadiah</label>
+                            <Input
+                              type="text"
+                              value={winner.prize}
+                              onChange={(e) => {
+                                const newWinners = [...winners];
+                                newWinners[index].prize = e.target.value;
+                                setWinners(newWinners);
+                              }}
+                              placeholder="Contoh: Rp 5.000.000"
+                            />
                           </div>
 
-                          <div className="space-y-4">
-                            <div className="space-y-2">
-                              <label className="block text-xs lg:text-sm font-bold text-slate-600 ml-1">Hadiah</label>
-                              <Input
-                                type="text"
-                                value={winner.prize}
-                                onChange={(e) => {
-                                  const newWinners = [...winners];
-                                  newWinners[index].prize = e.target.value;
-                                  setWinners(newWinners);
-                                }}
-                                placeholder="Contoh: Rp 5.000.000"
-                              />
-                            </div>
-
-                            <div className="space-y-2">
-                              <label className="block text-xs lg:text-sm font-bold text-slate-600 ml-1">Benefit / Hadiah Tambahan</label>
-                              <Textarea
-                                value={winner.benefits}
-                                onChange={(e) => {
-                                  const newWinners = [...winners];
-                                  newWinners[index].benefits = e.target.value;
-                                  setWinners(newWinners);
-                                }}
-                                rows={3}
-                                placeholder={`Contoh untuk juara ${index + 1}: Uang tunai, piala, sertifikat, beasiswa, dll`}
-                                maxLength={300}
-                              />
-                              <p className="text-xs text-slate-500 ml-1">{winner.benefits.length}/300 karakter</p>
-                            </div>
+                          <div className="space-y-2">
+                            <label className="block text-xs lg:text-sm font-bold text-slate-600 ml-1">Benefit / Hadiah Tambahan</label>
+                            <Textarea
+                              value={winner.benefits}
+                              onChange={(e) => {
+                                const newWinners = [...winners];
+                                newWinners[index].benefits = e.target.value;
+                                setWinners(newWinners);
+                              }}
+                              rows={3}
+                              placeholder={`Contoh untuk juara ${index + 1}: Uang tunai, piala, sertifikat, beasiswa, dll`}
+                              maxLength={300}
+                            />
+                            <p className="text-xs text-slate-500 ml-1">{winner.benefits.length}/300 karakter</p>
                           </div>
                         </div>
-                      ))
-                    )}
+                      </div>
+                    ))}
 
                     <DashedAddButton
                       label="Tambah Juara"
@@ -501,16 +496,13 @@ const CreateCompetition = () => {
       </div>
       <ChatbotButton />
 
-      {/* Notification */}
-      {notification && (
-        <CartoonNotification
-          type={notification.type}
-          title={notification.title}
-          message={notification.message}
-          duration={notification.type === "success" ? 3000 : 5000}
-          onClose={() => setNotification(null)}
-        />
-      )}
+      {/* Toast Notification */}
+      <Toast
+        show={toast.show}
+        message={toast.message}
+        type={toast.type}
+        onClose={() => setToast((prev) => ({ ...prev, show: false }))}
+      />
     </div>
   );
 };

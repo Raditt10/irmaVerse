@@ -5,13 +5,13 @@ import { useSession } from "next-auth/react";
 import DashboardHeader from "@/components/ui/Header";
 import Sidebar from "@/components/ui/Sidebar";
 import ChatbotButton from "@/components/ui/Chatbot";
-import CartoonNotification from "@/components/ui/Notification";
 import Loading from "@/components/ui/Loading";
 import DatePicker from "@/components/ui/DatePicker";
 import TimePicker from "@/components/ui/TimePicker";
 import { Input } from "@/components/ui/InputText";
 import { Textarea } from "@/components/ui/textarea";
-import { Calendar, MapPin, Clock, ArrowLeft, Upload, X, Save, Sparkles, Type } from "lucide-react";
+import { Calendar, MapPin, Clock, ArrowLeft, Upload, X, Save, Sparkles, Type, Users, Mic } from "lucide-react";
+import Toast from "@/components/ui/Toast";
 
 const CreateSchedule = () => {
   const router = useRouter();
@@ -19,12 +19,11 @@ const CreateSchedule = () => {
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   
-  // Notification State
-  const [notification, setNotification] = useState<{
-    type: "success" | "error" | "warning" | "info";
-    title: string;
+  const [toast, setToast] = useState<{
+    show: boolean;
     message: string;
-  } | null>(null);
+    type: "success" | "error";
+  }>({ show: false, message: "", type: "success" });
 
   const [formData, setFormData] = useState({
     title: "",
@@ -33,11 +32,17 @@ const CreateSchedule = () => {
     date: "",
     time: "",
     location: "",
-    penanggungjawab: "",
+    pemateri: "", // Diganti dari penanggungjawab agar konsisten dengan backend
     thumbnailUrl: "",
   });
 
-  // Redirect if not instructor
+  // Helper Toast
+  const showToast = (message: string, type: "success" | "error") => {
+    setToast({ show: true, message, type });
+    setTimeout(() => setToast((prev) => ({ ...prev, show: false })), 3000);
+  };
+
+  // Redirect jika bukan instruktur
   if (status === "authenticated" && session?.user?.role !== "instruktur") {
     router.push("/schedule");
     return null;
@@ -74,27 +79,15 @@ const CreateSchedule = () => {
         
         if (!res.ok) {
           const error = await res.json();
-          setNotification({
-            type: "error",
-            title: "Gagal Mengunggah",
-            message: error.message || "Gagal mengunggah gambar",
-          });
+          showToast(error.message || "Gagal mengunggah gambar", "error");
           return;
         }
         
         const data = await res.json();
         setFormData((prev) => ({ ...prev, thumbnailUrl: data.url }));
-        setNotification({
-          type: "success",
-          title: "Berhasil!",
-          message: "Gambar berhasil diunggah",
-        });
+        showToast("Gambar berhasil diunggah", "success");
       } catch (error) {
-        setNotification({
-          type: "error",
-          title: "Gagal Mengunggah",
-          message: "Gagal mengunggah gambar",
-        });
+        showToast("Gagal mengunggah gambar", "error");
       } finally {
         setUploading(false);
       }
@@ -104,71 +97,20 @@ const CreateSchedule = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Detailed validation
-    if (!formData.title.trim()) {
-      setNotification({
-        type: "warning",
-        title: "Data Belum Lengkap",
-        message: "Judul jadwal tidak boleh kosong",
-      });
-      return;
-    }
-    if (formData.title.trim().length < 3) {
-      setNotification({
-        type: "warning",
-        title: "Data Tidak Valid",
-        message: "Judul jadwal minimal 3 karakter",
-      });
-      return;
-    }
-    if (!formData.description.trim()) {
-      setNotification({
-        type: "warning",
-        title: "Data Belum Lengkap",
-        message: "Deskripsi jadwal tidak boleh kosong",
-      });
-      return;
-    }
-    if (!formData.date) {
-      setNotification({
-        type: "warning",
-        title: "Data Belum Lengkap",
-        message: "Tanggal jadwal harus dipilih",
-      });
-      return;
-    }
-    if (!formData.time) {
-      setNotification({
-        type: "warning",
-        title: "Data Belum Lengkap",
-        message: "Jam jadwal harus dipilih",
-      });
-      return;
-    }
-    if (!formData.location.trim()) {
-      setNotification({
-        type: "warning",
-        title: "Data Belum Lengkap",
-        message: "Lokasi jadwal tidak boleh kosong",
-      });
-      return;
-    }
-    if (!formData.penanggungjawab.trim()) {
-      setNotification({
-        type: "warning",
-        title: "Data Belum Lengkap",
-        message: "Penanggung jawab tidak boleh kosong",
-      });
-      return;
-    }
+    // --- VALIDASI KUAT ---
+    if (!formData.title.trim()) { showToast("Judul event tidak boleh kosong", "error"); return; }
+    if (formData.title.length < 5) { showToast("Judul event minimal 5 karakter", "error"); return; }
+    if (!formData.description.trim()) { showToast("Deskripsi singkat tidak boleh kosong", "error"); return; }
+    if (!formData.date) { showToast("Tanggal event harus dipilih", "error"); return; }
+    if (!formData.time) { showToast("Jam event harus dipilih", "error"); return; }
+    if (!formData.location.trim()) { showToast("Lokasi event tidak boleh kosong", "error"); return; }
+    if (!formData.pemateri.trim()) { showToast("Nama pemateri/penanggung jawab tidak boleh kosong", "error"); return; }
 
     setLoading(true);
     try {
       const response = await fetch("/api/schedules", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
 
@@ -177,20 +119,12 @@ const CreateSchedule = () => {
         throw new Error(error.error || "Gagal membuat jadwal");
       }
 
-      const data = await response.json();
-      setNotification({
-        type: "success",
-        title: "Berhasil!",
-        message: "Jadwal berhasil dibuat. Redirecting...",
-      });
-      setTimeout(() => router.push(`/schedule/${data.id}`), 2000);
+      showToast("Event berhasil dibuat. Mengalihkan...", "success");
+      // REDIRECT KE HALAMAN UTAMA SCHEDULE
+      setTimeout(() => router.push("/schedule"), 1500);
     } catch (error: any) {
       console.error("Error creating schedule:", error);
-      setNotification({
-        type: "error",
-        title: "Gagal Membuat Jadwal",
-        message: error.message || "Terjadi kesalahan saat membuat jadwal",
-      });
+      showToast(error.message || "Terjadi kesalahan saat membuat jadwal", "error");
     } finally {
       setLoading(false);
     }
@@ -249,7 +183,7 @@ const CreateSchedule = () => {
                       <Textarea
                         name="description"
                         required
-                        rows={5}
+                        rows={3}
                         value={formData.description}
                         onChange={handleChange}
                         placeholder="Jelaskan tentang event ini..."
@@ -310,12 +244,14 @@ const CreateSchedule = () => {
                     </div>
 
                     <div className="space-y-2">
-                      <label className="block text-xs lg:text-sm font-bold text-slate-600 ml-1">Penanggung jawab</label>
+                      <label className="flex text-xs lg:text-sm font-bold text-slate-600 ml-1 items-center gap-1">
+                         <Mic className="h-4 w-4" /> Pemateri / Penanggung Jawab
+                      </label>
                       <Input
                         type="text"
-                        name="penanggungjawab"
+                        name="pemateri"
                         required
-                        value={formData.penanggungjawab}
+                        value={formData.pemateri}
                         onChange={handleChange}
                         placeholder="Contoh: Ustadz Ahmad Zaki"
                       />
@@ -324,11 +260,12 @@ const CreateSchedule = () => {
                 </div>
               </div>
 
-              {/* --- KOLOM KANAN: UPLOAD GAMBAR --- */}
+              {/* --- KOLOM KANAN: MEDIA --- */}
               <div className="space-y-6 lg:space-y-8">
-                {/* Upload Thumbnail */}
                 <div className="bg-white p-5 lg:p-6 rounded-3xl lg:rounded-[2.5rem] border-2 border-slate-200 shadow-[0_4px_0_0_#cbd5e1] lg:shadow-[0_8px_0_0_#cbd5e1] text-center">
-                  <label className="block text-xs lg:text-sm font-bold text-slate-600 mb-3 lg:mb-4">Thumbnail Event</label>
+                  <label className="block text-xs lg:text-sm font-bold text-slate-600 mb-3 lg:mb-4">
+                    Thumbnail Event
+                  </label>
                   <div className="relative group cursor-pointer">
                     <input
                       type="file"
@@ -339,14 +276,18 @@ const CreateSchedule = () => {
                     />
                     {formData.thumbnailUrl ? (
                       <div className="relative w-full h-40 lg:h-48 rounded-2xl lg:rounded-3xl overflow-hidden border-2 border-slate-200 group-hover:border-teal-400 transition-all">
-                        <img src={formData.thumbnailUrl} alt="Preview" className="w-full h-full object-cover" />
+                        <img
+                          src={formData.thumbnailUrl}
+                          alt="Preview"
+                          className="w-full h-full object-cover"
+                        />
                         <button
                           type="button"
                           onClick={(e) => {
                             e.preventDefault();
                             setFormData((prev) => ({ ...prev, thumbnailUrl: "" }));
                           }}
-                          className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full border-2 border-white shadow-md hover:scale-110 transition-transform"
+                          className="absolute top-2 right-2 p-1.5 rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors shadow-sm"
                         >
                           <X className="w-3 h-3 lg:w-4 lg:h-4" />
                         </button>
@@ -354,7 +295,7 @@ const CreateSchedule = () => {
                     ) : (
                       <label
                         htmlFor="upload-thumb"
-                        className="flex flex-col items-center justify-center w-full h-40 lg:h-48 rounded-2xl lg:rounded-3xl border-2 border-dashed border-slate-300 bg-slate-50 hover:bg-teal-50 hover:border-teal-400 transition-all cursor-pointer"
+                        className="flex flex-col items-center justify-center w-full h-40 lg:h-48 rounded-2xl lg:rounded-3xl border-2 border-dashed border-slate-300 bg-slate-50 group-hover:border-teal-400 group-hover:bg-teal-50 transition-all cursor-pointer"
                       >
                         {uploading ? (
                           <Sparkles className="w-6 h-6 lg:w-8 lg:h-8 text-teal-400 animate-spin" />
@@ -391,16 +332,12 @@ const CreateSchedule = () => {
       </div>
       <ChatbotButton />
 
-      {/* Notification */}
-      {notification && (
-        <CartoonNotification
-          type={notification.type}
-          title={notification.title}
-          message={notification.message}
-          duration={notification.type === "success" ? 3000 : 5000}
-          onClose={() => setNotification(null)}
-        />
-      )}
+      <Toast
+        show={toast.show}
+        message={toast.message}
+        type={toast.type}
+        onClose={() => setToast((prev) => ({ ...prev, show: false }))}
+      />
     </div>
   );
 };

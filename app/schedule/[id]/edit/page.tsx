@@ -7,7 +7,8 @@ import Sidebar from "@/components/ui/Sidebar";
 import ChatbotButton from "@/components/ui/Chatbot";
 import DatePicker from "@/components/ui/DatePicker";
 import TimePicker from "@/components/ui/TimePicker";
-import CartoonNotification from "@/components/ui/Notification";
+import Toast from "@/components/ui/Toast"; 
+import Loading from "@/components/ui/Loading";
 import {
   Upload,
   X,
@@ -20,6 +21,8 @@ import {
   Users,
   Mic,
 } from "lucide-react";
+import { Input } from "@/components/ui/InputText"; 
+import { Textarea } from "@/components/ui/textarea";
 
 const EditSchedule = () => {
   const router = useRouter();
@@ -31,12 +34,12 @@ const EditSchedule = () => {
   const [submitting, setSubmitting] = useState(false);
   const [uploading, setUploading] = useState(false);
 
-  // Notification State
-  const [notification, setNotification] = useState<{
-    type: "success" | "error" | "warning" | "info";
-    title: string;
+  // Toast State
+  const [toast, setToast] = useState<{
+    show: boolean;
     message: string;
-  } | null>(null);
+    type: "success" | "error";
+  }>({ show: false, message: "", type: "success" });
 
   const [formData, setFormData] = useState({
     title: "",
@@ -48,6 +51,12 @@ const EditSchedule = () => {
     maxCapacity: "",
     thumbnailUrl: "",
   });
+
+  // Helper Toast
+  const showToast = (message: string, type: "success" | "error") => {
+    setToast({ show: true, message, type });
+    setTimeout(() => setToast((prev) => ({ ...prev, show: false })), 3000);
+  };
 
   // Fetch existing schedule data
   useEffect(() => {
@@ -69,18 +78,14 @@ const EditSchedule = () => {
       const data = text ? JSON.parse(text) : null;
 
       if (!data) {
-        throw new Error("Data jadwal tidak ditemukan (Empty Response)");
+        throw new Error("Data jadwal tidak ditemukan");
       }
 
       if (
         session?.user?.id !== data.instructorId &&
         session?.user?.role !== "admin"
       ) {
-        setNotification({
-          type: "error",
-          title: "Akses Ditolak",
-          message: "Anda tidak memiliki akses untuk mengedit jadwal ini",
-        });
+        showToast("Anda tidak memiliki akses untuk mengedit jadwal ini", "error");
         setTimeout(() => router.push("/schedule"), 2000);
         return;
       }
@@ -100,11 +105,7 @@ const EditSchedule = () => {
       });
     } catch (error: any) {
       console.error("Error fetching schedule:", error);
-      setNotification({
-        type: "error",
-        title: "Gagal",
-        message: "Gagal memuat data jadwal",
-      });
+      showToast("Gagal memuat data jadwal", "error");
     } finally {
       setLoading(false);
     }
@@ -143,17 +144,9 @@ const EditSchedule = () => {
 
         const data = await response.json();
         setFormData((prev) => ({ ...prev, thumbnailUrl: data.url }));
-        setNotification({
-          type: "success",
-          title: "Berhasil!",
-          message: "Gambar berhasil diunggah",
-        });
+        showToast("Gambar berhasil diunggah", "success");
       } catch (error) {
-        setNotification({
-          type: "error",
-          title: "Gagal",
-          message: "Gagal mengunggah gambar",
-        });
+        showToast("Gagal mengunggah gambar", "error");
       } finally {
         setUploading(false);
       }
@@ -169,11 +162,7 @@ const EditSchedule = () => {
       !formData.date ||
       !formData.location
     ) {
-      setNotification({
-        type: "warning",
-        title: "Mohon Perhatian",
-        message: "Lengkapi semua field yang wajib diisi",
-      });
+      showToast("Lengkapi semua field yang wajib diisi", "error");
       return;
     }
 
@@ -198,36 +187,18 @@ const EditSchedule = () => {
         try {
           const errorData = await response.json();
           errorMessage = errorData.error || errorMessage;
-        } catch (e) {
-          // Ignore parsing error
-        }
+        } catch (e) {}
         throw new Error(errorMessage);
       }
 
-      let data;
-      try {
-        const text = await response.text();
-        data = text ? JSON.parse(text) : { id: scheduleId };
-      } catch (e) {
-        data = { id: scheduleId };
-      }
-
-      setNotification({
-        type: "success",
-        title: "Berhasil!",
-        message: "Jadwal berhasil diperbarui",
-      });
+      // --- PERBAIKAN DISINI ---
+      showToast("Jadwal berhasil diperbarui. Mengalihkan...", "success");
       
-      const redirectId = data?.id || scheduleId;
-      setTimeout(() => router.push(`/schedule/${redirectId}`), 1500);
+      setTimeout(() => router.push("/schedule"), 1500);
 
     } catch (error: any) {
       console.error("Submit Error:", error);
-      setNotification({
-        type: "error",
-        title: "Gagal",
-        message: error.message || "Terjadi kesalahan saat menyimpan",
-      });
+      showToast(error.message || "Terjadi kesalahan saat menyimpan", "error");
     } finally {
       setSubmitting(false);
     }
@@ -235,15 +206,8 @@ const EditSchedule = () => {
 
   if (loading || status === "loading") {
     return (
-      <div className="min-h-screen bg-[#FDFBF7]">
-         <DashboardHeader />
-         <div className="flex">
-            <Sidebar />
-            <div className="flex-1 flex flex-col items-center justify-center min-h-[80vh]">
-               <Sparkles className="w-12 h-12 text-teal-400 animate-spin mb-4" />
-               <p className="text-slate-500 font-bold animate-pulse">Memuat data jadwal...</p>
-            </div>
-         </div>
+      <div className="min-h-screen bg-[#FDFBF7] flex items-center justify-center">
+         <Loading text="Memuat data jadwal..." size="lg" />
       </div>
     );
   }
@@ -251,15 +215,13 @@ const EditSchedule = () => {
   return (
     <div className="min-h-screen bg-[#FDFBF7]">
       <DashboardHeader />
-      <div className="flex">
+      <div className="flex flex-col lg:flex-row">
         <Sidebar />
-        
-        {/* Main Content Area */}
-        <div className="flex-1 w-full max-w-[100vw] overflow-x-hidden px-4 sm:px-6 lg:px-8 py-6 lg:py-12">
+        <div className="flex-1 px-4 sm:px-6 lg:px-8 py-6 lg:py-12 w-full max-w-[100vw] overflow-hidden">
           <div className="max-w-5xl mx-auto space-y-6 md:space-y-8">
             
             {/* Header & Back Button */}
-            <div className="flex flex-col gap-4 lg:gap-6">
+            <div className="flex flex-col gap-4 lg:gap-6 mb-6 lg:mb-8">
               <button
                 onClick={() => router.back()}
                 className="self-start inline-flex items-center gap-2 px-3 py-2 lg:px-4 lg:py-2 rounded-xl bg-white border-2 border-slate-200 text-slate-500 font-bold hover:border-teal-400 hover:text-teal-600 hover:shadow-[0_4px_0_0_#cbd5e1] active:translate-y-0.5 active:shadow-none transition-all text-sm lg:text-base"
@@ -297,14 +259,13 @@ const EditSchedule = () => {
                       <label className="block text-xs lg:text-sm font-bold text-slate-600 ml-1">
                         Judul Kegiatan <span className="text-red-500">*</span>
                       </label>
-                      <input
+                      <Input
                         type="text"
                         name="title"
                         required
                         value={formData.title}
                         onChange={handleInputChange}
                         placeholder="Contoh: Pengajian Malam Jumat"
-                        className="w-full rounded-2xl border-2 border-slate-200 bg-slate-50 px-4 py-3 lg:px-5 lg:py-3.5 text-sm lg:text-base font-bold text-slate-700 focus:outline-none focus:border-teal-400 focus:bg-white focus:shadow-[0_4px_0_0_#34d399] transition-all placeholder:text-slate-400 placeholder:font-medium"
                       />
                     </div>
 
@@ -312,14 +273,13 @@ const EditSchedule = () => {
                       <label className="block text-xs lg:text-sm font-bold text-slate-600 ml-1">
                         Deskripsi <span className="text-red-500">*</span>
                       </label>
-                      <textarea
+                      <Textarea
                         name="description"
                         required
                         rows={5}
                         value={formData.description}
                         onChange={handleInputChange}
                         placeholder="Jelaskan detail kegiatan..."
-                        className="w-full rounded-2xl border-2 border-slate-200 bg-slate-50 px-4 py-3 lg:px-5 lg:py-3.5 text-sm lg:text-base font-medium text-slate-700 focus:outline-none focus:border-teal-400 focus:bg-white focus:shadow-[0_4px_0_0_#34d399] transition-all placeholder:text-slate-400 resize-none"
                       />
                     </div>
                   </div>
@@ -363,14 +323,14 @@ const EditSchedule = () => {
                         Lokasi Kegiatan <span className="text-red-500">*</span>
                       </label>
                       <div className="relative">
-                        <input
+                        <Input
                           type="text"
                           name="location"
                           required
                           value={formData.location}
                           onChange={handleInputChange}
                           placeholder="Contoh: Aula Utama"
-                          className="w-full rounded-2xl border-2 border-slate-200 bg-slate-50 pl-11 pr-4 py-3 lg:pl-12 lg:pr-5 lg:py-3.5 text-sm lg:text-base font-bold text-slate-700 focus:outline-none focus:border-teal-400 focus:bg-white focus:shadow-[0_4px_0_0_#34d399] transition-all placeholder:text-slate-400 placeholder:font-medium"
+                          className="pl-11 lg:pl-12"
                         />
                         <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 h-5 w-5 pointer-events-none" />
                       </div>
@@ -382,13 +342,13 @@ const EditSchedule = () => {
                           Pembicara
                         </label>
                         <div className="relative">
-                          <input
+                          <Input
                             type="text"
                             name="pemateri"
                             value={formData.pemateri}
                             onChange={handleInputChange}
                             placeholder="Nama pembicara"
-                            className="w-full rounded-2xl border-2 border-slate-200 bg-slate-50 pl-11 pr-4 py-3 lg:pl-12 lg:pr-5 lg:py-3.5 text-sm lg:text-base font-medium text-slate-700 focus:outline-none focus:border-teal-400 focus:bg-white focus:shadow-[0_4px_0_0_#34d399] transition-all placeholder:text-slate-400"
+                            className="pl-11 lg:pl-12"
                           />
                           <Mic className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 h-5 w-5 pointer-events-none" />
                         </div>
@@ -399,13 +359,13 @@ const EditSchedule = () => {
                           Kapasitas (Opsional)
                         </label>
                         <div className="relative">
-                          <input
+                          <Input
                             type="number"
                             name="maxCapacity"
                             value={formData.maxCapacity}
                             onChange={handleInputChange}
                             placeholder="Contoh: 200"
-                            className="w-full rounded-2xl border-2 border-slate-200 bg-slate-50 pl-11 pr-4 py-3 lg:pl-12 lg:pr-5 lg:py-3.5 text-sm lg:text-base font-medium text-slate-700 focus:outline-none focus:border-teal-400 focus:bg-white focus:shadow-[0_4px_0_0_#34d399] transition-all placeholder:text-slate-400"
+                            className="pl-11 lg:pl-12"
                           />
                           <Users className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 h-5 w-5 pointer-events-none" />
                         </div>
@@ -452,10 +412,16 @@ const EditSchedule = () => {
                         htmlFor="upload-thumb"
                         className="flex flex-col items-center justify-center w-full h-40 lg:h-52 rounded-2xl lg:rounded-3xl border-2 border-dashed border-slate-300 bg-slate-50 group-hover:border-teal-400 group-hover:bg-teal-50 transition-all cursor-pointer"
                       >
-                        <Upload className="w-8 h-8 lg:w-10 lg:h-10 text-slate-400 group-hover:text-teal-500 mb-2 transition-colors" />
-                        <p className="text-xs lg:text-sm font-bold text-slate-500 group-hover:text-teal-600 transition-colors">
-                          {uploading ? "Uploading..." : "Unggah Gambar"}
-                        </p>
+                        {uploading ? (
+                          <Sparkles className="w-6 h-6 lg:w-8 lg:h-8 text-teal-400 animate-spin" />
+                        ) : (
+                          <>
+                            <Upload className="w-6 h-6 lg:w-8 lg:h-8 text-slate-400 mb-2 group-hover:text-teal-500" />
+                            <span className="text-xs lg:text-sm font-bold text-slate-500 group-hover:text-teal-600 transition-colors">
+                              {uploading ? "Uploading..." : "Unggah Gambar"}
+                            </span>
+                          </>
+                        )}
                       </label>
                     )}
                   </div>
@@ -465,7 +431,7 @@ const EditSchedule = () => {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="w-full bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-black rounded-2xl lg:rounded-3xl px-6 py-3.5 lg:py-4 border-2 lg:border-4 border-emerald-700 border-b-4 lg:border-b-8 shadow-[0_4px_0_0_#047857] active:translate-y-0.5 active:border-b-2 active:shadow-none transition-all flex items-center justify-center gap-2 lg:gap-3 text-base lg:text-lg"
+                  className="w-full bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-black rounded-2xl lg:rounded-3xl px-6 py-3 lg:py-4 border-2 lg:border-4 border-emerald-700 border-b-4 lg:border-b-8 shadow-[0_4px_0_0_#047857] active:translate-y-0.5 active:border-b-2 active:shadow-none transition-all flex items-center justify-center gap-2 lg:gap-3 text-base lg:text-lg"
                 >
                   {submitting ? (
                     <>
@@ -486,16 +452,13 @@ const EditSchedule = () => {
       </div>
       <ChatbotButton />
 
-      {/* Notification */}
-      {notification && (
-        <CartoonNotification
-          type={notification.type}
-          title={notification.title}
-          message={notification.message}
-          duration={3000}
-          onClose={() => setNotification(null)}
-        />
-      )}
+      {/* Toast Notification */}
+      <Toast
+        show={toast.show}
+        message={toast.message}
+        type={toast.type}
+        onClose={() => setToast((prev) => ({ ...prev, show: false }))}
+      />
     </div>
   );
 };

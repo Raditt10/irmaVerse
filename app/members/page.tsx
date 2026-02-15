@@ -7,6 +7,7 @@ import ChatbotButton from "@/components/ui/Chatbot";
 import Loading from "@/components/ui/Loading";
 import SearchInput from "@/components/ui/SearchInput";
 import CartoonNotification from "@/components/ui/Notification";
+import Toast from "@/components/ui/Toast";
 import { 
   UserCircle2, 
   UserPlus, 
@@ -36,6 +37,16 @@ const Members = () => {
     title: string;
     message: string;
   } | null>(null);
+  // Toast state for quick toasts
+  const [toast, setToast] = useState<{ show: boolean; message: string; type: 'success' | 'error' } | null>(null);
+
+  // Auto-hide toast after 3s
+  useEffect(() => {
+    if (toast?.show) {
+      const t = setTimeout(() => setToast(null), 3000);
+      return () => clearTimeout(t);
+    }
+  }, [toast]);
 
   const router = useRouter();
 
@@ -75,11 +86,7 @@ const Members = () => {
     : members;
 
   const handleAddFriend = (name: string) => {
-    setNotification({
-      type: "success",
-      title: "Permintaan Terkirim!",
-      message: `Permintaan pertemanan dikirim ke ${name}`,
-    });
+    setToast({ show: true, message: `Permintaan pertemanan dikirim ke ${name}`, type: 'success' });
   };
 
   return (
@@ -231,7 +238,12 @@ const Members = () => {
       </div>
       <ChatbotButton />
 
-      {/* --- NOTIFIKASI --- */}
+      {/* --- TOAST --- */}
+      {toast && (
+        <Toast show={toast.show} message={toast.message} type={toast.type} onClose={() => setToast(null)} />
+      )}
+
+      {/* --- NOTIFIKASI (Cartoon) --- */}
       {notification && (
         <CartoonNotification
           type={notification.type}

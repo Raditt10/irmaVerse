@@ -3,11 +3,23 @@ import { CourseCategory, Prisma } from "@prisma/client";
 import { auth } from "@/lib/auth";
 import { NextResponse, NextRequest } from "next/server";
 
-export async function GET(req: NextRequest) {
+export async function GET(req: NextRequest, { params }: { params?: { id?: string } } = {}) {
   try {
     const session = await auth();
-    const searchParams = req.nextUrl.searchParams;
-    const courseId = searchParams.get("courseId");
+
+    // Params may sometimes be undefined depending on how the route is invoked
+    // (Turbopack/Dev). Fall back to extracting id from the request pathname.
+    let id = params?.id;
+    if (!id) {
+      try {
+        const parsed = new URL(req.url);
+        const segments = parsed.pathname.split("/").filter(Boolean);
+        // Expecting last segment to be the id
+        id = segments[segments.length - 1];
+      } catch (e) {
+        id = undefined as any;
+      }
+    }
 
     if (!session || !session.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -15,21 +27,33 @@ export async function GET(req: NextRequest) {
 
     // Check if user exists
     const User = await prisma.user.findUnique({
-      where: { id: session.user.id }
+      where: { id: session.user.id },
     });
-        
+
     if (!User) {
-      console.log('User not found in database:', session.user.id);
+      console.log("User not found in database:", session.user.id);
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
-    console.log('User found:', User.email, User.role);
 
+    // Ensure we have an id before calling Prisma
+    if (!id) {
+      return NextResponse.json({ error: "Missing material id" }, { status: 400 });
+    }
 
+    // Fetch single material by id with related data
+    const m = await prisma.material.findUnique({
+      where: { id: id },
+      include: {
+        instructor: { select: { name: true, email: true } },
+        enrollments: { where: { userId: User.id }, select: { id: true } },
+        invites: {
+          include: { user: { select: { email: true, name: true, avatar: true } } },
+        },
+      },
+    });
 
-    const where: Prisma.MaterialWhereInput = {};
-    const category = searchParams.get("category");
-    if (category && Object.values(CourseCategory).includes(category as CourseCategory)) {
-      where.category = category as CourseCategory;
+    if (!m) {
+      return NextResponse.json({ error: "Kajian tidak ditemukan" }, { status: 404 });
     }
 
     const CATEGORY_LABEL: Record<CourseCategory, string> = {
@@ -45,43 +69,26 @@ export async function GET(req: NextRequest) {
       XII: "Kelas 12",
     } as const;
 
-    const materials = await prisma.material.findMany({
-      where,
-      include: {
-        instructor: {
-          select: { 
-            name: true,
-            email: true
-          },
-        },
-        enrollments: {
-          where: { userId: User.id },
-          select: { id: true },
-        },
-      },
-      orderBy: { date: "desc" },
-    });
-
-    // normalize ke format frontend
-    const result = materials.map((m) => ({
+    const result = {
       id: m.id,
       title: m.title,
       description: m.description,
       date: m.date,
-      instructor: m.instructor.name,
-      insttructorEmail: m.instructor.email,
+      instructor: m.instructor?.name || null,
+      insttructorEmail: m.instructor?.email || null,
       category: CATEGORY_LABEL[m.category as keyof typeof CATEGORY_LABEL],
       grade: GRADE_LABEL[m.grade as keyof typeof GRADE_LABEL],
       startedAt: m.startedAt,
       thumbnailUrl: m.thumbnailUrl,
       isJoined: m.enrollments.length > 0,
-    }));
+      invites: (m.invites || []).map((inv) => inv.user?.email || null).filter(Boolean),
+    };
 
     return NextResponse.json(result);
   } catch (error) {
-    console.error("Error fetching materials:", error);
+    console.error("Error fetching material by id:", error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to fetch materials" },
+      { error: error instanceof Error ? error.message : "Failed to fetch material" },
       { status: 500 }
     );
   }

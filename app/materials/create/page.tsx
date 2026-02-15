@@ -11,8 +11,7 @@ import { Input } from "@/components/ui/InputText";
 import { Textarea } from "@/components/ui/textarea";
 import CategoryFilter from "@/components/ui/CategoryFilter";
 import SearchInput from "@/components/ui/SearchInput";
-import CartoonNotification from "@/components/ui/Notification";
-import CartoonConfirmDialog from "@/components/ui/ConfirmDialog";
+import Toast from "@/components/ui/Toast"; // Menggunakan Toast baru
 import {
   Upload,
   X,
@@ -30,23 +29,13 @@ const CreateMaterial = () => {
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
 
-  // Notification States
-  const [notification, setNotification] = useState<{
-    type: "success" | "error" | "warning" | "info";
-    title: string;
+  // Toast State
+  const [toast, setToast] = useState<{
+    show: boolean;
     message: string;
-  } | null>(null);
-  const [confirmDialog, setConfirmDialog] = useState<{
-    type: "warning" | "info" | "success";
-    title: string;
-    message: string;
-    confirmText?: string;
-    cancelText?: string;
-    onConfirm: () => void | Promise<void>;
-    onCancel?: () => void;
-  } | null>(null);
+    type: "success" | "error";
+  }>({ show: false, message: "", type: "success" });
 
-  // Form State
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -57,21 +46,24 @@ const CreateMaterial = () => {
     thumbnailUrl: "",
   });
 
-  // Invite Section State
   const [inviteInput, setInviteInput] = useState("");
   const [invitedUsers, setInvitedUsers] = useState<string[]>([]);
   const [userOptions, setUserOptions] = useState<{ value: string; label: string; avatar?: string; email: string }[]>([]);
   const [searchResults, setSearchResults] = useState<{ value: string; label: string; avatar?: string; email: string }[]>([]);
   const [showSearchResults, setShowSearchResults] = useState(false);
 
-  // Fetch user list
+  // Helper Toast
+  const showToast = (message: string, type: "success" | "error") => {
+    setToast({ show: true, message, type });
+    setTimeout(() => setToast((prev) => ({ ...prev, show: false })), 3000);
+  };
+
   useEffect(() => {
     async function fetchUsers() {
       try {
         const res = await fetch("/api/users");
         if (!res.ok) throw new Error("Gagal mengambil data user");
         const data = await res.json();
-        // Format data
         const formattedUsers = data.map((u: any) => ({
           value: u.email,
           label: u.name || u.email,
@@ -86,7 +78,6 @@ const CreateMaterial = () => {
     fetchUsers();
   }, []);
 
-  // Search handler
   const handleSearchInvite = (query: string) => {
     setInviteInput(query);
     if (query.trim()) {
@@ -124,23 +115,15 @@ const CreateMaterial = () => {
 
         if (!res.ok) {
           const error = await res.json();
-          setNotification({
-            type: "error",
-            title: "Gagal Upload",
-            message: error.error || "Gagal mengunggah gambar",
-          });
+          showToast(error.error || "Gagal mengunggah gambar", "error");
           return;
         }
 
         const data = await res.json();
         setFormData((prev) => ({ ...prev, thumbnailUrl: data.url }));
+        showToast("Gambar berhasil diunggah", "success");
       } catch (error: any) {
-        console.error("Error uploading image:", error);
-        setNotification({
-          type: "error",
-          title: "Gagal Upload",
-          message: "Terjadi kesalahan saat mengunggah gambar",
-        });
+        showToast("Terjadi kesalahan saat mengunggah gambar", "error");
       } finally {
         setUploading(false);
       }
@@ -164,59 +147,16 @@ const CreateMaterial = () => {
     e.preventDefault();
     
     // Frontend validation
-    if (!formData.title.trim()) {
-      setNotification({
-        type: "warning",
-        title: "Data Belum Lengkap",
-        message: "Judul kajian tidak boleh kosong",
-      });
-      return;
-    }
-    if (formData.title.trim().length < 3) {
-      setNotification({
-        type: "warning",
-        title: "Data Tidak Valid",
-        message: "Judul kajian minimal 3 karakter",
-      });
-      return;
-    }
-    if (!formData.description.trim()) {
-      setNotification({
-        type: "warning",
-        title: "Data Belum Lengkap",
-        message: "Deskripsi kajian tidak boleh kosong",
-      });
-      return;
-    }
-    if (formData.description.trim().length < 10) {
-      setNotification({
-        type: "warning",
-        title: "Data Tidak Valid",
-        message: "Deskripsi kajian minimal 10 karakter",
-      });
-      return;
-    }
-    if (!formData.date) {
-      setNotification({
-        type: "warning",
-        title: "Data Belum Lengkap",
-        message: "Tanggal kajian harus dipilih",
-      });
-      return;
-    }
-    if (!formData.time) {
-      setNotification({
-        type: "warning",
-        title: "Data Belum Lengkap",
-        message: "Jam kajian harus dipilih",
-      });
-      return;
-    }
+    if (!formData.title.trim()) { showToast("Judul kajian tidak boleh kosong", "error"); return; }
+    if (formData.title.trim().length < 3) { showToast("Judul kajian minimal 3 karakter", "error"); return; }
+    if (!formData.description.trim()) { showToast("Deskripsi kajian tidak boleh kosong", "error"); return; }
+    if (formData.description.trim().length < 10) { showToast("Deskripsi kajian minimal 10 karakter", "error"); return; }
+    if (!formData.date) { showToast("Tanggal kajian harus dipilih", "error"); return; }
+    if (!formData.time) { showToast("Jam kajian harus dipilih", "error"); return; }
     
     setLoading(true);
     try {
       const payload = { ...formData, invites: invitedUsers };
-      console.log("Payload yang dikirim:", payload);
       
       const res = await fetch("/api/materials", {
         method: "POST",
@@ -229,33 +169,18 @@ const CreateMaterial = () => {
         try {
           const errorData = await res.json();
           errorMessage = errorData.error || errorMessage;
-        } catch (e) {
-          // Response is not JSON, use default error message
-        }
+        } catch (e) {}
         throw new Error(errorMessage);
       }
       
-      let data;
-      try {
-        data = await res.json();
-      } catch (e) {
-        // Response is not JSON but status was OK, treat as success
-        data = null;
-      }
+      showToast("Kajian berhasil dibuat. Mengalihkan...", "success");
       
-      setNotification({
-        type: "success",
-        title: "Berhasil!",
-        message: "Kajian berhasil dibuat. Redirecting...",
-      });
-      setTimeout(() => router.push("/materials"), 2000);
+      // PERUBAHAN DI SINI: Redirect ke /materials
+      setTimeout(() => router.push("/materials"), 1500);
+
     } catch (error: any) {
       console.error("Error creating material:", error);
-      setNotification({
-        type: "error",
-        title: "Gagal Membuat Kajian",
-        message: error.message || "Terjadi kesalahan saat membuat kajian",
-      });
+      showToast(error.message || "Terjadi kesalahan saat membuat kajian", "error");
     } finally {
       setLoading(false);
     }
@@ -343,17 +268,13 @@ const CreateMaterial = () => {
                     <DatePicker
                       label="Tanggal Pelaksanaan"
                       value={formData.date}
-                      onChange={(date) =>
-                        setFormData({ ...formData, date })
-                      }
+                      onChange={(date) => setFormData({ ...formData, date })}
                       placeholder="Pilih tanggal"
                     />
                     <TimePicker
                       label="Jam Mulai"
                       value={formData.time}
-                      onChange={(time) =>
-                        setFormData({ ...formData, time })
-                      }
+                      onChange={(time) => setFormData({ ...formData, time })}
                     />
                   </div>
                 </div>
@@ -381,7 +302,7 @@ const CreateMaterial = () => {
                             e.preventDefault();
                             setFormData((prev) => ({ ...prev, thumbnailUrl: "" }));
                           }}
-                          className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full border-2 border-white shadow-md hover:scale-110 transition-transform"
+                          className="absolute top-2 right-2 p-1.5 rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors"
                         >
                           <X className="w-3 h-3 lg:w-4 lg:h-4" />
                         </button>
@@ -404,7 +325,7 @@ const CreateMaterial = () => {
                   </div>
                 </div>
 
-                {/* --- INVITING SECTION (SEARCH INPUT) --- */}
+                {/* --- INVITING SECTION --- */}
                 <div className="bg-white p-5 lg:p-6 rounded-3xl lg:rounded-[2.5rem] border-2 border-slate-200 shadow-[0_4px_0_0_#cbd5e1] lg:shadow-[0_8px_0_0_#cbd5e1]">
                   <h2 className="text-lg font-black text-slate-700 mb-4 flex items-center gap-2">
                     <Users className="h-5 w-5 text-amber-500" /> Undang Peserta
@@ -514,32 +435,13 @@ const CreateMaterial = () => {
       </div>
       <ChatbotButton />
 
-      {/* Notification */}
-      {notification && (
-        <CartoonNotification
-          type={notification.type}
-          title={notification.title}
-          message={notification.message}
-          duration={notification.type === "success" ? 3000 : 5000}
-          onClose={() => setNotification(null)}
-        />
-      )}
-
-      {/* Confirm Dialog */}
-      {confirmDialog && (
-        <CartoonConfirmDialog
-          type={confirmDialog.type}
-          title={confirmDialog.title}
-          message={confirmDialog.message}
-          confirmText={confirmDialog.confirmText}
-          cancelText={confirmDialog.cancelText}
-          onConfirm={confirmDialog.onConfirm}
-          onCancel={() => {
-            setConfirmDialog(null);
-            confirmDialog.onCancel?.();
-          }}
-        />
-      )}
+      {/* Toast Notification */}
+      <Toast
+        show={toast.show}
+        message={toast.message}
+        type={toast.type}
+        onClose={() => setToast((prev) => ({ ...prev, show: false }))}
+      />
     </div>
   );
 };

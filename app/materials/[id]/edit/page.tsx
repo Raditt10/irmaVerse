@@ -7,7 +7,9 @@ import ChatbotButton from "@/components/ui/Chatbot";
 import DatePicker from "@/components/ui/DatePicker";
 import TimePicker from "@/components/ui/TimePicker";
 import CategoryFilter from "@/components/ui/CategoryFilter";
-import CartoonNotification from "@/components/ui/Notification";
+import SearchInput from "@/components/ui/SearchInput";
+import Toast from "@/components/ui/Toast";
+import Loading from "@/components/ui/Loading";
 import {
   Upload,
   X,
@@ -16,7 +18,10 @@ import {
   Sparkles,
   Save,
   ArrowLeft,
+  Users,
 } from "lucide-react";
+import { Input } from "@/components/ui/InputText";
+import { Textarea } from "@/components/ui/textarea";
 
 const EditMaterial = () => {
   const router = useRouter();
@@ -27,12 +32,11 @@ const EditMaterial = () => {
   const [submitting, setSubmitting] = useState(false);
   const [uploading, setUploading] = useState(false);
 
-  // Notification State
-  const [notification, setNotification] = useState<{
-    type: "success" | "error" | "warning" | "info";
-    title: string;
+  const [toast, setToast] = useState<{
+    show: boolean;
     message: string;
-  } | null>(null);
+    type: "success" | "error";
+  }>({ show: false, message: "", type: "success" });
 
   const [formData, setFormData] = useState({
     title: "",
@@ -44,47 +48,85 @@ const EditMaterial = () => {
     thumbnailUrl: "",
   });
 
-  // Fetch material data
+  // --- Invite State ---
+  const [inviteInput, setInviteInput] = useState("");
+  const [invitedUsers, setInvitedUsers] = useState<string[]>([]);
+  const [userOptions, setUserOptions] = useState<{ value: string; label: string; avatar?: string; email: string }[]>([]);
+  const [searchResults, setSearchResults] = useState<{ value: string; label: string; avatar?: string; email: string }[]>([]);
+  const [showSearchResults, setShowSearchResults] = useState(false);
+
+  const showToast = (message: string, type: "success" | "error") => {
+    setToast({ show: true, message, type });
+    setTimeout(() => setToast((prev) => ({ ...prev, show: false })), 3000);
+  };
+
+  // Fetch Users List (untuk pencarian)
+  useEffect(() => {
+    async function fetchUsers() {
+      try {
+        const res = await fetch("/api/users");
+        if (!res.ok) throw new Error("Gagal mengambil data user");
+        const data = await res.json();
+        const formattedUsers = data.map((u: any) => ({
+          value: u.email,
+          label: u.name || u.email,
+          avatar: u.avatar,
+          email: u.email,
+        }));
+        setUserOptions(formattedUsers);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+    fetchUsers();
+  }, []);
+
+  // Fetch Existing Material Data
   useEffect(() => {
     async function fetchMaterial() {
       try {
-        const res = await fetch(`/api/materials?id=${materialId}`);
+        const res = await fetch(`/api/materials/${materialId}`);
         if (!res.ok) throw new Error("Gagal mengambil data kajian");
         const data = await res.json();
-        
-        if (data && data.length > 0) {
-          const material = data[0];
-          // Map display labels back to form values
-          const categoryMap: Record<string, string> = {
-            "Program Wajib": "Program Wajib",
-            "Program Ekstra": "Program Ekstra",
-            "Program Next Level": "Program Next Level",
-            "Program Susulan": "Program Susulan",
-          };
 
-          const gradeMap: Record<string, string> = {
-            "Kelas 10": "Kelas 10",
-            "Kelas 11": "Kelas 11",
-            "Kelas 12": "Kelas 12",
-          };
+        // API may return either a single object or an array (older endpoints).
+        const material = Array.isArray(data) ? data[0] : data;
+
+        if (material) {
+          // Normalize date to YYYY-MM-DD for the DatePicker
+          let normalizedDate = "";
+          if (material.date) {
+            try {
+              normalizedDate = String(material.date).slice(0, 10);
+            } catch (e) {
+              normalizedDate = material.date || "";
+            }
+          }
 
           setFormData({
             title: material.title || "",
             description: material.description || "",
-            date: material.date || "",
-            time: material.startedAt || "",
+            date: normalizedDate,
+            time: material.startedAt || material.time || "",
             category: material.category || "Program Wajib",
             grade: material.grade || "Semua",
             thumbnailUrl: material.thumbnailUrl || "",
           });
+
+          // Load existing participants/invites if any. Accept array of emails or objects.
+          if (material.invites && Array.isArray(material.invites)) {
+            const invites = material.invites.map((inv: any) => {
+              if (!inv) return "";
+              if (typeof inv === "string") return inv;
+              if (inv.email) return inv.email;
+              return inv;
+            }).filter(Boolean);
+            setInvitedUsers(invites);
+          }
         }
       } catch (err: any) {
         console.error(err);
-        setNotification({
-          type: "error",
-          title: "Gagal Memuat Data",
-          message: err.message || "Tidak bisa memuat data kajian",
-        });
+        showToast(err.message || "Tidak bisa memuat data kajian", "error");
       } finally {
         setLoading(false);
       }
@@ -95,14 +137,9 @@ const EditMaterial = () => {
     }
   }, [materialId]);
 
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
+  // --- Handlers ---
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleDropdownChange = (name: string, value: string) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
@@ -121,91 +158,63 @@ const EditMaterial = () => {
         
         if (!res.ok) {
           const error = await res.json();
-          setNotification({
-            type: "error",
-            title: "Gagal Mengunggah",
-            message: error.message || "Gagal mengunggah gambar",
-          });
+          showToast(error.message || "Gagal mengunggah gambar", "error");
           return;
         }
         
         const data = await res.json();
         setFormData((prev) => ({ ...prev, thumbnailUrl: data.url }));
-        setNotification({
-          type: "success",
-          title: "Berhasil!",
-          message: "Gambar berhasil diunggah",
-        });
+        showToast("Gambar berhasil diunggah", "success");
       } catch (error) {
-        setNotification({
-          type: "error",
-          title: "Gagal Mengunggah",
-          message: "Gagal mengunggah gambar",
-        });
+        showToast("Gagal mengunggah gambar", "error");
       } finally {
         setUploading(false);
       }
     }
   };
 
+  const handleSearchInvite = (query: string) => {
+    setInviteInput(query);
+    if (query.trim()) {
+      const filtered = userOptions.filter(
+        (u) =>
+          (u.label.toLowerCase().includes(query.toLowerCase()) ||
+            u.email.toLowerCase().includes(query.toLowerCase())) &&
+          !invitedUsers.includes(u.value)
+      );
+      setSearchResults(filtered);
+      setShowSearchResults(true);
+    } else {
+      setSearchResults([]);
+      setShowSearchResults(false);
+    }
+  };
+
+  const handleAddInvite = (userEmail: string) => {
+    if (!invitedUsers.includes(userEmail)) {
+      setInvitedUsers([...invitedUsers, userEmail]);
+    }
+    setInviteInput("");
+    setSearchResults([]);
+    setShowSearchResults(false);
+  };
+
+  const handleRemoveInvite = (index: number) => {
+    setInvitedUsers(invitedUsers.filter((_, i) => i !== index));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Frontend validation
-    if (!formData.title.trim()) {
-      setNotification({
-        type: "warning",
-        title: "Data Belum Lengkap",
-        message: "Judul kajian tidak boleh kosong",
-      });
-      return;
-    }
-    if (formData.title.trim().length < 3) {
-      setNotification({
-        type: "warning",
-        title: "Data Tidak Valid",
-        message: "Judul kajian minimal 3 karakter",
-      });
-      return;
-    }
-    if (!formData.description.trim()) {
-      setNotification({
-        type: "warning",
-        title: "Data Belum Lengkap",
-        message: "Deskripsi kajian tidak boleh kosong",
-      });
-      return;
-    }
-    if (formData.description.trim().length < 10) {
-      setNotification({
-        type: "warning",
-        title: "Data Tidak Valid",
-        message: "Deskripsi kajian minimal 10 karakter",
-      });
-      return;
-    }
-    if (!formData.date) {
-      setNotification({
-        type: "warning",
-        title: "Data Belum Lengkap",
-        message: "Tanggal kajian harus dipilih",
-      });
-      return;
-    }
-    if (!formData.time) {
-      setNotification({
-        type: "warning",
-        title: "Data Belum Lengkap",
-        message: "Jam kajian harus dipilih",
-      });
-      return;
-    }
+    if (!formData.title.trim()) { showToast("Judul kajian tidak boleh kosong", "error"); return; }
+    if (!formData.description.trim()) { showToast("Deskripsi kajian tidak boleh kosong", "error"); return; }
+    if (!formData.date) { showToast("Tanggal kajian harus dipilih", "error"); return; }
+    if (!formData.time) { showToast("Jam kajian harus dipilih", "error"); return; }
 
     setSubmitting(true);
     try {
-      const payload = { ...formData };
-      console.log("Payload yang dikirim:", payload);
-
+      const payload = { ...formData, invites: invitedUsers }; // Include invites
+      
       const res = await fetch(`/api/materials/${materialId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -217,33 +226,16 @@ const EditMaterial = () => {
         try {
           const errorData = await res.json();
           errorMessage = errorData.error || errorMessage;
-        } catch (e) {
-          // Response is not JSON, use default error message
-        }
+        } catch (e) {}
         throw new Error(errorMessage);
       }
 
-      let data;
-      try {
-        data = await res.json();
-      } catch (e) {
-        // Response is not JSON but status was OK, treat as success
-        data = null;
-      }
+      showToast("Kajian berhasil diperbarui. Mengalihkan...", "success");
+      setTimeout(() => router.push(`/materials/${materialId}`), 1500);
 
-      setNotification({
-        type: "success",
-        title: "Berhasil!",
-        message: "Kajian berhasil diperbarui. Redirecting...",
-      });
-      setTimeout(() => router.push("/materials"), 2000);
     } catch (error: any) {
       console.error("Error updating material:", error);
-      setNotification({
-        type: "error",
-        title: "Gagal Memperbarui Kajian",
-        message: error.message || "Terjadi kesalahan saat memperbarui kajian",
-      });
+      showToast(error.message || "Terjadi kesalahan saat memperbarui kajian", "error");
     } finally {
       setSubmitting(false);
     }
@@ -252,7 +244,7 @@ const EditMaterial = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-[#FDFBF7] flex items-center justify-center">
-        <p className="text-slate-500">Memuat data kajian...</p>
+         <Loading text="Memuat data kajian..." size="lg" />
       </div>
     );
   }
@@ -286,6 +278,8 @@ const EditMaterial = () => {
             <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
               {/* --- KOLOM KIRI: FORM UTAMA --- */}
               <div className="lg:col-span-2 space-y-6 lg:space-y-8">
+                
+                {/* Card 1: Informasi Dasar */}
                 <div className="bg-white p-5 lg:p-8 rounded-3xl lg:rounded-[2.5rem] border-2 border-slate-200 shadow-[0_4px_0_0_#cbd5e1] lg:shadow-[0_8px_0_0_#cbd5e1]">
                   <h2 className="text-lg lg:text-xl font-black text-slate-700 mb-4 lg:mb-6 flex items-center gap-2">
                     <Type className="h-5 w-5 lg:h-6 lg:w-6 text-teal-500" /> Informasi Dasar
@@ -293,32 +287,26 @@ const EditMaterial = () => {
 
                   <div className="space-y-4 lg:space-y-6">
                     <div className="space-y-2">
-                      <label className="block text-xs lg:text-sm font-bold text-slate-600 ml-1">
-                        Judul Kajian
-                      </label>
-                      <input
+                      <label className="block text-xs lg:text-sm font-bold text-slate-600 ml-1">Judul Kajian</label>
+                      <Input
                         type="text"
                         name="title"
                         required
                         value={formData.title}
                         onChange={handleInputChange}
                         placeholder="Contoh: Tadabbur Alam & Quran"
-                        className="w-full rounded-xl lg:rounded-2xl border-2 border-slate-200 bg-slate-50 px-4 py-3 lg:px-5 lg:py-4 text-sm lg:text-base font-bold text-slate-700 focus:outline-none focus:border-teal-400 focus:bg-white focus:shadow-[0_4px_0_0_#34d399] transition-all placeholder:text-slate-400 placeholder:font-medium"
                       />
                     </div>
 
                     <div className="space-y-2">
-                      <label className="block text-xs lg:text-sm font-bold text-slate-600 ml-1">
-                        Deskripsi & Materi
-                      </label>
-                      <textarea
+                      <label className="block text-xs lg:text-sm font-bold text-slate-600 ml-1">Deskripsi & Materi</label>
+                      <Textarea
                         name="description"
                         required
                         rows={5}
                         value={formData.description}
                         onChange={handleInputChange}
                         placeholder="Jelaskan apa yang akan dipelajari..."
-                        className="w-full rounded-xl lg:rounded-2xl border-2 border-slate-200 bg-slate-50 px-4 py-3 lg:px-5 lg:py-4 text-sm lg:text-base font-medium text-slate-700 focus:outline-none focus:border-teal-400 focus:bg-white focus:shadow-[0_4px_0_0_#34d399] transition-all placeholder:text-slate-400 resize-none"
                       />
                     </div>
 
@@ -335,7 +323,7 @@ const EditMaterial = () => {
                   </div>
                 </div>
 
-                {/* Card Waktu */}
+                {/* Card 2: Waktu Pelaksanaan */}
                 <div className="bg-white p-5 lg:p-8 rounded-3xl lg:rounded-[2.5rem] border-2 border-slate-200 shadow-[0_4px_0_0_#cbd5e1] lg:shadow-[0_8px_0_0_#cbd5e1]">
                   <h2 className="text-lg lg:text-xl font-black text-slate-700 mb-4 lg:mb-6 flex items-center gap-2">
                     <Calendar className="h-5 w-5 lg:h-6 lg:w-6 text-indigo-500" /> Waktu Pelaksanaan
@@ -356,13 +344,12 @@ const EditMaterial = () => {
                 </div>
               </div>
 
-              {/* --- KOLOM KANAN: MEDIA --- */}
+              {/* --- KOLOM KANAN: MEDIA & UNDANG PESERTA --- */}
               <div className="space-y-6 lg:space-y-8">
+                
                 {/* Upload Thumbnail */}
                 <div className="bg-white p-5 lg:p-6 rounded-3xl lg:rounded-[2.5rem] border-2 border-slate-200 shadow-[0_4px_0_0_#cbd5e1] lg:shadow-[0_8px_0_0_#cbd5e1] text-center">
-                  <label className="block text-xs lg:text-sm font-bold text-slate-600 mb-3 lg:mb-4">
-                    Thumbnail Kajian
-                  </label>
+                  <label className="block text-xs lg:text-sm font-bold text-slate-600 mb-3 lg:mb-4">Thumbnail Kajian</label>
                   <div className="relative group cursor-pointer">
                     <input
                       type="file"
@@ -373,16 +360,10 @@ const EditMaterial = () => {
                     />
                     {formData.thumbnailUrl ? (
                       <div className="relative w-full h-40 lg:h-48 rounded-2xl lg:rounded-3xl overflow-hidden border-2 border-slate-200 group-hover:border-teal-400 transition-all">
-                        <img
-                          src={formData.thumbnailUrl}
-                          alt="Preview"
-                          className="w-full h-full object-cover"
-                        />
+                        <img src={formData.thumbnailUrl} alt="Preview" className="w-full h-full object-cover" />
                         <button
                           type="button"
-                          onClick={() =>
-                            setFormData({ ...formData, thumbnailUrl: "" })
-                          }
+                          onClick={() => setFormData({ ...formData, thumbnailUrl: "" })}
                           className="absolute top-2 right-2 p-1.5 rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors"
                         >
                           <X className="w-4 h-4" />
@@ -391,14 +372,98 @@ const EditMaterial = () => {
                     ) : (
                       <label
                         htmlFor="upload-thumb"
-                        className="flex flex-col items-center justify-center w-full h-40 lg:h-48 rounded-2xl lg:rounded-3xl border-2 border-dashed border-slate-300 bg-slate-50 group-hover:border-teal-400 group-hover:bg-teal-50 transition-all"
+                        className="flex flex-col items-center justify-center w-full h-40 lg:h-48 rounded-2xl lg:rounded-3xl border-2 border-dashed border-slate-300 bg-slate-50 hover:bg-teal-50 hover:border-teal-400 transition-all cursor-pointer"
                       >
-                        <Upload className="w-8 h-8 text-slate-400 group-hover:text-teal-500 mb-2" />
-                        <p className="text-xs lg:text-sm font-bold text-slate-500">
-                          {uploading ? "Uploading..." : "Unggah Gambar"}
-                        </p>
+                        {uploading ? (
+                          <Sparkles className="w-6 h-6 lg:w-8 lg:h-8 text-teal-400 animate-spin" />
+                        ) : (
+                          <>
+                            <Upload className="w-6 h-6 lg:w-8 lg:h-8 text-slate-400 mb-2 group-hover:text-teal-500" />
+                            <span className="text-xs lg:text-sm font-bold text-slate-400">Klik untuk Upload</span>
+                          </>
+                        )}
                       </label>
                     )}
+                  </div>
+                </div>
+
+                {/* --- INVITING SECTION (BARU) --- */}
+                <div className="bg-white p-5 lg:p-6 rounded-3xl lg:rounded-[2.5rem] border-2 border-slate-200 shadow-[0_4px_0_0_#cbd5e1] lg:shadow-[0_8px_0_0_#cbd5e1]">
+                  <h2 className="text-lg font-black text-slate-700 mb-4 flex items-center gap-2">
+                    <Users className="h-5 w-5 text-amber-500" /> Kelola Peserta
+                  </h2>
+
+                  <div className="space-y-3 lg:space-y-4">
+                    <div className="relative">
+                      <SearchInput
+                        placeholder="Cari nama atau email peserta..."
+                        value={inviteInput}
+                        onChange={(value) => handleSearchInvite(value)}
+                        className="w-full"
+                      />
+
+                      {/* Search Results Dropdown */}
+                      {showSearchResults && searchResults.length > 0 && (
+                        <div className="absolute top-full left-0 right-0 mt-2 bg-white border-2 border-amber-200 rounded-2xl shadow-lg z-10 max-h-64 overflow-y-auto">
+                          {searchResults.map((user) => (
+                            <button
+                              key={user.value}
+                              type="button"
+                              onClick={() => handleAddInvite(user.value)}
+                              className="w-full px-4 py-3 flex items-center gap-3 hover:bg-amber-50 border-b border-amber-100 last:border-b-0 transition-colors text-left"
+                            >
+                              {user.avatar ? (
+                                <img src={user.avatar} alt={user.label} className="h-8 w-8 rounded-full object-cover" />
+                              ) : (
+                                <div className="h-8 w-8 rounded-full bg-amber-200 flex items-center justify-center text-xs font-bold text-amber-700">
+                                  {user.label.charAt(0).toUpperCase()}
+                                </div>
+                              )}
+                              <div className="flex-1 text-left">
+                                <p className="font-bold text-slate-700 text-sm">{user.label}</p>
+                                <p className="text-xs text-slate-500">{user.email}</p>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Invited Chips List */}
+                    <div className="min-h-20 lg:min-h-25 bg-slate-50 rounded-2xl border-2 border-slate-100 p-3">
+                      {invitedUsers.length === 0 ? (
+                        <div className="h-full flex flex-col items-center justify-center text-slate-300 text-xs lg:text-sm font-bold py-2 lg:py-4 text-center">
+                          <Users className="w-6 h-6 lg:w-8 lg:h-8 mb-1 opacity-50" />
+                          Belum ada peserta
+                        </div>
+                      ) : (
+                        <div className="flex flex-wrap gap-2">
+                          {invitedUsers.map((userEmail, idx) => {
+                            const user = userOptions.find((u) => u.value === userEmail);
+                            return (
+                              <div
+                                key={idx}
+                                className="flex items-center gap-2 pl-2 pr-1 py-1 rounded-lg bg-white border-2 border-amber-200 text-amber-700 text-[10px] lg:text-xs font-bold shadow-sm animate-in zoom-in duration-200 max-w-full"
+                              >
+                                {user?.avatar ? (
+                                  <img src={user.avatar} alt={user.label} className="w-6 h-6 rounded-full object-cover border border-amber-300" />
+                                ) : (
+                                  <span className="w-6 h-6 flex items-center justify-center bg-amber-100 rounded-full text-amber-500 font-bold">👤</span>
+                                )}
+                                <span className="truncate max-w-30">{user?.label || userEmail}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveInvite(idx)}
+                                  className="p-0.5 hover:bg-red-100 hover:text-red-500 rounded-md transition-colors shrink-0"
+                                >
+                                  <X className="w-3 h-3" />
+                                </button>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -410,11 +475,11 @@ const EditMaterial = () => {
                 >
                   {submitting ? (
                     <>
-                      <Sparkles className="w-5 h-5 lg:w-6 lg:h-6 animate-spin" /> Memperbarui...
+                      <Sparkles className="w-5 h-5 lg:w-6 lg:h-6 animate-spin" /> Menyimpan...
                     </>
                   ) : (
                     <>
-                      <Save className="w-5 h-5 lg:w-6 lg:h-6" /> Perbarui Kajian
+                      <Save className="w-5 h-5 lg:w-6 lg:h-6" /> Simpan Perubahan
                     </>
                   )}
                 </button>
@@ -424,17 +489,7 @@ const EditMaterial = () => {
         </div>
       </div>
       <ChatbotButton />
-
-      {/* Notification */}
-      {notification && (
-        <CartoonNotification
-          type={notification.type}
-          title={notification.title}
-          message={notification.message}
-          duration={notification.type === "success" ? 3000 : 5000}
-          onClose={() => setNotification(null)}
-        />
-      )}
+      <Toast show={toast.show} message={toast.message} type={toast.type} onClose={() => setToast((prev) => ({ ...prev, show: false }))} />
     </div>
   );
 };
