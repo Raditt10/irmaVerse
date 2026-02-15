@@ -105,10 +105,11 @@ const Dashboard = () => {
         const data = await res.json();
 
         const favoritesJson = localStorage.getItem("favoriteInstructors");
-        const favoriteIds = favoritesJson ? JSON.parse(favoritesJson) : [];
+        const favoriteIdsRaw = favoritesJson ? JSON.parse(favoritesJson) : [];
+        const favoriteIds = Array.isArray(favoriteIdsRaw) ? favoriteIdsRaw.map((id: any) => String(id)) : [];
 
         const favorites = data.filter((instructor: any) =>
-          favoriteIds.includes(instructor.id)
+          favoriteIds.includes(String(instructor.id))
         );
         setFavoriteInstructors(favorites);
       } catch (error) {

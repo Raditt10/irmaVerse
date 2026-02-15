@@ -82,7 +82,8 @@ const LeaderboardPage = async () => {
             {/* JUARA 1 */}
             <div className="flex flex-col items-center group order-2 -mt-10 z-20">
                <div className="relative mb-5 z-20 transition-transform group-hover:-translate-y-3">
-                  <div className="absolute -top-8 left-1/2 -translate-x-1/2 animate-bounce">
+                  {/* Animasi 'animate-bounce' telah dihapus di baris bawah ini */}
+                  <div className="absolute -top-8 left-1/2 -translate-x-1/2">
                     <Crown className="w-8 h-8 md:w-12 md:h-12 text-amber-400 fill-amber-400" />
                   </div>
                   <div className="w-24 h-24 md:w-32 md:h-32 rounded-full border-4 border-amber-400 bg-amber-100 overflow-hidden shadow-lg">
@@ -121,17 +122,17 @@ const LeaderboardPage = async () => {
             {/* Search & Filter */}
             <div className="flex gap-3 mb-6">
               <div className="relative flex-1 group">
-                 <div className="relative bg-white border-2 border-slate-200 rounded-2xl flex items-center px-4 py-2.5 md:py-3 transition-all">
+                  <div className="relative bg-white border-2 border-slate-200 rounded-2xl flex items-center px-4 py-2.5 md:py-3 transition-all">
                     <Search className="w-4 h-4 md:w-5 md:h-5 text-slate-400 mr-2" />
                     <input 
                       type="text" 
                       placeholder="Cari teman..." 
                       className="w-full bg-transparent outline-none font-bold text-sm md:text-base text-slate-600"
                     />
-                 </div>
+                  </div>
               </div>
               <button className="bg-white border-2 border-slate-200 rounded-2xl p-2.5 md:p-3 flex items-center justify-center hover:bg-slate-50 transition-all">
-                 <Filter className="w-5 h-5 text-slate-600" />
+                  <Filter className="w-5 h-5 text-slate-600" />
               </button>
             </div>
 
@@ -156,27 +157,27 @@ const LeaderboardPage = async () => {
                     `}>
                       {/* Rank */}
                       <div className="col-span-2 sm:col-span-1 flex justify-center">
-                         <div className={`w-8 h-8 md:w-10 md:h-10 rounded-xl flex items-center justify-center font-black text-sm md:text-lg ${isCurrentUser ? 'bg-teal-500 text-white' : 'bg-slate-100 text-slate-500'}`}>
+                          <div className={`w-8 h-8 md:w-10 md:h-10 rounded-xl flex items-center justify-center font-black text-sm md:text-lg ${isCurrentUser ? 'bg-teal-500 text-white' : 'bg-slate-100 text-slate-500'}`}>
                             {rank}
-                         </div>
+                          </div>
                       </div>
 
                       {/* Profile */}
                       <div className="col-span-7 sm:col-span-8 flex items-center gap-2 md:gap-4">
-                         <div className="w-10 h-10 rounded-full bg-slate-200 overflow-hidden shrink-0 border border-slate-100">
-                            <img src={`https://picsum.photos/200/200?random=${user.avatarId}`} alt={user.name} className="w-full h-full object-cover" />
-                         </div>
-                         <div className="min-w-0">
+                          <div className="w-10 h-10 rounded-full bg-slate-200 overflow-hidden shrink-0 border border-slate-100">
+                             <img src={`https://picsum.photos/200/200?random=${user.avatarId}`} alt={user.name} className="w-full h-full object-cover" />
+                          </div>
+                          <div className="min-w-0">
                             <div className="flex items-center gap-1.5 flex-wrap">
                                 <p className={`font-black text-xs md:text-base truncate ${isCurrentUser ? 'text-teal-800' : 'text-slate-700'}`}>
                                   {user.name}
                                 </p>
                                 {isCurrentUser && (
-                                    <span className="bg-teal-200 text-teal-700 text-[8px] md:text-[10px] font-black px-1.5 py-0.5 rounded-md border border-teal-300">YOU</span>
+                                  <span className="bg-teal-200 text-teal-700 text-[8px] md:text-[10px] font-black px-1.5 py-0.5 rounded-md border border-teal-300">YOU</span>
                                 )}
                             </div>
                             <p className="text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-tight">{user.role}</p>
-                         </div>
+                          </div>
                       </div>
 
                       {/* Points */}

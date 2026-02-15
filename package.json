@@ -14,11 +14,10 @@
     "db:studio": "prisma studio",
     "db:push": "prisma db push",
     "db:seed": "ts-node --compiler-options {\"module\":\"commonjs\"} prisma/seed.ts"
-    
   },
   "prisma": {
-      "seed": "ts-node --compiler-options {\"module\":\"commonjs\"} prisma/seed.ts"
-    },
+    "seed": "ts-node --compiler-options {\"module\":\"commonjs\"} prisma/seed.ts"
+  },
   "dependencies": {
     "@prisma/client": "^6.3.1",
     "@radix-ui/react-avatar": "^1.1.11",
@@ -32,6 +31,7 @@
     "@uiw/react-md-editor": "^4.0.11",
     "bcryptjs": "^3.0.3",
     "class-variance-authority": "^0.7.1",
+    "classnames": "^2.5.1",
     "clsx": "^2.1.1",
     "dotenv": "^17.2.3",
     "lodash": "^4.17.21",

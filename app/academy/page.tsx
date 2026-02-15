@@ -19,7 +19,6 @@ import {
   ArrowRight,
   Sparkles,
 } from "lucide-react";
-import { Card } from "@/components/ui/card";
 import Sidebar from "@/components/ui/Sidebar";
 import DashboardHeader from "@/components/ui/Header";
 import ChatbotButton from "@/components/ui/Chatbot";

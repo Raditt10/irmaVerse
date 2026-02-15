@@ -2,10 +2,14 @@
 import React, { useEffect, useMemo, useRef, useState, useCallback, Suspense } from "react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import DashboardHeader from "@/components/ui/Header";
+import BackButton from "@/components/ui/BackButton";
 import Sidebar from "@/components/ui/Sidebar";
 import { Input } from "@/components/ui/InputText";
 import { Textarea } from "@/components/ui/textarea";
 import Loading from "@/components/ui/Loading";
+import Toast from "@/components/ui/Toast";
+// Import komponen Confirm Dialog yang baru
+import CartoonConfirmDialog from "@/components/ui/ConfirmDialog"; 
 import { useSearchParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useSocket } from "@/lib/socket";
@@ -29,13 +33,15 @@ import {
   X,
   Edit2,
   Trash2,
+  Heart,
   Check,
   CheckCheck,
   File,
   Loader2,
+  Menu, // Import icon Menu
 } from "lucide-react";
 
-// --- INTERFACES ---
+// ... (INTERFACES tetap sama) ...
 interface Instructor {
   id: string;
   name: string;
@@ -83,6 +89,15 @@ interface ChatMessage {
 }
 
 const ChatPage = () => {
+  const [toast, setToast] = useState<{ show: boolean; message: string; type: 'success' | 'error' } | null>(null);
+
+  useEffect(() => {
+    if (toast?.show) {
+      const timer = setTimeout(() => setToast(null), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast]);
+
   const router = useRouter();
   const { data: session, status } = useSession({
     required: true,
@@ -96,10 +111,10 @@ const ChatPage = () => {
     isConnected, 
     onlineUsers, 
     typingUsers, 
-    lastSeenMap,
+    lastSeenMap, 
     joinConversation, 
-    leaveConversation,
-    startTyping,
+    leaveConversation, 
+    startTyping, 
     stopTyping, 
   } = useSocket();
 
@@ -122,6 +137,8 @@ const ChatPage = () => {
   const [fileCaption, setFileCaption] = useState("");
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deletingConversation, setDeletingConversation] = useState(false);
+  const [isDesktopChatFullscreen, setIsDesktopChatFullscreen] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
   
   const messagesRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -129,7 +146,7 @@ const ChatPage = () => {
   const messageRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const searchParams = useSearchParams();
 
-  // --- DATA FETCHING & SOCKETS (Logika sama persis) ---
+  // ... (Fungsi-fungsi fetch dan handler tetap sama) ...
   const fetchConversations = useCallback(async () => {
     try {
       const res = await fetch("/api/chat/conversations");
@@ -184,7 +201,9 @@ const ChatPage = () => {
       );
       if (existingConv) {
         setSelectedConversationId(existingConv.id);
-        setIsMobileViewingChat(true);
+        if (window.innerWidth < 1024) {
+          setIsMobileViewingChat(true);
+        }
       }
     }
   }, [searchParams, conversations]);
@@ -500,11 +519,12 @@ const ChatPage = () => {
         );
         setSelectedConversationId(null);
         setMessages([]);
-        setShowDeleteConfirm(false);
+        setShowDeleteConfirm(false); // Close dialog
         setIsMobileViewingChat(false);
         socket?.emit("conversation:delete", {
           conversationId: selectedConversationId,
         });
+        setToast({ show: true, message: 'Percakapan berhasil dihapus', type: 'success' });
       } else {
         const error = await res.json();
         alert(error.error || "Gagal menghapus percakapan");
@@ -570,7 +590,9 @@ const ChatPage = () => {
         await fetchConversations();
         setSelectedConversationId(conv.id);
         setShowNewChatModal(false);
-        setIsMobileViewingChat(true);
+        if (window.innerWidth < 1024) {
+          setIsMobileViewingChat(true);
+        }
       }
     } catch (error) {
       console.error("Error starting conversation:", error);
@@ -589,27 +611,39 @@ const ChatPage = () => {
 
   return (
     // Gunakan 100dvh untuk handle browser mobile address bar
-    <div className="h-[100dvh] bg-[#FDFBF7] flex flex-col overflow-hidden">
+    <div className="h-dvh bg-[#FDFBF7] flex flex-col overflow-hidden">
       
       {/* Hide header & sidebar on mobile when viewing chat to maximize space */}
-      <div className={`${isMobileViewingChat ? 'hidden lg:block' : 'block'}`}>
+      <div className={`${isMobileViewingChat || isDesktopChatFullscreen ? 'hidden lg:block' : 'block'}`}>
         <DashboardHeader />
       </div>
 
       <div className="flex flex-1 overflow-hidden">
-        {/* Hide main sidebar on mobile when viewing chat */}
-        <div className={`${isMobileViewingChat ? 'hidden lg:block' : 'hidden lg:block'} h-full shrink-0`}>
-           <Sidebar />
+        {/* Hide main sidebar on mobile or fullscreen desktop when viewing chat */}
+        {/* PERBAIKAN: Ubah hidden lg:block menjadi block. Sidebar component sendiri yang handle responsiveness */}
+        <div className={`${isMobileViewingChat || isDesktopChatFullscreen ? 'hidden lg:block' : 'block'} h-full shrink-0`}>
+          <Sidebar />
         </div>
 
-        <main className={`w-full flex-1 flex flex-col ${isMobileViewingChat ? 'p-0' : 'p-4 lg:p-6'} overflow-hidden`}>
+        <main className={`w-full flex-1 flex flex-col ${(isMobileViewingChat || isDesktopChatFullscreen) ? 'p-0' : 'p-4 lg:p-6'} overflow-hidden`}>
           
           {/* Page Title (Only visible on Desktop/Tablet or when List View on Mobile) */}
-          <div className={`${isMobileViewingChat ? 'hidden' : 'flex'} mb-4 items-center justify-between shrink-0 px-2 lg:px-0`}>
-            <div>
-              <h1 className="text-2xl lg:text-3xl font-black text-slate-800 tracking-tight">Chat Instruktur</h1>
-              <p className="text-slate-500 font-bold text-xs lg:text-sm mt-1">Konsultasi langsung dengan ahlinya</p>
+          <div className={`${isMobileViewingChat || isDesktopChatFullscreen ? 'hidden' : 'flex'} mb-4 items-center justify-between shrink-0 px-2 lg:px-0`}>
+            <div className="flex items-center gap-3">
+              {/* PERBAIKAN: Tombol Hamburger untuk Mobile */}
+              <button 
+                onClick={() => window.dispatchEvent(new CustomEvent('open-mobile-sidebar'))}
+                className="lg:hidden p-2 -ml-2 text-slate-600 hover:bg-slate-100 rounded-xl transition-colors"
+              >
+                <Menu className="h-6 w-6" strokeWidth={2.5} />
+              </button>
+              
+              <div>
+                <h1 className="text-2xl lg:text-3xl font-black text-slate-800 tracking-tight">Chat Instruktur</h1>
+                <p className="text-slate-500 font-bold text-xs lg:text-sm mt-1">Konsultasi langsung dengan ahlinya</p>
+              </div>
             </div>
+
             <div className="flex items-center gap-2">
                 {isConnected ? (
                   <span className="flex items-center gap-2 text-[10px] lg:text-xs font-black text-emerald-600 bg-emerald-100 px-3 py-1.5 rounded-full border-2 border-emerald-200">
@@ -628,12 +662,12 @@ const ChatPage = () => {
           {/* CHAT CONTAINER FRAME */}
           <div className={`
             flex flex-1 bg-white overflow-hidden shadow-sm
-            ${isMobileViewingChat ? 'fixed inset-0 z-40 rounded-none' : 'rounded-[2rem] border-4 border-slate-200 shadow-[0_8px_0_0_#cbd5e1]'}
+            ${(isMobileViewingChat || isDesktopChatFullscreen) ? 'fixed inset-0 z-9999 w-screen h-screen rounded-none' : 'rounded-4xl border-4 border-slate-200 shadow-[0_8px_0_0_#cbd5e1]'}
           `}>
             
             {/* --- LIST CONVERSATIONS (SIDEBAR CHAT) --- */}
             <div className={`
-              ${isMobileViewingChat ? 'hidden' : 'flex'} 
+              ${(isMobileViewingChat || isDesktopChatFullscreen) ? 'hidden' : 'flex'} 
               flex-col w-full lg:w-80 xl:w-96 border-r-0 lg:border-r-4 border-slate-100 bg-slate-50/30
             `}>
               {/* Search & New Chat Button */}
@@ -671,7 +705,9 @@ const ChatPage = () => {
                       key={conv.id}
                       onClick={() => {
                         setSelectedConversationId(conv.id);
-                        setIsMobileViewingChat(true);
+                        if (window.innerWidth < 1024) { // hanya mobile/tablet
+                          setIsMobileViewingChat(true);
+                        }
                       }}
                       className={`w-full flex items-start gap-3 p-4 rounded-2xl transition-all border-2 text-left ${
                         selectedConversationId === conv.id
@@ -702,7 +738,7 @@ const ChatPage = () => {
                             {conv.lastMessage ? conv.lastMessage.content : <span className="italic opacity-70">Mulai percakapan...</span>}
                           </p>
                           {conv.unreadCount > 0 && (
-                            <span className="shrink-0 min-w-[1.25rem] h-5 bg-red-500 text-white text-[10px] font-black rounded-full flex items-center justify-center px-1">
+                            <span className="shrink-0 min-w-5 h-5 bg-red-500 text-white text-[10px] font-black rounded-full flex items-center justify-center px-1">
                               {conv.unreadCount}
                             </span>
                           )}
@@ -716,20 +752,23 @@ const ChatPage = () => {
 
             {/* --- ACTIVE CHAT WINDOW --- */}
             <div className={`
-              ${isMobileViewingChat ? 'flex' : 'hidden lg:flex'} 
+              ${(isMobileViewingChat || isDesktopChatFullscreen) ? 'flex' : 'hidden lg:flex'}
               flex-col flex-1 bg-slate-50 relative w-full h-full
+              ${(isMobileViewingChat || isDesktopChatFullscreen) ? 'bg-white' : ''}
             `}>
               {selectedConversation ? (
                 <>
                   {/* Active Chat Header */}
                   <div className="flex items-center justify-between px-4 py-3 bg-white border-b-2 border-slate-100 shadow-sm z-20 shrink-0">
                     <div className="flex items-center gap-3">
-                      <button 
-                        onClick={() => setIsMobileViewingChat(false)}
-                        className="lg:hidden p-2 -ml-2 rounded-full hover:bg-slate-100 text-slate-600"
-                      >
-                        <ArrowLeft className="h-6 w-6" strokeWidth={2.5} />
-                      </button>
+                      <BackButton 
+                        onClick={() => {
+                          if (isMobileViewingChat) setIsMobileViewingChat(false);
+                          else router.push('/instructors');
+                        }}
+                        className="p-2 -ml-2 bg-transparent border-none shadow-none hover:bg-slate-100 text-slate-600"
+                        label=""
+                      />
                       <div className="relative">
                         <Avatar className="h-10 w-10 border-2 border-white shadow-sm ring-2 ring-slate-100">
                           <AvatarImage src={selectedConversation.participant.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${selectedConversation.participant.name}`} />
@@ -756,12 +795,49 @@ const ChatPage = () => {
                         </p>
                       </div>
                     </div>
-                    <button 
-                      onClick={() => setShowDeleteConfirm(true)}
-                      className="p-2 hover:bg-slate-100 rounded-full text-slate-400"
-                    >
-                      <MoreHorizontal className="h-6 w-6" />
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setIsDesktopChatFullscreen((v) => !v)}
+                        className="hidden lg:inline-flex p-2 rounded-full hover:bg-slate-100 text-slate-400"
+                        title={isDesktopChatFullscreen ? 'Keluar Fullscreen' : 'Fullscreen'}
+                      >
+                        {isDesktopChatFullscreen ? (
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v2a2 2 0 002 2h2a2 2 0 002-2v-2m0-10V5a2 2 0 00-2-2h-2a2 2 0 00-2 2v2m10 10h-2a2 2 0 00-2 2v-2a2 2 0 002-2h2m-10 0H5a2 2 0 00-2 2v2a2 2 0 002 2h2" /></svg>
+                        ) : (
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4h6M4 4v6m0-6l6 6m10 10h-6m6 0v-6m0 6l-6-6" /></svg>
+                        )}
+                      </button>
+                      <div className="relative">
+                        <button
+                          onClick={() => setShowMenu((v) => !v)}
+                          className="p-2 hover:bg-slate-100 rounded-full text-slate-400"
+                        >
+                          <MoreHorizontal className="h-6 w-6" />
+                        </button>
+                        {showMenu && (
+                          <div className="absolute right-0 mt-2 w-60 bg-white border border-slate-200 rounded-xl shadow-lg z-50">
+                            <button
+                              onClick={() => { setShowMenu(false); setShowDeleteConfirm(true); }}
+                              className="w-full flex items-center gap-2 text-left px-4 py-3 hover:bg-slate-50 text-red-600 font-bold rounded-t-xl"
+                            >
+                              <Trash2 className="h-5 w-5 mr-2" />
+                              Hapus Semua Pesan
+                            </button>
+                            
+                            <button
+                              onClick={() => {
+                                setShowMenu(false);
+                                setToast({ show: true, message: 'Berhasil ditambahkan ke Favorit!', type: 'success' });
+                              }}
+                              className="w-full flex items-center gap-2 text-left px-4 py-3 hover:bg-slate-50 text-emerald-600 font-bold rounded-b-xl"
+                            >
+                              <Heart className="h-5 w-5 mr-2" fill="currentColor" />
+                              Tambahkan ke Favorit
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </div>
 
                   {/* Messages List Area */}
@@ -861,7 +937,7 @@ const ChatPage = () => {
 
                   {/* Input Area */}
                   <div className="p-3 lg:p-4 bg-white border-t-2 border-slate-100 z-20 shrink-0">
-                    <div className="flex items-end gap-2 bg-slate-50 p-2 rounded-[1.5rem] border-2 border-slate-200 focus-within:border-emerald-400 focus-within:shadow-[0_0_0_2px_rgba(52,211,153,0.2)] transition-all">
+                    <div className="flex items-end gap-2 bg-slate-50 p-2 rounded-3xl border-2 border-slate-200 focus-within:border-emerald-400 focus-within:shadow-[0_0_0_2px_rgba(52,211,153,0.2)] transition-all">
                       <button 
                         onClick={() => fileInputRef.current?.click()}
                         disabled={uploadingFile}
@@ -876,14 +952,14 @@ const ChatPage = () => {
                         onChange={(e) => { setMessageDraft(e.target.value); handleTyping(); }}
                         onKeyDown={handleKeyDown}
                         placeholder="Tulis pesan..."
-                        className="flex-1 bg-transparent border-none shadow-none focus-visible:ring-0 min-h-[44px] max-h-32 py-2.5 px-2 text-sm md:text-base font-medium text-slate-700 placeholder:text-slate-400 resize-none"
+                        className="flex-1 bg-transparent border-none shadow-none focus-visible:ring-0 min-h-11 max-h-32 py-2.5 px-2 text-sm md:text-base font-medium text-slate-700 placeholder:text-slate-400 resize-none"
                         rows={1}
                       />
                       
                       <button 
                         onClick={handleSendMessage}
                         disabled={!messageDraft.trim() && !uploadingFile}
-                        className="p-2.5 bg-emerald-500 text-white rounded-full hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_3px_0_0_#047857] active:translate-y-[2px] active:shadow-none transition-all shrink-0"
+                        className="p-2.5 bg-emerald-500 text-white rounded-full hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_3px_0_0_#047857] active:translate-y-0.5 active:shadow-none transition-all shrink-0"
                       >
                         <Send className="h-5 w-5" strokeWidth={3} />
                       </button>
@@ -983,32 +1059,27 @@ const ChatPage = () => {
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
-      {showDeleteConfirm && (
-        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-3xl w-full max-w-xs p-6 text-center border-4 border-white shadow-2xl">
-            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Trash2 className="h-8 w-8 text-red-500" />
-            </div>
-            <h3 className="text-xl font-black text-slate-800 mb-2">Hapus Chat?</h3>
-            <p className="text-sm text-slate-500 mb-6">Pesan yang dihapus tidak dapat dikembalikan lagi.</p>
-            <div className="flex flex-col gap-2">
-              <button 
-                onClick={handleDeleteConversation} 
-                disabled={deletingConversation}
-                className="w-full py-3 bg-red-500 text-white font-bold rounded-xl shadow-[0_3px_0_0_#991b1b] active:translate-y-1 active:shadow-none"
-              >
-                {deletingConversation ? 'Menghapus...' : 'Ya, Hapus'}
-              </button>
-              <button 
-                onClick={() => setShowDeleteConfirm(false)}
-                className="w-full py-3 text-slate-500 font-bold hover:bg-slate-100 rounded-xl"
-              >
-                Batal
-              </button>
-            </div>
-          </div>
-        </div>
+      {/* --- CARTOON CONFIRM DIALOG --- */}
+      {/* Menggantikan modal delete manual sebelumnya */}
+      <CartoonConfirmDialog
+        isOpen={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={handleDeleteConversation}
+        title="Hapus Chat?"
+        message="Apakah kamu yakin ingin menghapus semua pesan dalam percakapan ini? Tindakan ini tidak dapat dibatalkan."
+        type="warning"
+        confirmText="Ya, Hapus"
+        cancelText="Batal"
+      />
+
+      {/* Toast notification */}
+      {toast && (
+        <Toast
+          show={toast.show}
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
       )}
 
     </div>
