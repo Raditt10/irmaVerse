@@ -9,8 +9,8 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
-  url      = env("DATABASE_URL")
+  provider          = "mysql"
+  url               = env("DATABASE_URL")
   shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
 }
 
@@ -74,8 +74,8 @@ model User {
   invitesAsUser           MaterialInvite[]    @relation("MaterialInviteUser")
   courseEnrollments       CourseEnrollments[]
   competitions            Competition[]       @relation("competitionInstructor")
-  friends1                Friendship[]       @relation("Friend1")
-  friends2                Friendship[]       @relation("Friend2")
+  friends1                Friendship[]        @relation("Friends1")
+  friends2                Friendship[]        @relation("Friends2")
 
   @@map("users")
 }
@@ -309,7 +309,7 @@ model Attendance {
 
 enum FriendshipStatus {
   Pending
-  Accepted
+  Friend
   Rejected
   Blocked
 }
@@ -320,11 +320,11 @@ model Friendship {
   addresseeId    String
   status         FriendshipStatus
 
-  requester     User  @relation("Friend1", fields: [requesterId], references: [id])
-  addressee     User  @relation("Friend2", fields: [addresseeId], references: [id])
+  requester      User @relation("Friends1", fields: [requesterId], references: [id], map: "fk_friendship_requester")
+  addressee      User @relation("Friends2", fields: [addresseeId], references: [id], map: "fk_friendship_addressee")
 
-  createdAt  DateTime   @default(now())
-  updatedAt  DateTime   @updatedAt
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
   
   @@index([requesterId])
   @@index([addresseeId])

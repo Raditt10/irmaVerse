@@ -54,25 +54,20 @@ export default function QuizPage() {
   }, []);
 
   const fetchFriends = async () => {
-    setLoading(true);
-    setFriendExists(false);
-    try{  
+    setLoading(false);
+    try{
       const res = await fetch("/api/friends");
       const data = await res.json();
 
-      if (!res.ok) {
-        switch(data.code){
-          case "NOT_FOUND":
-            throw new Error("Belum ada data pertemanan");
-          case "UNAUTHORIZED":
-            throw new Error("Anda tidak memiliki izin untuk mengakses page ini!");
-          default:
-            throw new Error("Gagal Mengambil data pertemanan");
-        }
-      };
+      if (data.notFound) {
+        setFriendExists(false);
+        return;
+      }
+      if (!res.ok) throw new Error("Gagal Mengambil data pertemanan");
 
+      const filteredData = data ? data.filter((f) => f.status != "Friends") : data;
       setFriendExists(true);
-      setFriends(data);
+      setFriends(filteredData);
     }catch(error){
       console.error("Error fetching friend requests: ", error);
     }finally{
@@ -83,6 +78,51 @@ export default function QuizPage() {
   const filteredFriends = search 
   ? friends.filter((m) => m.name.toLowerCase().includes(search.toLowerCase()))
   : friends;
+
+  const handleAcceptFriend = async (id: string, name: string) => {
+    setLoading(true);
+    try {
+      const req = await fetch(`/api/friends/request`, {
+        method: "POST",
+        body: JSON.stringify({ 
+          targetId: id
+        }),
+        headers: {
+          "Content-Type": "application/json"
+        }
+      });
+      
+      if(req.ok){
+        setNotification({
+          type: "success",
+          title: "Permintaan Diterima!",
+          message: `Permintaan pertemanan ${name}diterima`,
+        });
+        return;
+      }
+      const res = await req.json();
+
+      if(res.existed){
+        setNotification({
+          type: "warning",
+          title: "Sudah Berteman!",
+          message: `Kamu sudah berteman dengan ${name}`,
+        });
+        return;
+      }
+      setNotification({
+        type: "error",
+        title: "Permintaan Gagal Diterima!",
+        message: `Permintaan pertemanan ${name} gagal diterima`,
+      });
+      throw new Error("gagal mengirim request pertemanan");
+    }
+    catch (error){
+      console.error("Error accepting friend request:", error);
+    }finally{
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#FDFBF7]">
@@ -135,7 +175,7 @@ export default function QuizPage() {
                       Cobalah menambahkan teman terlebih dahulu.
                   </p>
                   <Link
-                    href={`@/app/members`}
+                    href={`../../members`}
                     className="w-full py-3.5 rounded-2xl bg-teal-400 text-white font-black border-2 border-teal-600 border-b-4 hover:bg-teal-500 hover:shadow-lg hover:shadow-teal-200 active:border-b-2 active:translate-y-0.5 transition-all flex items-center justify-center gap-2 group/btn shadow-lg"
                   >
                     Pergi ke halaman anggota
@@ -143,7 +183,7 @@ export default function QuizPage() {
                 </div>
               ) : (
                 <>
-                {/* --- FRIENDS GRID --- */}
+                {/* --- GRID TEMAN --- */}
                 {filteredFriends.length > 0 ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                     {filteredFriends.map((friends) => (
@@ -203,6 +243,22 @@ export default function QuizPage() {
                                 <UserCircle2 className="h-4 w-4" />
                                 Profile
                             </button>
+                            {friends.status == "Pending" ? (
+                                <button
+                                    onClick={() => handleAcceptFriend(friends.id, friends.name)}
+                                    className="flex items-center justify-center gap-2 py-2.5 rounded-xl bg-teal-400 border-2 border-teal-600 text-white font-bold text-sm shadow-[0_2px_0_0_#0f766e] hover:bg-teal-500 active:border-b-2 active:translate-y-0.5 transition-all"
+                                >
+                                    <UserPlus className="h-4 w-4" />
+                                    Terima Pertemanan
+                                </button>
+                            ) : (
+                              <Link
+                                href={`../chat`}
+                                className="w-full py-3.5 rounded-2xl bg-teal-400 text-white font-black border-2 border-teal-600 border-b-4 hover:bg-teal-500 hover:shadow-lg hover:shadow-teal-200 active:border-b-2 active:translate-y-0.5 transition-all flex items-center justify-center gap-2 group/btn shadow-lg"
+                              >
+                                Pergi ke halaman anggota
+                              </Link>
+                            )}
                         </div>
                       </div>
                     ))}

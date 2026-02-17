@@ -3,11 +3,11 @@ import { FriendshipStatus } from "@prisma/client";
 import { auth } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function POST(req: NextRequest) {
+export async function POST(req: NextRequest) {       // Request
   try{
     const session = await auth();    
     if (!session || !session.user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ message: "Unauthorized", code: "UNAUTHORIZED" }, { status: 401 });
     }
     const User = await prisma.user.findUnique({
     where: { id: session.user.id }
@@ -15,14 +15,14 @@ export async function POST(req: NextRequest) {
         
     if (!User) {
     console.log('User not found in database:', session.user.id);
-    return NextResponse.json({ error: "User not found" }, { status: 404 });
+    return NextResponse.json({ message: "User not found" }, { status: 404 });
     }
 
     const { targetId } = await req.json();
     const userId = session.user.id;
 
     if (userId === targetId) {
-      return NextResponse.json("Cannot friend yourself", { status: 400 });
+      return NextResponse.json({ message: "Cannot friend yourself", code: "SELF_REQUEST" }, { status: 400 });
     }
 
     // Check existing relationship
@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
     });
 
     if (existing) {
-      return NextResponse.json("Relationship already exists", { status: 400 });
+      return NextResponse.json({ message: "Relationship already exists", code: "ALREADY_EXISTS" }, { status: 400 });
     }
 
     const friendship = await prisma.friendship.create({
@@ -47,90 +47,66 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    return NextResponse.json(friendship);
+    return NextResponse.json({ success: true, message: "Berhasil mengirim request pertemanan" }, { status: 201 });
   } catch(error){
-    return NextResponse.json({ error: "Failed to fetch and request friendship" }, { status: 500 })
+    return NextResponse.json({ message: "gagal mengirim request pertemanan" }, { status: 500 })
   }
 }
 
-export async function GET(req: NextRequest){
+export async function GET(req: NextRequest){         // Fetch
   try{
     const session = await auth();    
     if (!session || !session.user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ mesage: "Unauthorized", code: "UNAUTHORIZED" }, { status: 401 });
     }
     const User = await prisma.user.findUnique({
       where: { id: session.user.id }
     });
         
     if (!User) {
-    console.log('User not found in database:', session.user.id);
-    return NextResponse.json({ error: "User not found" }, { status: 404 });
+      console.log('User not found in database:', session.user.id);
+      return NextResponse.json({ message: "User not found", code: "UNAUTHRORIZED" }, { status: 401 });
     };
 
-    const friendreqs = await prisma.user.findMany({
-      where: { 
-        friendship: { requesterId: User.id } 
-      },
-      select: {
-        id: true,
-        name: true,
-        role: true,
-        class: true,
-        avatar: true
-      }
-    });
-
-    return NextResponse.json(friendreqs)
-  }catch(error){
-    return NextResponse.json({ error: "Failed to fetch friend requests" }, { status: 500 })
-  }
-}
-
-export async function DELETE(req: NextRequest){
-  try{
-    const session = await auth();
-    if (!session || !session.user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    const User = await prisma.user.findUnique({
-    where: { id: session.user.id }
-    });
-        
-    if (!User) {
-    console.log('User not found in database:', session.user.id);
-    return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
-
-    const { targetId } = await req.json();
-    const userId = session.user.id;
-
-    if (userId === targetId) {
-      return NextResponse.json("Cannot reject yourself", { status: 400 });
-    }
-
-    // check if friendship request is exists
-    const friendship = await prisma.friendship.findFirst({
+    const friends = await prisma.user.findMany({
       where: {
-        requesterId: userId,
-        addresseeId: targetId,
-        status: "Pending",
+        status: "Accepted",
+        OR: [
+          { requesterId: User.id },
+          { addresseeId: User.id },
+        ],
+      },
+      include: {
+        requester: {
+          select: {
+            id: true,
+            name: true,
+            role: true,
+            class: true,
+            avatar: true,
+          },
+        },
+        addressee: {
+          select: {
+            id: true,
+            name: true,
+            role: true,
+            class: true,
+            avatar: true,
+          },
+        },
       },
     });
 
-    if (!friendship) {
-      return NextResponse.json("No existing request from this user", { status: 400 });
-    }
-    
-    const reject = await prisma.friendship.delete({
-      where: { 
-        requesterId: friendship.id,
-        addresseeId: targetId,
-      },
-    });
+    if(friends.length < 1) return NextResponse.json({ message: "No data found", code: "NOT_FOUND" }, { status: 404 });
 
-    return 
-  } catch(error){
-    return NextResponse.json({ error: "Failed to fetch and reject friendship" }, { status: 500 })
+    const friendsData = friends.map((f) =>
+      f.requesterId === User.id ? f.addressee : f.requester
+    );
+
+
+    return NextResponse.json(friendsData);
+  }catch(error){
+    return NextResponse.json({ message: "Failed to fetch friend requests" }, { status: 500 })
   }
 }

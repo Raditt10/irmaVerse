@@ -99,7 +99,7 @@ const Members = () => {
   const handleAddFriend = async (id: string, name: string) => {
     setLoading(true);
     try {
-      await fetch (`/api/friends/request`, {
+      const req = await fetch(`/api/friends`, {
         method: "POST",
         body: JSON.stringify({ 
           targetId: id
@@ -109,22 +109,35 @@ const Members = () => {
         }
       });
       
-      setNotification({
-        type: "success",
-        title: "Permintaan Terkirim!",
-        message: `Permintaan pertemanan dikirim ke ${name}`,
-      });
-      
-      setLoading(false);
-    }
-    catch (error){
-      console.error("Error sending friend request:", error);
-      setLoading(false);
+      if(req.ok){
+        setNotification({
+          type: "success",
+          title: "Permintaan Terkirim!",
+          message: `Permintaan pertemanan dikirim ke ${name}`,
+        });
+        return;
+      }
+      const res = await req.json();
+
+      if(res.existed){
+        setNotification({
+          type: "warning",
+          title: "Permintaan Sudah Ada!",
+          message: `Sudah ada permintaan pertemanan ke ${name}`,
+        });
+        return;
+      }
       setNotification({
         type: "error",
         title: "Permintaan Gagal Dikirim!",
         message: `Permintaan pertemanan gagal dikirim ke ${name}`,
       });
+      throw new Error("gagal mengirim request pertemanan");
+    }
+    catch (error){
+      console.error("Error sending friend request:", error);
+    }finally{
+      setLoading(false);
     }
   };
 
