@@ -18,6 +18,7 @@ import {
   Megaphone,
   Trophy,
   CheckCheck,
+  Users, // <-- Ikon Users sudah ditambahkan di sini
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -466,6 +467,16 @@ export default function DashboardHeader() {
                   <TrendingUp className="h-4 w-4 mr-2" strokeWidth={2.5} />
                   <span>Level & Poin</span>
                 </DropdownMenuItem>
+
+                {/* --- MENU TEMANKU DITAMBAHKAN DI SINI --- */}
+                <DropdownMenuItem
+                  onClick={() => router.push("/temanku")}
+                  className="cursor-pointer font-bold text-slate-600 focus:text-emerald-700 focus:bg-emerald-50 rounded-lg px-3 py-2.5 transition-colors"
+                >
+                  <Users className="h-4 w-4 mr-2" strokeWidth={2.5} />
+                  <span>Temanku</span>
+                </DropdownMenuItem>
+                {/* -------------------------------------- */}
 
                 <DropdownMenuItem className="cursor-pointer font-bold text-slate-600 focus:text-emerald-700 focus:bg-emerald-50 rounded-lg px-3 py-2.5 transition-colors">
                   <Settings className="h-4 w-4 mr-2" strokeWidth={2.5} />

@@ -19,9 +19,9 @@ export default function MaterialUserActions({
 
   if (isJoined) {
     return (
-      <div className="space-y-3">
-        <div className="flex items-center justify-center gap-2 text-emerald-500 font-bold text-xs bg-emerald-50 py-2 px-3 rounded-lg text-center">
-          <span className="w-full text-center">
+      <div className="flex flex-col items-stretch w-full">
+        <div className="text-emerald-500 font-bold text-xs bg-emerald-50 py-2 px-3 rounded-lg text-center mb-3">
+          <span className="block w-full text-center">
             Kamu sudah mengikuti kajian ini, pada tanggal{" "}
             {attendedAt
               ? new Date(attendedAt).toLocaleDateString("id-ID", {
@@ -33,7 +33,9 @@ export default function MaterialUserActions({
             .
           </span>
         </div>
-        <MaterialRecapButton materialId={materialId} />
+        <div className="w-full">
+          <MaterialRecapButton materialId={materialId} />
+        </div>
       </div>
     );
   }
