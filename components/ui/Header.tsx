@@ -1,5 +1,4 @@
 "use client";
-
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
@@ -309,7 +308,7 @@ export default function DashboardHeader() {
                 </DropdownMenuItem>
                 
                 <DropdownMenuItem onClick={() => router.push("/friends")} className="cursor-pointer font-bold text-slate-600 focus:text-emerald-700 focus:bg-emerald-50 rounded-lg px-3 py-2.5 transition-colors">
-                    <TrendingUp className="h-4 w-4 mr-2" strokeWidth={2.5} />
+                    <UserIcon className="h-4 w-4 mr-2" strokeWidth={2.5} />
                     <span>Teman</span> 
                 </DropdownMenuItem>
                 

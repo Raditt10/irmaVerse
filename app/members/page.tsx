@@ -108,33 +108,47 @@ const Members = () => {
           "Content-Type": "application/json"
         }
       });
-      
-      if(req.ok){
-        setNotification({
-          type: "success",
-          title: "Permintaan Terkirim!",
-          message: `Permintaan pertemanan dikirim ke ${name}`,
-        });
-        return;
-      }
       const res = await req.json();
 
-      if(res.existed){
-        setNotification({
-          type: "warning",
-          title: "Permintaan Sudah Ada!",
-          message: `Sudah ada permintaan pertemanan ke ${name}`,
-        });
-        return;
-      }
+      if(!req.ok){
+        switch(res.code){
+          case "ALREADY_FRIENDS":
+            setNotification({
+              type: "info",
+              title: "Sudah Berteman!",
+              message: `Kamu sudah berteman dengan ${name}`,
+            });
+            throw new Error("gagal mengirim request pertemanan");
+          case "ALREADY_SENT":
+            setNotification({
+              type: "warning",
+              title: "Permintaan Sudah Dikirim!",
+              message: `Permintaan pertemanan sudah dikirim ke ${name}`,
+            });
+            throw new Error("Request pertemanan sudah ada");
+          case "USER_BLOCKED":
+            setNotification({
+              type: "error",
+              title: "Permintaan Dblokir!",
+              message: `Kamu diblokir oleh ${name}`,
+            });
+            throw new Error("Pertemanan diblokir");
+          default:
+            setNotification({
+              type: "error",
+              title: "Permintaan Gagal Dikirim!",
+              message: `Permintaan pertemanan gagal dikirim ke ${name}`,
+            });
+            throw new Error("gagal mengirim request pertemanan");
+        }
+      } 
+      
       setNotification({
-        type: "error",
-        title: "Permintaan Gagal Dikirim!",
-        message: `Permintaan pertemanan gagal dikirim ke ${name}`,
+        type: "success",
+        title: "Permintaan Terkirim!",
+        message: `Permintaan pertemanan dikirim ke ${name}`,
       });
-      throw new Error("gagal mengirim request pertemanan");
-    }
-    catch (error){
+    }catch (error){
       console.error("Error sending friend request:", error);
     }finally{
       setLoading(false);

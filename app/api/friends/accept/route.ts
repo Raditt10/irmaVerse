@@ -20,29 +20,33 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
     
-    const { targetId } = await req.json();
+    const { rowId, targetId } = await req.json();
     const userId = session.user.id;
 
-    // check if friendship request is exista
+    if(userId === targetId) {
+      return NextResponse.json({ message: "cannot accept yourself", code: "SELF_ACCEPT" }, { status: 400 });
+    }
+
+    // check if friendship request is exists
     const friendship = await prisma.friendship.findFirst({
       where: {
-        requesterId: targetId,
-        addresseeId: userId,
-        status: "Pending" as FriendshipStatus,
+        id: rowId,
+        status: {
+          in: [FriendshipStatus.Pending, FriendshipStatus.Friend]
+        }
       },
     });
 
-    if (!friendship) {
-      return NextResponse.json("Invalid request", { status: 400 });
-    }
+    if (!friendship) return NextResponse.json({ message: "Friendship request not found", code: "NOT_FOUND" }, { status: 400 });
+    if (friendship.status === FriendshipStatus.Friend) return NextResponse.json({ message: "Already friends", code: "ALREADY_FRIENDS" }, { status: 400 });
 
     const updated = await prisma.friendship.update({
       where: { id: friendship.id },
-      data: { status: "Accepted" as FriendshipStatus },
+      data: { status: FriendshipStatus.Friend },
     });
 
-    return Response.json(updated);
+    return NextResponse.json(updated);
   } catch(error){
-    return NextResponse.json({ error: "Failed to fetch and accept request"}, { status: 500})
+    return NextResponse.json({ error: "Failed to fetch and accept request: " + error }, { status: 500})
   }
 }

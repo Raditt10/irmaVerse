@@ -1,9 +1,9 @@
 import prisma from "@/lib/prisma";
-import { FriendshipStatus } from "@prisma/client";
+import { FriendshipStatus, Prisma } from "@prisma/client";
 import { auth } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function DELETE(req: NextRequest){
+export async function POST(req: NextRequest){
   try{
     const session = await auth();
     if (!session || !session.user) {
@@ -18,34 +18,44 @@ export async function DELETE(req: NextRequest){
     return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    const { targetId } = await req.json();
+    const { rowId, targetId } = await req.json();
     const userId = session.user.id;
 
     if (userId === targetId) {
-      return NextResponse.json("Cannot reject yourself", { status: 400 });
+      return NextResponse.json({ message: "Cannot reject yourself", code: "SELF_REJECT" }, { status: 400 });
     }
 
     // check if friendship request is exists
     const friendship = await prisma.friendship.findFirst({
       where: {
-        requesterId: userId,
-        addresseeId: targetId,
-        status: "Pending",
+        id: rowId,
+        status: FriendshipStatus.Pending,
       },
     });
-
-    if (!friendship) {
-      return NextResponse.json("No existing request from this user", { status: 400 });
-    }
+    if (!friendship) return NextResponse.json({ message: "No existing request from this user", code: "NOT_FOUND"}, { status: 400 });
     
     const reject = await prisma.friendship.delete({
       where: { 
-        requesterId: friendship.id,
-        addresseeId: targetId,
+        id: friendship.id,
       },
     });
 
+    return NextResponse.json({ message: "Friend request rejected successfully" }, { status: 200 });
   } catch(error){
-    return NextResponse.json({ error: "Failed to fetch and reject friendship" }, { status: 500 })
+  if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    if (error.code === "P2025") {
+      return NextResponse.json(
+        { message: "Friendship not found", code: "NOT_FOUND" },
+        { status: 404 }
+      );
+    }
+    if (error.code === "P2002") {
+      return NextResponse.json(
+        { message: "Duplicate request", code: "DUPLICATE" },
+        { status: 400 }
+      );
+    }
+  };
+    return NextResponse.json({ error: "Failed to reject friendship" }, { status: 500 });
   }
 }
