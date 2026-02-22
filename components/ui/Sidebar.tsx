@@ -179,25 +179,6 @@ const Sidebar = () => {
       label: "Event", 
       path: "/schedule" 
     },
-    // --- UPDATED SECTION: INSTRUKTUR DROPDOWN ---
-    { 
-      icon: Users, // Icon induk
-      label: "Instruktur", 
-      id: "menu-instruktur", // ID unik untuk toggle
-      submenu: [
-        {
-          icon: Contact, // Icon untuk list
-          label: "Daftar Instruktur",
-          path: "/instructors"
-        },
-        {
-          icon: MessageCircle, // Icon untuk chat
-          label: isInstruktur ? "Chat Anggota" : "Chat Instruktur",
-          path: isInstruktur ? "/academy/chat" : "/instructors/chat"
-        }
-      ]
-    },
-    // --------------------------------------------
     { 
       icon: GraduationCap, 
       label: "Program Kurikulum", 
@@ -208,11 +189,58 @@ const Sidebar = () => {
       label: "Info Perlombaan", 
       path: "/competitions" 
     },
-    { 
-      icon: Users, 
-      label: "Daftar Anggota", 
-      path: "/members" 
-    },
+    // --- UPDATED SECTION: INSTRUKTUR & DAFTAR ANGGOTA ---
+    ...(isInstruktur 
+      ? [
+          { 
+            icon: Users, 
+            label: "Instruktur", 
+            path: "/instructors" 
+          },
+          { 
+            icon: Users, 
+            label: "Daftar Anggota", 
+            id: "menu-anggota",
+            submenu: [
+              {
+                icon: Users,
+                label: "List Anggota",
+                path: "/members"
+              },
+              {
+                icon: MessageCircle,
+                label: "Chat Anggota",
+                path: "/academy/chat"
+              }
+            ]
+          }
+        ]
+      : [
+          { 
+            icon: Users,
+            label: "Instruktur", 
+            id: "menu-instruktur",
+            submenu: [
+              {
+                icon: Contact,
+                label: "Daftar Instruktur",
+                path: "/instructors"
+              },
+              {
+                icon: MessageCircle,
+                label: "Chat Instruktur",
+                path: "/instructors/chat"
+              }
+            ]
+          },
+          { 
+            icon: Users, 
+            label: "Daftar Anggota", 
+            path: "/members" 
+          }
+        ]
+    ),
+    // ----------------------------------------------------
     { 
       icon: Newspaper, 
       label: isInstruktur ? "Kelola Berita" : "Berita IRMA", 

@@ -25,13 +25,9 @@ import {
 interface Program {
   id: string;
   title: string;
-  description?: string;
+  description: string | null;
   duration: string;
   level: string;
-  quota: {
-    filled: number;
-    total: number;
-  };
   status: "in-progress" | "done" | "upcoming";
   thumbnail?: string;
 }
@@ -388,14 +384,6 @@ const OurPrograms = () => {
                                 <Clock3 className="h-4 w-4 text-teal-400" />
                                 <span>{program.duration}</span>
                               </div>
-                              <div className="w-1.5 h-1.5 rounded-full bg-slate-200" />
-                              <div className="flex items-center gap-1.5">
-                                <BookOpen className="h-4 w-4 text-emerald-500" />
-                                <span>
-                                  {program.quota?.filled ?? 0}/
-                                  {program.quota?.total ?? 0} Siswa
-                                </span>
-                              </div>
                             </div>
                           </div>
 
@@ -411,6 +399,7 @@ const OurPrograms = () => {
                             onDelete={() => handleDeleteProgram(program.id)}
                             label="Detail"
                             className="mt-auto w-full"
+                            showConfirm={false}
                           />
                         </div>
                       </div>

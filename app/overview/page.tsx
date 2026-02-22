@@ -96,17 +96,27 @@ const Dashboard = () => {
     }
   }, [status, session, router]);
 
-  // Load favorite instructors
+  // Load favorite instructors from database
   useEffect(() => {
     const fetchInstructorsAndFavorites = async () => {
       try {
-        const res = await fetch("/api/instructors");
-        if (!res.ok) throw new Error("Gagal mengambil data instruktur");
-        const data = await res.json();
+        // Load semua instruktur
+        const [instructorsRes, favoritesRes] = await Promise.all([
+          fetch("/api/instructors"),
+          fetch("/api/instructors/favorites"),
+        ]);
 
-        const favoritesJson = localStorage.getItem("favoriteInstructors");
-        const favoriteIdsRaw = favoritesJson ? JSON.parse(favoritesJson) : [];
-        const favoriteIds = Array.isArray(favoriteIdsRaw) ? favoriteIdsRaw.map((id: any) => String(id)) : [];
+        if (!instructorsRes.ok) throw new Error("Gagal mengambil data instruktur");
+        const data = await instructorsRes.json();
+
+        // Load favorit dari database (bukan localStorage)
+        let favoriteIds: string[] = [];
+        if (favoritesRes.ok) {
+          const favData = await favoritesRes.json();
+          favoriteIds = Array.isArray(favData.favoriteIds)
+            ? favData.favoriteIds.map((id: any) => String(id))
+            : [];
+        }
 
         const favorites = data.filter((instructor: any) =>
           favoriteIds.includes(String(instructor.id))
@@ -123,6 +133,7 @@ const Dashboard = () => {
       fetchInstructorsAndFavorites();
     }
   }, [status]);
+
     
   // Random button colors for quizzes
   const quizButtonColors = [

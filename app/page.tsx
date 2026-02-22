@@ -19,7 +19,9 @@ import {
   Facebook,
   Heart,
   Instagram,
+  Mail,
   MapPin,
+  Phone,
   Shield,
   Sparkles,
   Star,
@@ -264,11 +266,29 @@ export default function Home() {
             </div>
 
             <nav className="hidden lg:flex items-center gap-6 text-sm font-semibold text-white/90">
-              {['Beranda', 'Profil', 'Informasi', 'Galeri', 'FAQ', 'Kontak'].map((item) => (
-                <Link key={item} href={`/${item.toLowerCase()}`} className="hover:text-white hover:scale-110 transition-all hover:drop-shadow-[0_2px_0_rgba(0,0,0,0.2)]">
-                  {item}
-                </Link>
-              ))}
+              {['Beranda', 'Fitur', 'Galeri', 'FAQ', 'Kontak'].map((item) => {
+                const sectionId = item.toLowerCase();
+                
+                const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+                  e.preventDefault();
+                  if (sectionId === 'beranda') {
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  } else {
+                    document.getElementById(sectionId)?.scrollIntoView({ behavior: "smooth" });
+                  }
+                };
+
+                return (
+                  <Link 
+                    key={item} 
+                    href={`#${sectionId}`} 
+                    onClick={handleClick}
+                    className="hover:text-white hover:scale-110 transition-all hover:drop-shadow-[0_2px_0_rgba(0,0,0,0.2)]"
+                  >
+                    {item}
+                  </Link>
+                );
+              })}
             </nav>
 
             <div className="flex items-center gap-2 sm:gap-3">
@@ -339,7 +359,7 @@ export default function Home() {
       </div>
 
       {/* Menu Icons Section */}
-      <section className="py-20 relative bg-white">
+      <section id="fitur" className="py-20 relative bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold bg-linear-to-r from-emerald-500 via-teal-500 to-cyan-500 bg-clip-text text-transparent mb-2 sm:mb-4 drop-shadow-[2px_2px_0px_rgba(0,0,0,0.3)] relative z-10">Fitur Tersedia</h2>
@@ -425,7 +445,7 @@ export default function Home() {
       </section>
 
       {/* CARTOON GALLERY SECTION */}
-      <section className="py-24 relative">
+      <section id="galeri" className="py-24 relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <div className="inline-flex items-center gap-2 px-5 py-2.5 mb-6 bg-white/10 border-2 border-white/20 rounded-2xl backdrop-blur-md shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] transform -rotate-2 hover:rotate-0 transition-all duration-300">
@@ -484,6 +504,130 @@ export default function Home() {
             
             <div className="absolute -top-10 -left-10 w-24 h-24 bg-yellow-400 rounded-full blur-xl opacity-60 animate-bounce"></div>
             <div className="absolute -bottom-10 -right-10 w-36 h-36 bg-cyan-400 rounded-full blur-2xl opacity-60 animate-pulse delay-700"></div>
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ SECTION */}
+      <section id="faq" className="py-24 relative">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <div className="inline-flex items-center gap-2 px-5 py-2.5 mb-6 bg-white/10 border-2 border-white/20 rounded-2xl backdrop-blur-md shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] transform rotate-2 hover:rotate-0 transition-all duration-300">
+              <BookOpen className="h-5 w-5 text-emerald-300 stroke-[3px]" />
+              <span className="text-sm font-extrabold text-white uppercase tracking-wider">Tanya Jawab</span>
+            </div>
+            <h2 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-white mb-6 leading-tight drop-shadow-[3px_3px_0px_rgba(0,0,0,0.15)]">
+               FAQ <span className="bg-linear-to-r from-emerald-200 to-cyan-200 bg-clip-text text-transparent" style={{ textShadow: "2px 2px 0px rgba(0,0,0,0.2)" }}>Terkait</span>
+            </h2>
+          </div>
+
+          <div className="space-y-4">
+            {[
+              {
+                q: "Apa itu IRMAVerse?",
+                a: "IRMAVerse adalah platform digital khusus untuk mendukung seluruh kegiatan, informasi, dan komunikasi anggota IRMA SMKN 13 Bandung agar lebih terorganisir dan modern."
+              },
+              {
+                q: "Bagaimana cara mengakses fitur di IRMAVerse?",
+                a: "Klik tombol 'Login', lalu masuk menggunakan akun yang telah didaftarkan. Anda dapat menikmati fitur Presensi, Event, hingga Jadwal Kajian secara mudah."
+              },
+              {
+                q: "Apakah alumni bisa gabung ke IRMAVerse?",
+                a: "Saat ini fokus utama IRMAVerse adalah untuk anggota aktif. Namun, alumni dapat melihat galeri dan artikel seputar IRMA di bagian yang bersifat publik."
+              },
+              {
+                q: "Bagaimana jika ada kendala penggunaan?",
+                a: "Silakan kirimkan laporan Anda melalui form di bagian 'Kontak Kami' di bawah, tim kami akan segera membalas email Anda."
+              }
+            ].map((faq, i) => (
+              <div key={i} className="group p-6 sm:p-8 rounded-3xl bg-white/10 backdrop-blur-md border-[3px] border-white/20 hover:border-emerald-300 hover:bg-white/20 transition-all duration-300 shadow-[8px_8px_0px_0px_rgba(0,0,0,0.15)]">
+                <h3 className="text-lg sm:text-xl font-bold text-white mb-3 group-hover:text-emerald-200 transition-colors duration-300 flex items-start gap-3">
+                  <span className="text-emerald-300 mt-1 flex-shrink-0">
+                    <Zap className="h-5 w-5 stroke-[3px]" />
+                  </span>
+                  {faq.q}
+                </h3>
+                <p className="text-sm sm:text-base text-white/80 font-medium leading-relaxed sm:ml-8">
+                  {faq.a}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CONTACT SECTION */}
+      <section id="kontak" className="py-24 relative">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <div className="inline-flex items-center gap-2 px-5 py-2.5 mb-6 bg-white/10 border-2 border-white/20 rounded-2xl backdrop-blur-md shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] transform rotate-2 hover:rotate-0 transition-all duration-300">
+              <MapPin className="h-5 w-5 text-emerald-300 stroke-[3px]" />
+              <span className="text-sm font-extrabold text-white uppercase tracking-wider">Kontak Kami</span>
+            </div>
+            <h2 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-white mb-6 leading-tight drop-shadow-[3px_3px_0px_rgba(0,0,0,0.15)]">
+               Mari <span className="bg-linear-to-r from-emerald-200 to-cyan-200 bg-clip-text text-transparent" style={{ textShadow: "2px 2px 0px rgba(0,0,0,0.2)" }}>Berkomunikasi</span>
+            </h2>
+            <p className="text-lg md:text-xl text-white/80 max-w-3xl mx-auto leading-relaxed font-bold">
+               Punya pertanyaan atau ingin tahu lebih lanjut tentang IRMAVerse? Jangan ragu untuk menghubungi kami.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-5xl mx-auto items-center">
+            {/* Contact Info Cards */}
+            <div className="space-y-6 z-10">
+              <div className="group flex items-center gap-6 p-6 rounded-3xl bg-white/10 backdrop-blur-md border-[3px] border-white/20 hover:border-emerald-300 hover:bg-white/20 transition-all duration-300 shadow-[8px_8px_0px_0px_rgba(0,0,0,0.15)] hover:shadow-[12px_12px_0px_0px_rgba(0,0,0,0.15)] hover:-translate-y-2">
+                <div className="w-16 h-16 rounded-2xl bg-white/20 flex items-center justify-center border-2 border-white/10 group-hover:scale-110 group-hover:rotate-6 transition-all duration-300">
+                  <MapPin className="h-8 w-8 text-emerald-300 stroke-[2.5px]" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-white mb-1">Alamat</h3>
+                  <p className="text-white/80 font-medium leading-relaxed">Jl. SMK Negeri 13 Bandung<br />Kota Bandung, Jawa Barat</p>
+                </div>
+              </div>
+
+              <div className="group flex items-center gap-6 p-6 rounded-3xl bg-white/10 backdrop-blur-md border-[3px] border-white/20 hover:border-emerald-300 hover:bg-white/20 transition-all duration-300 shadow-[8px_8px_0px_0px_rgba(0,0,0,0.15)] hover:shadow-[12px_12px_0px_0px_rgba(0,0,0,0.15)] hover:-translate-y-2">
+                <div className="w-16 h-16 rounded-2xl bg-white/20 flex items-center justify-center border-2 border-white/10 group-hover:scale-110 group-hover:-rotate-6 transition-all duration-300">
+                  <Mail className="h-8 w-8 text-yellow-300 stroke-[2.5px]" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-white mb-1">Email</h3>
+                  <p className="text-white/80 font-medium leading-relaxed">1CtJ3@example.com</p>
+                </div>
+              </div>
+
+              <div className="group flex items-center gap-6 p-6 rounded-3xl bg-white/10 backdrop-blur-md border-[3px] border-white/20 hover:border-emerald-300 hover:bg-white/20 transition-all duration-300 shadow-[8px_8px_0px_0px_rgba(0,0,0,0.15)] hover:shadow-[12px_12px_0px_0px_rgba(0,0,0,0.15)] hover:-translate-y-2">
+                <div className="w-16 h-16 rounded-2xl bg-white/20 flex items-center justify-center border-2 border-white/10 group-hover:scale-110 group-hover:rotate-6 transition-all duration-300">
+                  <Phone className="h-8 w-8 text-emerald-300 stroke-[2.5px]" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-white mb-1">Telepon & WhatsApp</h3>
+                  <p className="text-white/80 font-medium leading-relaxed">0812-3456-7890</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Form */}
+            <div className="bg-white rounded-4xl p-8 sm:p-10 border-4 border-emerald-100 shadow-[16px_16px_0px_0px_rgba(0,0,0,0.15)] transform hover:-translate-y-2 transition-transform duration-500 z-10">
+              <h3 className="text-2xl font-extrabold text-slate-800 mb-6 drop-shadow-sm">Kirim Pesan</h3>
+              <form className="space-y-5" onSubmit={(e) => e.preventDefault()}>
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-2">Nama Lengkap</label>
+                  <input type="text" placeholder="Masukkan nama Anda" className="w-full px-4 py-3 rounded-2xl bg-slate-50 border-2 border-slate-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 outline-none transition-all font-medium text-slate-700 placeholder-slate-400" />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-2">Email</label>
+                  <input type="email" placeholder="contoh@email.com" className="w-full px-4 py-3 rounded-2xl bg-slate-50 border-2 border-slate-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 outline-none transition-all font-medium text-slate-700 placeholder-slate-400" />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-2">Pesan</label>
+                  <textarea rows={4} placeholder="Tuliskan pesan Anda..." className="w-full px-4 py-3 rounded-2xl bg-slate-50 border-2 border-slate-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 outline-none transition-all font-medium text-slate-700 placeholder-slate-400 resize-none"></textarea>
+                </div>
+                <button type="button" className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-2xl border-b-4 border-emerald-800 active:border-b-0 active:translate-y-1 shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2 group">
+                  <span>Kirim Pesan Sekarang</span>
+                  <ArrowRight className="h-5 w-5 stroke-[3px] group-hover:translate-x-1 transition-transform" />
+                </button>
+              </form>
+            </div>
           </div>
         </div>
       </section>

@@ -474,21 +474,33 @@ const CreateCompetition = () => {
                   </div>
                 </div>
 
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full py-3 lg:py-4 rounded-2xl bg-teal-400 text-white font-black text-base lg:text-lg border-2 border-teal-600 border-b-4 lg:border-b-6 hover:bg-teal-500 active:border-b-2 active:translate-y-1 transition-all shadow-lg lg:shadow-xl hover:shadow-teal-200 flex items-center justify-center gap-2 lg:gap-3 disabled:opacity-70 disabled:cursor-not-allowed mb-8"
-                >
-                  {loading ? (
-                    <>
-                      <Sparkles className="w-5 h-5 lg:w-6 lg:h-6 animate-spin" /> Menyimpan...
-                    </>
-                  ) : (
-                    <>
-                      <Save className="w-5 h-5 lg:w-6 lg:h-6" /> Buat Kompetisi
-                    </>
-                  )}
-                </button>
+                {/* Submit Card */}
+                <div className="bg-amber-500 p-6 rounded-[2.5rem] text-white border-2 border-amber-600 shadow-[0_6px_0_0_#d97706] mb-8">
+                  <div className="flex items-center gap-3 mb-4">
+                    <Trophy className="h-8 w-8 text-amber-100" strokeWidth={2.5} />
+                    <h3 className="text-xl font-black">Siap Terbit?</h3>
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full flex items-center justify-center gap-2 py-4 bg-white text-amber-600 font-black text-lg rounded-2xl shadow-[0_4px_0_0_#fef3c7] border-2 border-amber-100 hover:bg-amber-50 active:translate-y-1 active:shadow-none transition-all disabled:opacity-50"
+                  >
+                    {loading ? (
+                      <>
+                        <Sparkles className="h-6 w-6 animate-spin" />{" "}
+                        Menyimpan...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="h-6 w-6" />
+                        Buat Kompetisi
+                      </>
+                    )}
+                  </button>
+                  <p className="text-xs text-amber-100 font-bold mt-4 text-center opacity-80">
+                    Pastikan semua informasi lomba sudah benar sebelum diterbitkan.
+                  </p>
+                </div>
               </div>
             </form>
           </div>

@@ -37,9 +37,7 @@ const Instructors = () => {
   const [instructors, setInstructors] = useState<Instructor[]>([]);
   const [loading, setLoading] = useState(true);
   const [favoriteInstructorIds, setFavoriteInstructorIds] = useState<Set<string>>(new Set());
-  
-  // --- STATE PENTING UNTUK FIX BUG LOCALSTORAGE ---
-  const [isFavoritesLoaded, setIsFavoritesLoaded] = useState(false);
+  const [togglingId, setTogglingId] = useState<string | null>(null);
 
   // State untuk Search & Filter
   const [searchTerm, setSearchTerm] = useState("");
@@ -61,35 +59,23 @@ const Instructors = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // 1. LOAD DATA & FAVORITES (Hanya sekali saat mount)
+  // Load instruktur & favorit dari database
   useEffect(() => {
     fetchInstructors();
-    
-    // Load favorites from localStorage on mount
-    const favoritesJson = localStorage.getItem("favoriteInstructors");
-    if (favoritesJson) {
-      try {
-        const favoriteIds = JSON.parse(favoritesJson);
-        // Normalize to string IDs to avoid type mismatches
-        const stringIds = Array.isArray(favoriteIds) ? favoriteIds.map((id: any) => String(id)) : [];
-        setFavoriteInstructorIds(new Set(stringIds));
-      } catch (error) {
-        console.error("Error parsing favorites:", error);
-      }
-    }
-
-    // TANDAI BAHWA LOAD SUDAH SELESAI
-    setIsFavoritesLoaded(true);
+    fetchFavorites();
   }, []);
 
-  // 2. SAVE FAVORITES (Setiap kali ada perubahan, TAPI tunggu load selesai dulu)
-  useEffect(() => {
-    // JANGAN simpan jika belum selesai loading dari localStorage awal
-    if (!isFavoritesLoaded) return;
-
-    // Ensure we persist string IDs only
-    localStorage.setItem("favoriteInstructors", JSON.stringify(Array.from(favoriteInstructorIds).map(String)));
-  }, [favoriteInstructorIds, isFavoritesLoaded]);
+  const fetchFavorites = async () => {
+    try {
+      const res = await fetch("/api/instructors/favorites");
+      if (!res.ok) return;
+      const data = await res.json();
+      const ids = Array.isArray(data.favoriteIds) ? data.favoriteIds.map((id: any) => String(id)) : [];
+      setFavoriteInstructorIds(new Set(ids));
+    } catch (error) {
+      console.error("Error fetching favorites:", error);
+    }
+  };
 
   const fetchInstructors = async () => {
     try {
@@ -122,9 +108,13 @@ const Instructors = () => {
   // Mendapatkan list spesialisasi unik untuk dropdown
   const uniqueSpecializations = ["all", ...Array.from(new Set(instructors.map(i => i.specialization)))];
 
-  // Toggle favorite instructor
-  const toggleFavorite = (instructorId: string) => {
+  // Toggle favorite instruktur — simpan ke database
+  const toggleFavorite = async (instructorId: string) => {
     const idStr = String(instructorId);
+    if (togglingId === idStr) return; // prevent double click
+    setTogglingId(idStr);
+
+    // Optimistic UI update
     const newFavorites = new Set(favoriteInstructorIds);
     if (newFavorites.has(idStr)) {
       newFavorites.delete(idStr);
@@ -132,6 +122,20 @@ const Instructors = () => {
       newFavorites.add(idStr);
     }
     setFavoriteInstructorIds(newFavorites);
+
+    try {
+      await fetch("/api/instructors/favorites", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ instructorId: idStr }),
+      });
+    } catch (error) {
+      console.error("Error toggling favorite:", error);
+      // Rollback jika gagal
+      setFavoriteInstructorIds(favoriteInstructorIds);
+    } finally {
+      setTogglingId(null);
+    }
   };
 
   // Logic Filtering

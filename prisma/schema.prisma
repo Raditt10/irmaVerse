@@ -60,8 +60,29 @@ model User {
   notifications           Notification[]     @relation("userNotifications")
   sentNotifications       Notification[]     @relation("senderNotifications")
 
+  // Favorites
+  favoritedInstructors  FavoriteInstructor[] @relation("UserFavorites")
+  favoritedByUsers      FavoriteInstructor[] @relation("InstructorFavorites")
+
   @@map("users")
 }
+
+model FavoriteInstructor {
+  id           String   @id @default(cuid())
+  userId       String
+  instructorId String
+  createdAt    DateTime @default(now())
+
+  user       User @relation("UserFavorites", fields: [userId], references: [id], onDelete: Cascade)
+  instructor User @relation("InstructorFavorites", fields: [instructorId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, instructorId])
+  @@index([userId])
+  @@index([instructorId])
+  @@map("favorite_instructors")
+}
+
+
 
 model News {
   id        String   @id @default(cuid())
@@ -198,10 +219,20 @@ model Material {
   participants String?
   date         DateTime   @default(now())
   startedAt    String?
+  
+  // New fields for curriculum and content
+  parentId     String?
+  materialType String?    // "editor" | "link"
+  content      String?    @db.LongText
+  link         String?
 
   instructor   User       @relation(fields: [instructorId], references: [id])
   nextCourse   Material?  @relation("CourseChain", fields: [nextCourseId], references: [id])
   prevCourses  Material[] @relation("CourseChain")
+  
+  // Relations for Curriculum -> Kajian
+  parent       Material?  @relation("ProgramMaterials", fields: [parentId], references: [id])
+  subMaterials Material[] @relation("ProgramMaterials")
 
   enrollments  CourseEnrollment[]
   invites      MaterialInvite[]

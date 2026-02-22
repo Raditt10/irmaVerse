@@ -36,7 +36,7 @@ export async function GET(
     }
 
     // Fetch single material by id with related data
-    const m = await prisma.material.findUnique({
+    const m = (await prisma.material.findUnique({
       where: { id: id },
       include: {
         instructor: { select: { name: true, email: true } },
@@ -46,8 +46,9 @@ export async function GET(
             user: { select: { email: true, name: true, avatar: true } },
           },
         },
+        parent: { select: { id: true, title: true } },
       },
-    });
+    })) as any;
 
     if (!m) {
       return NextResponse.json(
@@ -77,12 +78,17 @@ export async function GET(
       description: m.description,
       date: m.date,
       instructor: m.instructor?.name || null,
-      insttructorEmail: m.instructor?.email || null,
+      instructorEmail: m.instructor?.email || null,
       category: CATEGORY_LABEL[m.category as keyof typeof CATEGORY_LABEL],
       grade: GRADE_LABEL[m.grade as keyof typeof GRADE_LABEL],
       startedAt: m.startedAt,
       thumbnailUrl: m.thumbnailUrl,
       isJoined: m.enrollments.length > 0,
+      programId: m.parentId,
+      programTitle: m.parent?.title || null,
+      materialType: m.materialType,
+      materialContent: m.content,
+      materialLink: m.link,
       // For editing: flat email list of all invited users
       invites: (m.invites || [])
         .map((inv) => inv.user?.email || null)
@@ -215,6 +221,10 @@ export async function PUT(
       grade,
       thumbnailUrl,
       invites,
+      programId,
+      materialType,
+      materialContent,
+      materialLink,
     } = body;
 
     // Detailed validation
@@ -298,23 +308,26 @@ export async function PUT(
     const mappedGrade = GRADE_MAP[grade] || "X";
 
     // Update material
-    const updatedMaterial = await prisma.material.update({
-      where: { id },
+    const updatedMaterial = (await prisma.material.update({
+      where: { id: id },
       data: {
         title,
         description,
         date: new Date(date),
         startedAt: time || null,
-        category: mappedCategory as any,
         grade: mappedGrade as any,
         thumbnailUrl: thumbnailUrl || null,
-      },
+        parentId: programId || null,
+        materialType: materialType || null,
+        content: materialContent || null,
+        link: materialLink || null,
+      } as any,
       include: {
         instructor: {
           select: { name: true },
         },
       },
-    });
+    })) as any;
 
     // Handle new invites if provided
     if (invites && Array.isArray(invites) && invites.length > 0) {

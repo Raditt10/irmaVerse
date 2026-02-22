@@ -17,9 +17,10 @@ export default function DatePicker({
   placeholder = "Pilih tanggal",
 }: DatePickerProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [currentMonth, setCurrentMonth] = useState(
-    value ? new Date(value) : new Date()
-  );
+  const [currentMonth, setCurrentMonth] = useState(() => {
+    const d = value ? new Date(value) : new Date();
+    return isNaN(d.getTime()) ? new Date() : d;
+  });
 
   const monthNames = [
     "Januari",
@@ -71,7 +72,13 @@ export default function DatePicker({
 
   const formatDisplayDate = (dateString: string) => {
     if (!dateString) return placeholder;
-    const date = new Date(dateString + "T00:00:00");
+    
+    // Validasi apakah string sudah memiliki format waktu (ISO)
+    const hasTime = dateString.includes("T");
+    const date = new Date(hasTime ? dateString : dateString + "T00:00:00");
+    
+    if (isNaN(date.getTime())) return placeholder;
+
     const day = String(date.getDate()).padStart(2, "0");
     const month = String(date.getMonth() + 1).padStart(2, "0");
     const year = date.getFullYear();
@@ -101,7 +108,9 @@ export default function DatePicker({
 
   const isSelected = (day: number) => {
     if (!value || !day) return false;
-    const date = new Date(value + "T00:00:00");
+    const hasTime = value.includes("T");
+    const date = new Date(hasTime ? value : value + "T00:00:00");
+    if (isNaN(date.getTime())) return false;
     return (
       day === date.getDate() &&
       currentMonth.getMonth() === date.getMonth() &&

@@ -331,15 +331,23 @@ const ProfileInformationForm = ({ stats, level, rank }: any) => {
           
           {/* Badge Container: Center di mobile, Start di desktop */}
           <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 pt-1">
-            <span className="px-3 py-1 rounded-full bg-linear-to-r from-emerald-400 to-cyan-500 text-white text-xs font-bold shadow-sm">
-              Level {level}
-            </span>
-            <span className="px-3 py-1 rounded-full bg-linear-to-r from-amber-400 to-orange-500 text-white text-xs font-bold shadow-sm">
-              Mashaallah
-            </span>
-            <span className="px-3 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-100 text-xs font-bold">
-              Peringkat #{rank}
-            </span>
+            {session?.user?.role === "user" ? (
+              <>
+                <span className="px-3 py-1 rounded-full bg-linear-to-r from-emerald-400 to-cyan-500 text-white text-xs font-bold shadow-sm">
+                  Level {level}
+                </span>
+                <span className="px-3 py-1 rounded-full bg-linear-to-r from-amber-400 to-orange-500 text-white text-xs font-bold shadow-sm">
+                  Mashaallah
+                </span>
+                <span className="px-3 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-100 text-xs font-bold">
+                  Peringkat #{rank}
+                </span>
+              </>
+            ) : (
+              <span className="px-3 py-1 rounded-full bg-linear-to-r from-emerald-400 to-teal-500 text-white text-xs font-bold shadow-sm">
+                Instruktur
+              </span>
+            )}
           </div>
         </div>
       </div>

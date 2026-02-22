@@ -10,6 +10,9 @@ interface DetailButtonProps {
   className?: string;
   role?: "instruktur" | "admin" | "member" | null;
   iconOnly?: boolean;
+  showConfirm?: boolean;
+  confirmTitle?: string;
+  confirmMessage?: string;
 }
 
 export default function DetailButton({
@@ -20,6 +23,9 @@ export default function DetailButton({
   className = "",
   role,
   iconOnly = false,
+  showConfirm = true,
+  confirmTitle,
+  confirmMessage,
 }: DetailButtonProps) {
   const isInstructor = role === "instruktur" || role === "admin";
 
@@ -102,6 +108,9 @@ export default function DetailButton({
             variant="icon-only"
             className={`${actionIconClass} p-0!`} // Override padding bawaan DeleteButton
             iconClassName="w-5 h-5 stroke-[2.5]"
+            showConfirm={showConfirm}
+            confirmTitle={confirmTitle}
+            confirmMessage={confirmMessage}
           />
         )}
       </div>

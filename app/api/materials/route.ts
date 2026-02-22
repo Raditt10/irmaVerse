@@ -140,6 +140,10 @@ export async function POST(req: NextRequest) {
       grade,
       thumbnailUrl,
       invites,
+      programId,
+      materialType,
+      materialContent,
+      materialLink,
     } = body;
 
     // Detailed validation
@@ -208,7 +212,7 @@ export async function POST(req: NextRequest) {
     const mappedGrade = GRADE_MAP[grade] || "X";
 
     // Create material
-    const material = await prisma.material.create({
+    const material = (await prisma.material.create({
       data: {
         title,
         description,
@@ -218,8 +222,12 @@ export async function POST(req: NextRequest) {
         grade: mappedGrade as any,
         thumbnailUrl: thumbnailUrl || null,
         instructorId: session.user.id,
-      },
-    });
+        parentId: programId || null,
+        materialType: materialType || null,
+        content: materialContent || null,
+        link: materialLink || null,
+      } as any,
+    })) as any;
 
     // Resolve invited users by email and create MaterialInvite + Notification
     const generateToken = () =>
