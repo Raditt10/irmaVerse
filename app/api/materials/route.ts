@@ -1,5 +1,5 @@
 import prisma from "@/lib/prisma";
-import { CourseCategory, Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { auth } from "@/lib/auth";
 import { NextResponse, NextRequest } from "next/server";
 import { createBulkNotifications } from "@/lib/notifications";
@@ -14,93 +14,126 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Check if user exists
+    // Check if user exists (using email for higher reliability with session)
     const User = await prisma.user.findUnique({
-      where: { id: session.user.id },
+      where: { email: session.user.email as string },
     });
 
     if (!User) {
-      console.log("User not found in database:", session.user.id);
+      console.log("[GET /api/materials] User not found for email:", session.user.email);
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
-    console.log("User found:", User.email, User.role);
 
-    const where: Prisma.MaterialWhereInput = {};
-    const category = searchParams.get("category");
+    console.log("[GET /api/materials] User role:", User.role, "ID:", User.id);
+
+    const where: any = {};
+    const categoryQuery = searchParams.get("category");
+    const categories = (Prisma as any).material_category || {}; 
     if (
-      category &&
-      Object.values(CourseCategory).includes(category as CourseCategory)
+      categoryQuery &&
+      Object.values(categories).includes(categoryQuery as any)
     ) {
-      where.category = category as CourseCategory;
+      where.category = categoryQuery as any;
     }
 
     // If user is not instructor/admin, only show materials where they are enrolled or invited
-    if (User.role !== "instruktur" && User.role !== "admin") {
+    // Normalizing role check to include both 'instruktur' and 'instructor'
+    const isPrivileged = User.role === "instruktur" || User.role === "admin" || User.role === "instructor";
+    
+    if (!isPrivileged) {
       where.OR = [
         {
-          // Materials user is enrolled in
-          enrollments: {
+          courseenrollment: {
             some: { userId: User.id },
           },
         },
         {
-          // Materials user has been invited to (accepted)
-          invites: {
+          materialinvite: {
             some: {
               userId: User.id,
-              status: "accepted",
+              status: { in: ["accepted", "pending"] }, 
             },
           },
         },
       ];
     }
 
-    const CATEGORY_LABEL: Record<CourseCategory, string> = {
+    console.log("[GET /api/materials] isPrivileged:", isPrivileged);
+
+    console.log("[GET /api/materials] Generated where clause:");
+    console.dir(where, { depth: null });
+
+    const CATEGORY_LABEL: Record<string, string> = {
       Wajib: "Program Wajib",
       Extra: "Program Ekstra",
       NextLevel: "Program Next Level",
       Susulan: "Program Susulan",
     };
 
-    const GRADE_LABEL = {
+    const GRADE_LABEL: Record<string, string> = {
       X: "Kelas 10",
       XI: "Kelas 11",
       XII: "Kelas 12",
-    } as const;
+      x: "Kelas 10",
+      xi: "Kelas 11",
+      xii: "Kelas 12",
+    };
 
     const materials = await prisma.material.findMany({
       where,
       include: {
-        instructor: {
+        users: {
           select: {
             name: true,
           },
         },
-        enrollments: {
+        courseenrollment: {
           where: { userId: User.id },
           select: { id: true },
+        },
+        materialinvite: {
+          where: { userId: User.id },
+          select: { status: true },
         },
       },
       orderBy: { date: "desc" },
     });
 
+    console.log("[GET /api/materials] Found materials count:", materials.length);
+
     // normalize ke format frontend
-    const result = materials.map((m) => ({
-      id: m.id,
-      title: m.title,
-      description: m.description,
-      date: m.date,
-      instructor: m.instructor.name,
-      category: CATEGORY_LABEL[m.category as keyof typeof CATEGORY_LABEL],
-      grade: GRADE_LABEL[m.grade as keyof typeof GRADE_LABEL],
-      startedAt: m.startedAt,
-      thumbnailUrl: m.thumbnailUrl,
-      isJoined: m.enrollments.length > 0,
-    }));
+    const result = materials.map((m: any) => {
+      const hasEnrollment = (m.courseenrollment || []).length > 0;
+      // Only treat as joined if invite is accepted (not pending/rejected)
+      const hasAcceptedInvite = (m.materialinvite || []).some((inv: any) => inv.status === "accepted");
+      const isJoined = hasEnrollment || hasAcceptedInvite;
+
+      return {
+        id: m.id,
+        title: m.title,
+        description: m.description,
+        date: m.date,
+        instructor: m.users?.name || "TBA",
+        category: CATEGORY_LABEL[m.category] || m.category,
+        grade: GRADE_LABEL[m.grade as keyof typeof GRADE_LABEL] || m.grade,
+        startedAt: m.startedAt,
+        thumbnailUrl: m.thumbnailUrl,
+        createdAt: m.createdAt,
+        isJoined: isJoined,
+      };
+    });
+
+    console.log("[GET /api/materials] Returning mapped result count:", result.length);
 
     return NextResponse.json(result);
   } catch (error) {
     console.error("Error fetching materials:", error);
+    // Enhanced error logging to provide more context
+    if (error instanceof Error) {
+      console.error("Error details:", error.message, error.stack);
+    } else {
+      console.error("Unknown error type:", error);
+    }
     return NextResponse.json(
       {
         error:
@@ -193,7 +226,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Map category from label to enum
-    const CATEGORY_MAP: Record<string, CourseCategory> = {
+    const CATEGORY_MAP: Record<string, any> = { // Changed CourseCategory to any
       "Program Wajib": "Wajib",
       "Program Ekstra": "Extra",
       "Program Next Level": "NextLevel",
@@ -212,13 +245,15 @@ export async function POST(req: NextRequest) {
     const mappedGrade = GRADE_MAP[grade] || "X";
 
     // Create material
-    const material = (await prisma.material.create({
+    // Temporary workaround: manually provide ID since prisma generate is blocked by file lock
+    const material = await prisma.material.create({
       data: {
+        id: `cl${Math.random().toString(36).substring(2, 11)}`, // Simple cuid-like fallback
         title,
         description,
         date: new Date(date),
         startedAt: time || null,
-        category: mappedCategory as CourseCategory,
+        category: mappedCategory as any,
         grade: mappedGrade as any,
         thumbnailUrl: thumbnailUrl || null,
         instructorId: session.user.id,
@@ -226,8 +261,9 @@ export async function POST(req: NextRequest) {
         materialType: materialType || null,
         content: materialContent || null,
         link: materialLink || null,
+        updatedAt: new Date(),
       } as any,
-    })) as any;
+    });
 
     // Resolve invited users by email and create MaterialInvite + Notification
     const generateToken = () =>
@@ -241,14 +277,16 @@ export async function POST(req: NextRequest) {
 
     if (invitedUsersDb.length > 0) {
       const inviteData = invitedUsersDb.map((u) => ({
+        id: `cl${Math.random().toString(36).substring(2, 11)}`,
         materialId: material.id,
         instructorId: session.user.id,
         userId: u.id,
         token: generateToken(),
-        status: "pending" as const,
+        status: "pending" as any,
+        updatedAt: new Date(),
       }));
 
-      await prisma.materialInvite.createMany({ data: inviteData });
+      await prisma.materialinvite.createMany({ data: inviteData });
 
       // Fetch instructor name for notification message
       const instructor = await prisma.user.findUnique({

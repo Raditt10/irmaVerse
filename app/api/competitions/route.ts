@@ -130,3 +130,65 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+export async function PUT(request: NextRequest) {
+  try {
+    const session = await auth();
+
+    if (!session || !session.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const body = await request.json();
+    const { 
+      id, title, description, date, location, prize, category, thumbnailUrl, 
+      requirements, judgingCriteria, prizes, schedules, 
+      contactPerson, contactNumber, contactEmail, maxParticipants 
+    } = body;
+
+    if (!id || !title || !date || !prize || !category) {
+      return NextResponse.json(
+        { error: "Missing required fields" },
+        { status: 400 }
+      );
+    }
+
+    const competition = await prisma.competition.findUnique({
+      where: { id },
+    });
+
+    if (!competition) {
+      return NextResponse.json({ error: "Competition not found" }, { status: 404 });
+    }
+
+
+    const updatedCompetition = await prisma.competition.update({
+      where: { id },
+      data: {
+        title,
+        description,
+        date: new Date(date),
+        location,
+        prize,
+        category,
+        thumbnailUrl,
+        requirements,
+        judgingCriteria,
+        prizes,
+        schedules,
+        contactPerson,
+        contactNumber,
+        contactEmail,
+        maxParticipants,
+      },
+    });
+
+    return NextResponse.json(updatedCompetition, { status: 200 });
+  } catch (error: any) {
+    console.error("Error updating competition:", error);
+    return NextResponse.json(
+      { error: "Failed to update competition", details: error?.message },
+      { status: 500 }
+    );
+  }
+}

@@ -80,7 +80,7 @@ export async function PATCH(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { id, ids, status } = body;
+    const { id, ids, status, reason } = body;
 
     if (!status) {
       return NextResponse.json(
@@ -133,36 +133,73 @@ export async function PATCH(req: NextRequest) {
     }
 
     // For invitation type: handle accept/reject
-    if (notification.type === "invitation" && notification.inviteToken) {
+    if (notification.type === "invitation") {
+      const inviteToken = notification.inviteToken;
+      const materialId = notification.resourceId;
+      
+      console.log("[PATCH /api/notifications] Handling invitation response:", {
+        inviteToken,
+        materialId,
+        status,
+        notificationId: id
+      });
+      
       if (status === "accepted" || status === "rejected") {
-        // Update the MaterialInvite too
-        const invite = await prisma.materialInvite.findUnique({
-          where: { token: notification.inviteToken },
-        });
+        // Update the materialinvite
+        // Strategy: Try by token first, if fails, try by materialId + userId (fallback)
+        let invite = null;
+        if (inviteToken) {
+          invite = await prisma.materialinvite.findUnique({
+            where: { token: inviteToken },
+          });
+        }
+        
+        if (!invite && materialId) {
+          console.log("[PATCH /api/notifications] token failed, trying fallback by materialId:", materialId);
+          invite = await prisma.materialinvite.findFirst({
+            where: { 
+              materialId: materialId,
+              userId: session.user.id
+            },
+          });
+        }
 
         if (invite) {
-          await prisma.materialInvite.update({
-            where: { token: notification.inviteToken },
-            data: { status: status === "accepted" ? "accepted" : "rejected" },
+          console.log("[PATCH /api/notifications] Found invite, updating status to:", status);
+          await prisma.materialinvite.update({
+            where: { id: invite.id },
+            data: { 
+              status, 
+              reason: status === "rejected" ? reason : null,
+              updatedAt: new Date() 
+            } as any,
           });
 
           // If accepted, create course enrollment
           if (status === "accepted") {
-            await prisma.courseEnrollment.upsert({
+            console.log("[PATCH /api/notifications] Accepted! Creating enrollment for user:", session.user.id);
+            await prisma.courseenrollment.upsert({
               where: {
                 materialId_userId: {
                   materialId: invite.materialId,
                   userId: session.user.id,
                 },
               },
-              update: { role: "user" },
+              update: { 
+                role: "user",
+                enrolledAt: new Date()
+              },
               create: {
+                id: `enr-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
                 materialId: invite.materialId,
                 userId: session.user.id,
                 role: "user",
+                enrolledAt: new Date(),
               },
             });
           }
+        } else {
+          console.log("[PATCH /api/notifications] WARNING: No invite record found even with fallback for token:", inviteToken);
         }
       }
     }

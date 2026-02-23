@@ -20,6 +20,7 @@ import {
   BookOpen,
   ChevronDown,
   Plus,
+  Target,
 } from "lucide-react";
 
 interface Program {
@@ -157,10 +158,10 @@ const OurPrograms = () => {
               
               {/* Kiri: Judul & Deskripsi */}
               <div className="flex-1">
-                <h1 className="text-3xl lg:text-4xl font-black text-slate-800 tracking-tight mb-2">
+                <h1 className="text-2xl lg:text-4xl font-black text-slate-800 tracking-tight mb-1.5 leading-tight">
                   Program Kurikulum
                 </h1>
-                <p className="text-slate-500 font-medium text-sm lg:text-lg">
+                <p className="text-slate-500 font-medium text-xs lg:text-lg">
                   Pendidikan dan pelatihan untuk meningkatkan kompetensi keagamaan.
                 </p>
               </div>
@@ -333,10 +334,10 @@ const OurPrograms = () => {
                     return (
                       <div
                         key={program.id}
-                        className="bg-white rounded-[2.5rem] border-2 border-slate-200 shadow-[0_8px_0_0_#cbd5e1] hover:border-teal-400 hover:shadow-[0_8px_0_0_#34d399] transition-all duration-300 overflow-hidden group hover:-translate-y-2 flex flex-col h-full"
+                        className="bg-white rounded-3xl lg:rounded-[2.5rem] border-2 border-slate-200 shadow-[0_6px_0_0_#cbd5e1] sm:shadow-[0_8px_0_0_#cbd5e1] hover:border-teal-400 hover:shadow-[0_8px_0_0_#34d399] transition-all duration-300 overflow-hidden group hover:-translate-y-2 flex flex-col h-full"
                       >
                         {/* Image Area */}
-                        <div className="relative h-48 sm:h-52 overflow-hidden border-b-2 border-slate-100">
+                        <div className="relative h-40 md:h-52 overflow-hidden border-b-2 border-slate-100">
                           <img
                             src={program.thumbnail}
                             alt={program.title}
@@ -361,46 +362,57 @@ const OurPrograms = () => {
                         </div>
 
                         {/* Content Area */}
-                        <div className="p-6 flex flex-col justify-between flex-1">
+                        <div className="p-4 sm:p-6 flex flex-col justify-between flex-1">
                           <div className="mb-4">
-                            <div className="mb-3">
-                              <span className="inline-block px-3 py-1 rounded-lg bg-teal-50 text-teal-600 text-[10px] font-black border border-teal-200 uppercase tracking-wider mb-2">
-                                {program.level}
-                              </span>
-                              <h3 className="text-xl font-black text-slate-800 leading-tight group-hover:text-teal-600 transition-colors line-clamp-2">
+                            <div className="mb-2 sm:mb-3">
+                              <h3 className="text-lg sm:text-xl font-black text-slate-800 leading-tight group-hover:text-teal-600 transition-colors line-clamp-2">
                                 {program.title}
                               </h3>
                             </div>
 
                             {program.description && (
-                              <p className="text-sm text-slate-500 font-medium leading-relaxed mb-4 line-clamp-3">
+                              <p className="text-xs sm:text-sm text-slate-500 font-medium leading-relaxed mb-4 line-clamp-3">
                                 {program.description}
                               </p>
                             )}
 
-                            {/* Meta Info */}
-                            <div className="pt-4 border-t-2 border-slate-100 flex items-center gap-4 text-xs font-bold text-slate-400">
+                            {/* Meta Info - Simple row without divider */}
+                            <div className="mt-3 sm:mt-4 flex items-center gap-4 text-[10px] sm:text-[11px] font-bold text-slate-400">
                               <div className="flex items-center gap-1.5">
-                                <Clock3 className="h-4 w-4 text-teal-400" />
+                                <Clock3 className="h-3.5 w-3.5 text-teal-400" />
                                 <span>{program.duration}</span>
                               </div>
                             </div>
                           </div>
 
-                          {/* Detail Button Component */}
-                          <DetailButton
-                            role={session?.user?.role as any}
-                            onClick={() =>
-                              router.push(`/programs/${program.id}`)
-                            }
-                            onEdit={() =>
-                              router.push(`/programs/${program.id}/edit`)
-                            }
-                            onDelete={() => handleDeleteProgram(program.id)}
-                            label="Detail"
-                            className="mt-auto w-full"
-                            showConfirm={false}
-                          />
+                          {/* Action Row: Grade on Left, Buttons on Right */}
+                          <div className="mt-auto pt-5 border-t-2 border-slate-50 flex items-center justify-between gap-2">
+                            <div className="flex-1">
+                              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-teal-50/50 border border-teal-100 text-teal-600 font-bold">
+                                <Target className="h-3 w-3" strokeWidth={3} />
+                                <span className="text-[9px] uppercase tracking-widest whitespace-nowrap">
+                                  {program.level}
+                                </span>
+                              </div>
+                            </div>
+                            
+                            <div className="flex items-center gap-2">
+                              <DetailButton
+                                role={session?.user?.role as any}
+                                onClick={() =>
+                                  router.push(`/programs/${program.id}`)
+                                }
+                                onEdit={() =>
+                                  router.push(`/programs/${program.id}/edit`)
+                                }
+                                onDelete={() => handleDeleteProgram(program.id)}
+                                label="Detail"
+                                className="w-auto!"
+                                showConfirm={false}
+                                iconOnly={true}
+                              />
+                            </div>
+                          </div>
                         </div>
                       </div>
                     );

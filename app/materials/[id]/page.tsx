@@ -25,6 +25,7 @@ import {
   Users,
   CheckCircle,
   XCircle,
+  History,
 } from "lucide-react";
 
 interface InviteDetail {
@@ -79,8 +80,8 @@ const MaterialDetail = () => {
     },
   });
 
-  const isPrivileged =
-    session?.user?.role === "instruktur" || session?.user?.role === "admin";
+  const role = session?.user?.role?.toLowerCase();
+  const isPrivileged = role === "instruktur" || role === "admin" || role === "instructor";
 
   const showToast = (message: string, type: "success" | "error") => {
     setToast({ show: true, message, type });
@@ -240,7 +241,7 @@ const MaterialDetail = () => {
             </button>
 
             {/* --- HERO SECTION --- */}
-            <div className="relative bg-white rounded-4xl lg:rounded-[2.5rem] border-2 border-slate-200 shadow-[0_8px_0_0_#cbd5e1] overflow-hidden group">
+            <div className="relative bg-white rounded-4xl lg:rounded-5xl border-2 border-slate-200 shadow-[0_8px_0_0_#cbd5e1] overflow-hidden group">
               <div className="relative h-64 md:h-80 lg:h-96 w-full overflow-hidden border-b-2 border-slate-200">
                 <img
                   src={
@@ -320,7 +321,7 @@ const MaterialDetail = () => {
                 </div>
 
                 {/* Deskripsi & Poin Pembahasan */}
-                <div className="bg-white p-6 lg:p-8 rounded-[2.5rem] border-2 border-slate-200 shadow-[0_6px_0_0_#cbd5e1]">
+                <div className="bg-white p-6 lg:p-8 rounded-5xl border-2 border-slate-200 shadow-[0_6px_0_0_#cbd5e1]">
                   <div className="flex items-center gap-4 mb-6">
                     <div className="p-2.5 bg-blue-100 rounded-2xl border-2 border-blue-200">
                       <BookOpen
@@ -362,7 +363,7 @@ const MaterialDetail = () => {
               {/* RIGHT COLUMN (Instructor & CTA) */}
               <div className="space-y-6 lg:space-y-8">
                 {/* Instructor Card */}
-                <div className="bg-white rounded-[2.5rem] border-2 border-slate-200 shadow-[0_6px_0_0_#cbd5e1] overflow-hidden p-6 lg:p-8 text-center">
+                <div className="bg-white rounded-5xl border-2 border-slate-200 shadow-[0_6px_0_0_#cbd5e1] overflow-hidden p-6 lg:p-8 text-center">
                   <div className="w-28 h-28 mx-auto bg-slate-100 rounded-full mb-4 border-4 border-teal-100 overflow-hidden relative shadow-sm">
                     {material.instructorAvatar ? (
                       <img
@@ -410,7 +411,7 @@ const MaterialDetail = () => {
                 {isPrivileged &&
                   material.inviteDetails &&
                   material.inviteDetails.length > 0 && (
-                    <div className="bg-white rounded-[2.5rem] border-2 border-slate-200 shadow-[0_6px_0_0_#cbd5e1] overflow-hidden p-6 lg:p-8">
+                    <div className="bg-white rounded-5xl border-2 border-slate-200 shadow-[0_6px_0_0_#cbd5e1] overflow-hidden p-6 lg:p-8">
                       <h3 className="text-lg font-black text-slate-800 mb-1 flex items-center gap-2">
                         <Users className="w-5 h-5 text-amber-500" /> Status
                         Undangan
@@ -509,47 +510,75 @@ const MaterialDetail = () => {
 
                 {/* CTA / Action Box */}
                 {isPrivileged ? (
-                  <div className="bg-slate-50 rounded-[2.5rem] p-6 text-center border-2 border-slate-200 border-dashed">
+                  <div className="bg-slate-50 rounded-5xl p-6 text-center border-2 border-slate-200 border-dashed">
                     <p className="text-slate-500 text-sm font-bold mb-4">
                       Kelola Kajian Ini
                     </p>
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-3">
                       <button
                         onClick={() =>
-                          router.push(`/materials/${material.id}/edit`)
+                          router.push(`/materials/${material.id}/attendance-list`)
                         }
-                        className="w-full py-3 rounded-xl bg-white border-2 border-slate-200 text-slate-700 font-bold hover:border-amber-400 hover:text-amber-600 transition-all shadow-sm"
+                        className="w-full flex items-center justify-center gap-2 py-4 rounded-xl bg-teal-400 text-white font-black border-2 border-teal-600 border-b-4 hover:bg-teal-500 active:border-b-2 active:translate-y-0.5 transition-all shadow-sm group"
                       >
-                        Edit
+                        <History className="w-5 h-5 group-hover:rotate-12 transition-transform" />
+                        Lihat Absensi
                       </button>
-                      <button
-                        onClick={() => setShowConfirmDelete(true)}
-                        className="w-full py-3 rounded-xl bg-white border-2 border-slate-200 text-slate-700 font-bold hover:border-red-400 hover:text-red-600 transition-all shadow-sm"
-                      >
-                        Hapus
-                      </button>
+                      <div className="grid grid-cols-2 gap-3">
+                        <button
+                          onClick={() =>
+                            router.push(`/materials/${material.id}/edit`)
+                          }
+                          className="w-full py-3 rounded-xl bg-white border-2 border-slate-200 text-slate-700 font-bold hover:border-amber-400 hover:text-amber-600 transition-all shadow-sm"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => setShowConfirmDelete(true)}
+                          className="w-full py-3 rounded-xl bg-white border-2 border-slate-200 text-slate-700 font-bold hover:border-red-400 hover:text-red-600 transition-all shadow-sm"
+                        >
+                          Hapus
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ) : (
-                  <div className="bg-linear-to-br from-teal-400 to-cyan-400 rounded-[2.5rem] p-6 lg:p-8 text-white border-2 border-teal-600 shadow-[0_6px_0_0_#0f766e] text-center relative overflow-hidden">
+                  <div className="bg-linear-to-br from-teal-400 to-cyan-400 rounded-5xl p-6 lg:p-8 text-white border-2 border-teal-600 shadow-[0_6px_0_0_#0f766e] text-center relative overflow-hidden">
                     <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-10 -mt-10 blur-2xl"></div>
 
-                    <h3 className="text-2xl font-black mb-2 relative z-10">
-                      Siap Hadir?
-                    </h3>
-                    <p className="text-teal-50 text-sm font-bold mb-6 leading-relaxed relative z-10">
-                      Jangan lupa isi absensi saat kegiatan berlangsung untuk
-                      mencatat kehadiranmu.
-                    </p>
-                    <button
-                      onClick={() =>
-                        router.push(`/materials/${material.id}/attendance`)
-                      }
-                      className="w-full py-4 rounded-2xl bg-white text-teal-600 font-black border-2 border-teal-100 shadow-lg hover:bg-teal-50 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 relative z-10"
-                    >
-                      <CheckCircle2 className="w-5 h-5" />
-                      Isi Absensi
-                    </button>
+                    {material.attendedAt ? (
+                      <>
+                        <h3 className="text-2xl font-black mb-2 relative z-10">
+                          Alhamdulillah! ✨
+                        </h3>
+                        <p className="text-teal-50 text-sm font-bold mb-6 leading-relaxed relative z-10">
+                          Kamu sudah mengisi absensi untuk kajian ini. Semoga ilmunya berkah dan bermanfaat ya!
+                        </p>
+                        <div className="w-full py-4 rounded-2xl bg-white/20 text-white font-black border-2 border-white/30 backdrop-blur-sm flex items-center justify-center gap-2 relative z-10">
+                          <CheckCircle2 className="w-5 h-5 text-white" />
+                          Sudah Absen
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <h3 className="text-2xl font-black mb-2 relative z-10">
+                          Siap Hadir?
+                        </h3>
+                        <p className="text-teal-50 text-sm font-bold mb-6 leading-relaxed relative z-10">
+                          Jangan lupa isi absensi saat kegiatan berlangsung untuk
+                          mencatat kehadiranmu.
+                        </p>
+                        <button
+                          onClick={() =>
+                            router.push(`/materials/${material.id}/absensi`)
+                          }
+                          className="w-full py-4 rounded-2xl bg-white text-teal-600 font-black border-2 border-teal-100 shadow-lg hover:bg-teal-50 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 relative z-10"
+                        >
+                          <CheckCircle2 className="w-5 h-5" />
+                          Aku Ikut! ✋
+                        </button>
+                      </>
+                    )}
                   </div>
                 )}
               </div>

@@ -52,6 +52,7 @@ interface NotificationContextType {
   respondToInvitation: (
     id: string,
     action: "accepted" | "rejected",
+    reason?: string,
   ) => Promise<void>;
   /** Remove a notification from local state (optimistic) */
   dismiss: (id: string) => void;
@@ -137,6 +138,26 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   }, [socket]);
 
   // ------------------------------------------
+  // Sync with external updates (e.g. Invitation popups)
+  // ------------------------------------------
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const handleSync = () => {
+      console.log("[NotificationProvider] Sync event detected, refreshing...");
+      fetchNotifications();
+    };
+
+    window.addEventListener("invitationCountUpdate", handleSync);
+    window.addEventListener("materialAction", handleSync);
+
+    return () => {
+      window.removeEventListener("invitationCountUpdate", handleSync);
+      window.removeEventListener("materialAction", handleSync);
+    };
+  }, [fetchNotifications]);
+
+  // ------------------------------------------
   // Actions
   // ------------------------------------------
   const markAsRead = useCallback(async (id: string) => {
@@ -180,22 +201,36 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const respondToInvitation = useCallback(
-    async (id: string, action: "accepted" | "rejected") => {
+    async (id: string, action: "accepted" | "rejected", reason?: string) => {
       try {
         const res = await fetch("/api/notifications", {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ id, status: action }),
+          body: JSON.stringify({ id, status: action, reason }),
         });
 
         if (res.ok) {
-          setNotifications((prev) =>
-            prev.map((n) => (n.id === id ? { ...n, status: action } : n)),
-          );
-          // If it was unread before, decrement
-          const notif = notifications.find((n) => n.id === id);
-          if (notif?.status === "unread") {
-            setUnreadCount((prev) => Math.max(0, prev - 1));
+          // Update local state immediately and atomically
+          setNotifications((prev) => {
+            const wasUnread = prev.find((n) => n.id === id)?.status === "unread";
+            if (wasUnread) {
+              setUnreadCount((count) => Math.max(0, count - 1));
+            }
+            
+            return prev.map((n) => 
+              n.id === id 
+                ? { ...n, status: action as any, updatedAt: new Date().toISOString() } 
+                : n
+            );
+          });
+
+          // Refresh invitation count for other observers
+          if (typeof window !== "undefined") {
+            window.dispatchEvent(new Event("invitationCountUpdate"));
+          }
+          // Trigger refresh jadwal kajian
+          if (typeof window !== "undefined") {
+            window.dispatchEvent(new Event("materialAction"));
           }
         }
       } catch (error) {
@@ -205,7 +240,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         );
       }
     },
-    [notifications],
+    [], // Removed notifications dependency as we use functional updates
   );
 
   const dismiss = useCallback((id: string) => {

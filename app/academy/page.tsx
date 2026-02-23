@@ -60,7 +60,7 @@ export default function InstructorAcademy() {
       <div className="flex">
         <Sidebar />
 
-        <main className="flex-1 p-4 md:p-6 lg:p-8 max-w-[1600px] mx-auto">
+        <main className="flex-1 p-4 md:p-6 lg:p-8 max-w-7xl mx-auto">
 
           {/* ===== HEADER ===== */}
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
@@ -87,53 +87,61 @@ export default function InstructorAcademy() {
           </div>
 
           {/* ===== STATS GRID ===== */}
-          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-            {/* Stat 1 - Total Siswa */}
-            <div className="bg-white p-5 rounded-[2rem] border-2 border-slate-100 shadow-[0_4px_0_0_#f1f5f9] hover:shadow-[0_4px_0_0_#a7f3d0] hover:border-emerald-300 transition-all duration-300 group">
-              <div className="flex justify-between items-start mb-3">
-                <div className="p-3 bg-emerald-50 border-2 border-emerald-100 rounded-2xl group-hover:scale-110 transition-transform">
-                  <Users className="w-7 h-7 text-emerald-500" strokeWidth={2.5} />
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-10">
+            {/* Stat 1 - Total Siswa (Emerald) */}
+            <div className="bg-white p-5 md:p-6 rounded-[2.5rem] border-2 border-emerald-100 shadow-[0_8px_0_0_#d1fae5] hover:shadow-[0_4px_0_0_#d1fae5] hover:translate-y-1 hover:border-emerald-200 transition-all duration-300 group relative max-md:aspect-square flex flex-col justify-between">
+              <div className="flex justify-between items-start md:mb-5">
+                <div className="p-2.5 md:p-3 bg-emerald-50 border-2 border-emerald-100 rounded-2xl group-hover:scale-110 transition-transform">
+                  <Users className="w-6 h-6 md:w-8 md:h-8 text-emerald-500" strokeWidth={2.5} />
                 </div>
-                <span className="text-xs font-black px-3 py-1 bg-emerald-100 text-emerald-600 rounded-full border border-emerald-200">+15</span>
+                <span className="text-[10px] md:text-xs font-black px-2.5 py-1 md:px-3 bg-emerald-100 text-emerald-600 rounded-full border-2 border-emerald-200">+15</span>
               </div>
-              <div className="text-3xl font-black text-slate-800 mb-1">{stats ? stats.totalStudents : "—"}</div>
-              <div className="text-sm text-slate-500 font-bold">Total Siswa</div>
+              <div className="flex flex-col gap-1">
+                <div className="text-3xl md:text-4xl font-black text-slate-800 leading-none">{stats ? stats.totalStudents : "1"}</div>
+                <div className="text-[10px] md:text-sm text-slate-400 font-black tracking-wide">Total Siswa</div>
+              </div>
             </div>
 
-            {/* Stat 2 - Kajian Aktif */}
-            <div className="bg-white p-5 rounded-[2rem] border-2 border-slate-100 shadow-[0_4px_0_0_#f1f5f9] hover:shadow-[0_4px_0_0_#bfdbfe] hover:border-blue-300 transition-all duration-300 group">
-              <div className="flex justify-between items-start mb-3">
-                <div className="p-3 bg-blue-50 border-2 border-blue-100 rounded-2xl group-hover:scale-110 transition-transform">
-                  <BookOpen className="w-7 h-7 text-blue-500" strokeWidth={2.5} />
+            {/* Stat 2 - Kajian Aktif (Blue) */}
+            <div className="bg-white p-5 md:p-6 rounded-[2.5rem] border-2 border-blue-100 shadow-[0_8px_0_0_#dbeafe] hover:shadow-[0_4px_0_0_#dbeafe] hover:translate-y-1 hover:border-blue-200 transition-all duration-300 group relative max-md:aspect-square flex flex-col justify-between">
+              <div className="flex justify-between items-start md:mb-5">
+                <div className="p-2.5 md:p-3 bg-blue-50 border-2 border-blue-100 rounded-2xl group-hover:scale-110 transition-transform">
+                  <BookOpen className="w-6 h-6 md:w-8 md:h-8 text-blue-500" strokeWidth={2.5} />
                 </div>
-                <span className="text-xs font-black px-3 py-1 bg-blue-100 text-blue-600 rounded-full border border-blue-200">Aktif</span>
+                <span className="text-[10px] md:text-xs font-black px-2.5 py-1 md:px-3 bg-blue-100 text-blue-600 rounded-full border-2 border-blue-200">Aktif</span>
               </div>
-              <div className="text-3xl font-black text-slate-800 mb-1">{stats ? stats.activeCourses : "—"}</div>
-              <div className="text-sm text-slate-500 font-bold">Kajian Aktif</div>
+              <div className="flex flex-col gap-1">
+                <div className="text-3xl md:text-4xl font-black text-slate-800 leading-none">{stats ? stats.activeCourses : "1"}</div>
+                <div className="text-[10px] md:text-sm text-slate-400 font-black tracking-wide">Kajian Aktif</div>
+              </div>
             </div>
 
-            {/* Stat 3 - Sesi Selesai */}
-            <div className="bg-white p-5 rounded-[2rem] border-2 border-slate-100 shadow-[0_4px_0_0_#f1f5f9] hover:shadow-[0_4px_0_0_#ddd6fe] hover:border-purple-300 transition-all duration-300 group">
-              <div className="flex justify-between items-start mb-3">
-                <div className="p-3 bg-purple-50 border-2 border-purple-100 rounded-2xl group-hover:scale-110 transition-transform">
-                  <CheckCircle className="w-7 h-7 text-purple-500" strokeWidth={2.5} />
+            {/* Stat 3 - Sesi Selesai (Purple) */}
+            <div className="bg-white p-5 md:p-6 rounded-[2.5rem] border-2 border-purple-100 shadow-[0_8px_0_0_#f3e8ff] hover:shadow-[0_4px_0_0_#f3e8ff] hover:translate-y-1 hover:border-purple-200 transition-all duration-300 group relative max-md:aspect-square flex flex-col justify-between">
+              <div className="flex justify-between items-start md:mb-5">
+                <div className="p-2.5 md:p-3 bg-purple-50 border-2 border-purple-100 rounded-2xl group-hover:scale-110 transition-transform">
+                  <CheckCircle className="w-6 h-6 md:w-8 md:h-8 text-purple-500" strokeWidth={2.5} />
                 </div>
-                <span className="text-xs font-black px-3 py-1 bg-purple-100 text-purple-600 rounded-full border border-purple-200">Selesai</span>
+                <span className="text-[10px] md:text-xs font-black px-2.5 py-1 md:px-3 bg-purple-100 text-purple-600 rounded-full border-2 border-purple-200">Selesai</span>
               </div>
-              <div className="text-3xl font-black text-slate-800 mb-1">{stats ? stats.completedSessions : "—"}</div>
-              <div className="text-sm text-slate-500 font-bold">Sesi Selesai</div>
+              <div className="flex flex-col gap-1">
+                <div className="text-3xl md:text-4xl font-black text-slate-800 leading-none">{stats ? stats.completedSessions : "0"}</div>
+                <div className="text-[10px] md:text-sm text-slate-400 font-black tracking-wide">Sesi Selesai</div>
+              </div>
             </div>
 
-            {/* Stat 4 - Rating */}
-            <div className="bg-white p-5 rounded-[2rem] border-2 border-slate-100 shadow-[0_4px_0_0_#f1f5f9] hover:shadow-[0_4px_0_0_#fde68a] hover:border-amber-300 transition-all duration-300 group">
-              <div className="flex justify-between items-start mb-3">
-                <div className="p-3 bg-amber-50 border-2 border-amber-100 rounded-2xl group-hover:scale-110 transition-transform">
-                  <Star className="w-7 h-7 text-amber-500 fill-amber-400" strokeWidth={2.5} />
+            {/* Stat 4 - Rating (Amber) */}
+            <div className="bg-white p-5 md:p-6 rounded-[2.5rem] border-2 border-amber-100 shadow-[0_8px_0_0_#fef3c7] hover:shadow-[0_4px_0_0_#fef3c7] hover:translate-y-1 hover:border-amber-200 transition-all duration-300 group relative max-md:aspect-square flex flex-col justify-between">
+              <div className="flex justify-between items-start md:mb-5">
+                <div className="p-2.5 md:p-3 bg-amber-50 border-2 border-amber-100 rounded-2xl group-hover:scale-110 transition-transform">
+                  <Star className="w-6 h-6 md:w-8 md:h-8 text-amber-500 fill-amber-400" strokeWidth={2.5} />
                 </div>
-                <span className="text-xs font-black px-3 py-1 bg-amber-100 text-amber-600 rounded-full border border-amber-200">Bagus!</span>
+                <span className="text-[10px] md:text-xs font-black px-2.5 py-1 md:px-3 bg-amber-100 text-amber-600 rounded-full border-2 border-amber-200">Bagus!</span>
               </div>
-              <div className="text-3xl font-black text-slate-800 mb-1">{stats ? stats.averageRating : "—"}</div>
-              <div className="text-sm text-slate-500 font-bold">Rating Rata-rata</div>
+              <div className="flex flex-col gap-1">
+                <div className="text-3xl md:text-4xl font-black text-slate-800 leading-none">{stats ? stats.averageRating : "0"}</div>
+                <div className="text-[10px] md:text-sm text-slate-400 font-black tracking-wide">Rating Rata-rata</div>
+              </div>
             </div>
           </div>
 
@@ -160,7 +168,7 @@ export default function InstructorAcademy() {
                 </div>
 
                 {upcomingClasses.length === 0 ? (
-                  <div className="bg-white p-8 rounded-[2rem] border-2 border-slate-100 text-center">
+                    <div className="bg-white p-8 rounded-4xl border-2 border-slate-100 text-center">
                     <Calendar className="w-12 h-12 text-slate-300 mx-auto mb-3" strokeWidth={1.5} />
                     <p className="text-slate-400 font-bold">Belum ada kelas mendatang</p>
                   </div>
@@ -215,7 +223,7 @@ export default function InstructorAcademy() {
                 </div>
 
                 {coursesOverview.length === 0 ? (
-                  <div className="bg-white p-8 rounded-[2rem] border-2 border-slate-100 text-center">
+                    <div className="bg-white p-8 rounded-4xl border-2 border-slate-100 text-center">
                     <BookOpen className="w-12 h-12 text-slate-300 mx-auto mb-3" strokeWidth={1.5} />
                     <p className="text-slate-400 font-bold">Belum ada kajian aktif</p>
                   </div>
@@ -224,7 +232,7 @@ export default function InstructorAcademy() {
                     {coursesOverview.map((course) => (
                       <div
                         key={course.id}
-                        className="bg-white p-5 rounded-[2rem] border-2 border-slate-100 hover:border-emerald-400 hover:shadow-[0_4px_0_0_#10b981] hover:-translate-y-1 transition-all group"
+                        className="bg-white p-5 rounded-4xl border-2 border-slate-100 hover:border-emerald-400 hover:shadow-[0_4px_0_0_#10b981] hover:-translate-y-1 transition-all group"
                       >
                         <h3 className="font-black text-slate-800 mb-4 group-hover:text-emerald-600 transition-colors">{course.title}</h3>
                         <div className="space-y-2 text-sm">
@@ -249,7 +257,7 @@ export default function InstructorAcademy() {
                           </div>
                           <div className="w-full bg-slate-100 rounded-full h-2">
                             <div
-                              className="bg-gradient-to-r from-emerald-400 to-teal-400 h-2 rounded-full transition-all"
+                              className="bg-linear-to-r from-emerald-400 to-teal-400 h-2 rounded-full transition-all"
                               style={{ width: `${course.progress}%` }}
                             />
                           </div>
@@ -272,7 +280,7 @@ export default function InstructorAcademy() {
             <div className="xl:col-span-4 space-y-6">
 
               {/* Instructor Profile Card */}
-              <div className="bg-gradient-to-br from-emerald-400 to-teal-500 p-5 rounded-[2rem] text-white shadow-[0_6px_0_0_#047857] border-2 border-emerald-600 relative overflow-hidden group transition-transform hover:scale-[1.02]">
+              <div className="bg-linear-to-br from-emerald-400 to-teal-500 p-5 rounded-4xl text-white shadow-[0_6px_0_0_#047857] border-2 border-emerald-600 relative overflow-hidden group transition-transform hover:scale-[1.02]">
                 <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -mr-10 -mt-10 blur-sm" />
                 <div className="absolute bottom-0 left-0 w-16 h-16 bg-white/10 rounded-full -ml-8 -mb-8 blur-sm" />
 
@@ -292,7 +300,7 @@ export default function InstructorAcademy() {
               </div>
 
               {/* Recent Activities */}
-              <div className="bg-white p-5 rounded-[2rem] border-2 border-slate-100 shadow-sm">
+              <div className="bg-white p-5 rounded-4xl border-2 border-slate-100 shadow-sm">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="p-2 bg-white border-2 border-slate-200 rounded-xl shadow-[0_3px_0_0_#e2e8f0]">
                     <Activity className="w-5 h-5 text-slate-800" />
@@ -325,7 +333,7 @@ export default function InstructorAcademy() {
               </div>
 
               {/* Performance Summary */}
-              <div className="bg-white p-5 rounded-[2rem] border-2 border-slate-100 shadow-sm">
+              <div className="bg-white p-5 rounded-4xl border-2 border-slate-100 shadow-sm">
                 <h4 className="font-black text-slate-800 mb-4 flex items-center gap-2">
                   <TrendingUp className="w-5 h-5 text-emerald-500" strokeWidth={2.5} />
                   Performa Mengajar
@@ -343,7 +351,7 @@ export default function InstructorAcademy() {
                       </div>
                       <div className="w-full bg-slate-100 rounded-full h-1.5">
                         <div
-                          className={`bg-gradient-to-r ${item.color} h-1.5 rounded-full`}
+                          className={`bg-linear-to-r ${item.color} h-1.5 rounded-full`}
                           style={{ width: `${item.value}%` }}
                         />
                       </div>
@@ -353,7 +361,7 @@ export default function InstructorAcademy() {
               </div>
 
               {/* Motivational Card */}
-              <div className="bg-slate-900 p-5 rounded-[2rem] text-white relative overflow-hidden group">
+              <div className="bg-slate-900 p-5 rounded-4xl text-white relative overflow-hidden group">
                 <div className="absolute top-[-20%] right-[-10%] w-24 h-24 bg-emerald-500/20 rounded-full blur-xl group-hover:scale-125 transition-transform" />
                 <div className="flex items-center gap-3 mb-3 relative z-10">
                   <div className="p-2 bg-white/10 border border-white/20 rounded-xl">

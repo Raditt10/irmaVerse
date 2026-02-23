@@ -16,7 +16,6 @@ export async function GET(
       );
     }
 
-    // Await params for Next.js 16
     const { id: materialId } = await params;
 
     if (!materialId) {
@@ -26,11 +25,10 @@ export async function GET(
       );
     }
 
-    // Get material to check if user is instructor
-    const material = await prisma.material.findUnique({
+    const material = await (prisma as any).material.findUnique({
       where: { id: materialId },
       include: {
-        instructor: true,
+        users: true,
       },
     });
 
@@ -41,7 +39,6 @@ export async function GET(
       );
     }
 
-    // Check if current user is the instructor or admin
     const user = await prisma.user.findUnique({
       where: { email: session.user.email },
     });
@@ -53,7 +50,6 @@ export async function GET(
       );
     }
 
-    // Only instructor or admin can view attendance
     if (
       material.instructorId !== user.id &&
       user.role !== "admin"
@@ -64,8 +60,7 @@ export async function GET(
       );
     }
 
-    // Get all attendance for this material
-    const attendances = await prisma.attendance.findMany({
+    const attendances = await (prisma as any).attendance.findMany({
       where: {
         materialId: materialId,
       },
@@ -74,7 +69,6 @@ export async function GET(
       },
     });
 
-    // Get user details for each attendance
     const attendanceWithUsers = await Promise.all(
       attendances.map(async (att) => {
         const attendanceUser = await prisma.user.findUnique({

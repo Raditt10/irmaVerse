@@ -8,11 +8,10 @@ import Loading from "@/components/ui/Loading";
 import SuccessDataFound from "@/components/ui/SuccessDataFound";
 import SearchInput from "@/components/ui/SearchInput";
 import EmptyState from "@/components/ui/EmptyState";
-import { ArrowRight, Trophy, Calendar } from "lucide-react";
+import { Trophy, Calendar, Target } from "lucide-react";
 import { useSession } from "next-auth/react";
-import DeleteButton from "@/components/ui/DeleteButton";
-import ButtonEdit from "@/components/ui/ButtonEdit";
-import Toast from "@/components/ui/Toast"; // Import Toast
+import DetailButton from "@/components/ui/DetailButton";
+import Toast from "@/components/ui/Toast";
 
 interface CompetitionItem {
   id: string;
@@ -116,12 +115,12 @@ const Competitions = () => {
           <div className="max-w-7xl mx-auto">
             
             {/* Header */}
-            <div className="mb-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="mb-6 lg:mb-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
-                <h1 className="text-4xl font-black text-slate-800 tracking-tight mb-2">
+                <h1 className="text-2xl lg:text-4xl font-black text-slate-800 tracking-tight mb-1.5 leading-tight">
                   Info Perlombaan
                 </h1>
-                <p className="text-slate-500 text-lg font-medium">
+                <p className="text-slate-500 font-medium text-xs lg:text-lg">
                   Tunjukkan bakatmu di ajang bergengsi ini!
                 </p>
               </div>
@@ -172,11 +171,11 @@ const Competitions = () => {
                   </div>
                 )}
 
-                <div className="grid gap-8 grid-cols-1 lg:grid-cols-2">
+                <div className="grid gap-6 lg:gap-8 grid-cols-1 lg:grid-cols-2">
                   {filteredCompetitions.map((item) => (
                     <div
                       key={item.id}
-                      className="bg-white rounded-[2.5rem] border-2 border-slate-200 shadow-[0_8px_0_0_#cbd5e1] hover:border-emerald-400 hover:shadow-[0_8px_0_0_#34d399] transition-all duration-300 overflow-hidden group hover:-translate-y-2 flex flex-col"
+                      className="bg-white rounded-3xl lg:rounded-[2.5rem] border-2 border-slate-200 shadow-[0_6px_0_0_#cbd5e1] sm:shadow-[0_8px_0_0_#cbd5e1] hover:border-emerald-400 hover:shadow-[0_8px_0_0_#34d399] transition-all duration-300 overflow-hidden group hover:-translate-y-2 flex flex-col"
                     >
                       {/* Image Section */}
                       <div className="relative h-40 md:h-60 border-b-2 border-slate-100 overflow-hidden">
@@ -186,22 +185,18 @@ const Competitions = () => {
                           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                         />
                         <div className="absolute inset-0 bg-linear-to-t from-black/50 to-transparent" />
-                        
-                        <span className={`absolute top-4 left-4 px-3 py-1 rounded-xl text-xs font-black uppercase tracking-wide border-2 shadow-sm ${badgeStyles[item.category]}`}>
-                          {item.category}
-                        </span>
                       </div>
 
                       {/* Content Section */}
-                      <div className="p-4 md:p-6 flex flex-col flex-1">
-                        <h3 className="text-lg md:text-xl font-black text-slate-800 leading-tight mb-3 md:mb-4 group-hover:text-emerald-600 transition-colors line-clamp-2">
+                      <div className="p-4 sm:p-6 flex flex-col flex-1">
+                        <h3 className="text-lg sm:text-xl font-black text-slate-800 leading-tight mb-3 sm:mb-4 group-hover:text-emerald-600 transition-colors line-clamp-2">
                           {item.title}
                         </h3>
 
-                        <div className="space-y-2 md:space-y-3 mb-4 md:mb-6 bg-slate-50 p-3 md:p-4 rounded-2xl border-2 border-slate-100">
-                          <div className="flex items-center justify-between text-xs md:text-sm">
+                        <div className="space-y-2.5 sm:space-y-3 mb-5 sm:mb-6 bg-slate-50 p-3.5 sm:p-4 rounded-xl border-2 border-slate-100">
+                          <div className="flex items-center justify-between text-[11px] sm:text-sm">
                             <div className="flex items-center gap-2 text-slate-500 font-bold">
-                              <Calendar className="w-4 h-4 text-emerald-400" />
+                              <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-400" />
                               <span>Tanggal</span>
                             </div>
                             <span className="text-slate-800 font-black">{item.date}</span>
@@ -209,9 +204,9 @@ const Competitions = () => {
                           
                           <div className="w-full h-px bg-slate-200 dashed"></div>
 
-                          <div className="flex items-center justify-between text-xs md:text-sm">
+                          <div className="flex items-center justify-between text-[11px] sm:text-sm">
                             <div className="flex items-center gap-2 text-slate-500 font-bold">
-                              <Trophy className="w-4 h-4 text-amber-400" />
+                              <Trophy className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-400" />
                               <span>Hadiah</span>
                             </div>
                             <span className="text-emerald-600 font-black bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100">
@@ -220,33 +215,31 @@ const Competitions = () => {
                           </div>
                         </div>
 
-                        <div className="flex gap-2 md:gap-3 mt-auto flex-wrap md:flex-nowrap">
-                          <button 
-                            onClick={() => router.push(`/competitions/${item.id}`)}
-                            className="flex-1 py-2 md:py-3 px-2 md:px-3 rounded-xl md:rounded-2xl bg-teal-400 text-white font-bold md:font-black text-sm md:text-base border-2 border-teal-600 border-b-3 md:border-b-4 hover:bg-teal-500 active:border-b-2 active:translate-y-px md:active:translate-y-0.5 transition-all flex items-center justify-center gap-1 md:gap-2 group/btn shadow-md hover:shadow-teal-100"
-                          >
-                            <span>Lihat Detail</span>
-                            <ArrowRight className="h-3 md:h-4 w-3 md:w-4 group-hover/btn:translate-x-1 transition-transform" strokeWidth={3} />
-                          </button>
-
-                          {session?.user?.role === "instruktur" && (
-                            <>
-                              <ButtonEdit
-                                id={item.id}
-                                basePath="/competitions"
-                                className="flex-1 py-2 md:py-3 px-2 md:px-3 rounded-xl md:rounded-2xl text-sm md:text-base border-b-3 md:border-b-4"
-                                label="Edit"
-                              />
-                              <DeleteButton
-                                label=""
-                                onClick={() => handleDeleteCompetition(item.id)}
-                                variant="icon-only"
-                                confirmTitle="Hapus Kompetisi?"
-                                confirmMessage="Apakah Anda yakin ingin menghapus kompetisi ini?"
-                                className="px-3 md:px-4 py-2 md:py-3 rounded-xl md:rounded-2xl bg-red-500 text-white font-bold border-2 border-red-600 border-b-3 md:border-b-4 hover:bg-red-600 active:border-b-2 active:translate-y-px md:active:translate-y-0.5 transition-all shadow-md hover:shadow-red-100"
-                              />
-                            </>
-                          )}
+                        {/* Action Row: Category on Left, Buttons on Right */}
+                        <div className="mt-auto pt-5 border-t-2 border-slate-50 flex items-center justify-between gap-2">
+                          <div className="flex-1">
+                            <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border font-bold ${badgeStyles[item.category]}`}>
+                              <Target className="h-3 w-3" strokeWidth={3} />
+                              <span className="text-[9px] uppercase tracking-widest whitespace-nowrap">
+                                {item.category}
+                              </span>
+                            </div>
+                          </div>
+                      
+                          <div className="flex items-center gap-2">
+                            <DetailButton
+                              role={session?.user?.role as any}
+                              onClick={() => router.push(`/competitions/${item.id}`)}
+                              onEdit={() => router.push(`/competitions/${item.id}/edit`)}
+                              onDelete={() => handleDeleteCompetition(item.id)}
+                              label="Detail"
+                              className="w-auto!"
+                              showConfirm={true}
+                              iconOnly={true}
+                              confirmTitle="Hapus Kompetisi?"
+                              confirmMessage="Apakah Anda yakin ingin menghapus kompetisi ini?"
+                            />
+                          </div>
                         </div>
                       </div>
                     </div>

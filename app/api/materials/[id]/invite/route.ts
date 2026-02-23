@@ -13,11 +13,6 @@ export async function POST(
     const { userIds } = await req.json();
     const { id: materialId } = await params;
 
-    console.log("=== INVITE REQUEST ===");
-    console.log("Received userIds:", userIds);
-    console.log("Material ID:", materialId);
-    console.log("Instructor (session.user.id):", session?.user?.id);
-
     if (!session || !session.user) {
       return NextResponse.json(
         { error: "Tidak terautentikasi" },
@@ -25,19 +20,16 @@ export async function POST(
       );
     }
 
-    // Check if user exists
     const User = await prisma.user.findUnique({
       where: { id: session.user.id },
     });
 
     if (!User) {
-      console.log("User not found in database:", session.user.id);
       return NextResponse.json(
         { error: "User tidak ditemukan" },
         { status: 404 },
       );
     }
-    console.log("User found:", User.email, User.role);
 
     if (User.role !== "instruktur" && User.role !== "admin") {
       return NextResponse.json(
@@ -47,7 +39,7 @@ export async function POST(
     }
 
     // Check which users already have pending or accepted invitations
-    const existingInvites = await prisma.materialInvite.findMany({
+    const existingInvites = await (prisma as any).materialinvite.findMany({
       where: {
         materialId,
         userId: { in: userIds },
@@ -63,35 +55,33 @@ export async function POST(
 
     // Create invitations for new users
     if (newUserIds.length > 0) {
-      // Generate a simple token for each invitation
       const generateToken = () =>
         Math.random().toString(36).substring(2, 15) +
         Math.random().toString(36).substring(2, 15);
 
-      console.log("Creating invitations for users:", newUserIds);
-
-      // Generate tokens for each user
       const inviteData = newUserIds.map((userId: string) => ({
+        id: `inv-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
         materialId,
         instructorId: session.user.id,
         userId,
         token: generateToken(),
         status: "pending" as const,
+        updatedAt: new Date(),
       }));
 
-      await prisma.materialInvite.createMany({
+      await (prisma as any).materialinvite.createMany({
         data: inviteData,
       });
 
-      // Fetch the material title for notification message
-      const material = await prisma.material.findUnique({
+      const material = await (prisma as any).material.findUnique({
         where: { id: materialId },
-        select: { title: true },
+        include: {
+          users: true,
+        },
       });
 
-      // Create notification records for each invited user
       const notifications = await createBulkNotifications(
-        inviteData.map((inv: { userId: string; token: string }) => ({
+        inviteData.map((inv) => ({
           userId: inv.userId,
           type: "invitation" as const,
           title: material?.title || "Undangan Kajian",
@@ -105,15 +95,12 @@ export async function POST(
         })),
       );
 
-      // Push notifications via WebSocket in real-time
       await emitNotificationsToUsers(
         notifications.map((n) => ({
           userId: n.userId,
           notification: n,
         })),
       );
-
-      console.log("Invitations + notifications created successfully");
     }
 
     return NextResponse.json({
@@ -123,7 +110,6 @@ export async function POST(
       alreadyInvited: alreadyInvitedIds,
       totalAttempted: userIds.length,
       materialId: materialId,
-      instructorId: session.user.id,
     });
   } catch (error) {
     console.error("Error inviting users to material:", error);
@@ -147,19 +133,16 @@ export async function GET(
       );
     }
 
-    // Check if user exists
     const User = await prisma.user.findUnique({
       where: { id: session.user.id },
     });
 
     if (!User) {
-      console.log("User not found in database:", session.user.id);
       return NextResponse.json(
         { error: "User tidak ditemukan" },
         { status: 404 },
       );
     }
-    console.log("User found:", User.email, User.role);
 
     if (User.role !== "instruktur" && User.role !== "admin") {
       return NextResponse.json(
@@ -176,7 +159,7 @@ export async function GET(
       where: {
         OR: [{ name: { contains: query } }, { email: { contains: query } }],
         NOT: {
-          courseEnrollments: { some: { materialId } },
+          courseenrollment: { some: { materialId } },
         },
       },
       take: 10,

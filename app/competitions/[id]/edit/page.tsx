@@ -80,15 +80,10 @@ const EditCompetition = () => {
 
       const data = await response.json();
 
-      if (session?.user?.id !== data.instructorId && session?.user?.role !== "admin") {
-        showToast("Anda tidak memiliki akses untuk mengedit perlombaan ini", "error");
-        setTimeout(() => router.push("/competitions"), 2000);
-        return;
-      }
 
       const dateObj = new Date(data.date);
       const formattedDate = dateObj.toISOString().split('T')[0];
-      const formattedTime = dateObj.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false });
+      const formattedTime = dateObj.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false }).replace('.', ':');
 
       setFormData({
         title: data.title || "",
@@ -130,7 +125,7 @@ const EditCompetition = () => {
     }
   };
 
-  if (status === "authenticated" && session?.user?.role !== "instruktur") {
+  if (status === "authenticated" && session?.user?.role !== "instruktur" && session?.user?.role !== "admin") {
     router.push("/competitions");
     return null;
   }
@@ -222,7 +217,7 @@ const EditCompetition = () => {
 
       const data = await response.json();
       showToast("Perlombaan berhasil diperbarui!", "success");
-      setTimeout(() => router.push(`/competitions/${data.id}`), 1500);
+      setTimeout(() => router.push("/competitions"), 1500);
 
     } catch (error: any) {
       showToast(error.message || "Terjadi kesalahan saat memperbarui perlombaan", "error");
@@ -241,11 +236,11 @@ const EditCompetition = () => {
             {/* Header & Back Button */}
             <div className="flex flex-col gap-4 lg:gap-6 mb-6 lg:mb-8">
               <button
-                onClick={() => router.push(`/competitions/${competitionId}`)}
+                onClick={() => router.push(`/competitions/`)}
                 className="self-start inline-flex items-center gap-2 px-3 py-2 lg:px-4 lg:py-2 rounded-xl bg-white border-2 border-slate-200 text-slate-500 font-bold hover:border-teal-400 hover:text-teal-600 hover:shadow-[0_4px_0_0_#cbd5e1] active:translate-y-0.5 active:shadow-none transition-all text-sm lg:text-base"
               >
                 <ArrowLeft className="h-4 w-4 lg:h-5 lg:w-5" strokeWidth={3} />
-                Kembali ke Detail
+                Kembali
               </button>
               <div>
                 <h1 className="text-2xl lg:text-4xl font-black text-slate-800 tracking-tight mb-2 flex items-center gap-2 lg:gap-3">
@@ -358,8 +353,11 @@ const EditCompetition = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
                     {/* Requirements Column */}
                     <div className="space-y-4 lg:space-y-6">
-                      <h2 className="text-lg lg:text-xl font-black text-slate-700 mb-4 lg:mb-6 flex items-center gap-2">
-                        <ShieldCheck className="h-5 w-5 lg:h-6 lg:w-6 text-emerald-500" /> Persyaratan
+                      <h2 className="text-lg lg:text-xl font-black text-slate-700 mb-6 lg:mb-8 flex items-center gap-3">
+                        <div className="p-2 rounded-xl bg-emerald-100 text-emerald-600">
+                          <ShieldCheck className="h-5 w-5 lg:h-6 lg:w-6" />
+                        </div>
+                        Persyaratan
                       </h2>
                       <div className="space-y-4">
                         {requirements.map((req, index) => (
@@ -394,8 +392,11 @@ const EditCompetition = () => {
 
                     {/* Criteria Column */}
                     <div className="space-y-4 lg:space-y-6">
-                      <h2 className="text-lg lg:text-xl font-black text-slate-700 mb-4 lg:mb-6 flex items-center gap-2">
-                        <ListChecks className="h-5 w-5 lg:h-6 lg:w-6 text-rose-500" /> Kriteria Penilaian
+                      <h2 className="text-lg lg:text-xl font-black text-slate-700 mb-6 lg:mb-8 flex items-center gap-3">
+                        <div className="p-2 rounded-xl bg-rose-100 text-rose-600">
+                          <ListChecks className="h-5 w-5 lg:h-6 lg:w-6" />
+                        </div>
+                        Kriteria Penilaian
                       </h2>
                       <div className="space-y-4">
                         {judgingCriteria.map((criteria, index) => (

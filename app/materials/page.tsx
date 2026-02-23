@@ -13,7 +13,7 @@ import MaterialInstructorActions from "@/components/ui/AbsensiButton";
 import MaterialUserActions from "@/app/materials/_components/ButtonUserAbsenMaterial";
 import Loading from "@/components/ui/Loading"; // Import Loading baru
 import SuccessDataFound from "@/components/ui/SuccessDataFound";
-import { Calendar, Clock, Plus, Sparkles } from "lucide-react";
+import { Calendar, Clock, Plus, Sparkles, BookOpen, CheckCheck } from "lucide-react";
 import AddButton from "@/components/ui/AddButton";
 import DeleteButton from "@/components/ui/DeleteButton";
 import DetailButton from "@/components/ui/DetailButton";
@@ -31,6 +31,7 @@ interface Material {
   thumbnailUrl?: string;
   isJoined: boolean;
   attendedAt?: string;
+  createdAt?: string;
 }
 
 const Materials = () => {
@@ -40,6 +41,7 @@ const Materials = () => {
   const [selectedProgram, setSelectedProgram] = useState("Semua");
   const [selectedGrade, setSelectedGrade] = useState("Semua");
   const [searchQuery, setSearchQuery] = useState("");
+  const [showJoinedOnly, setShowJoinedOnly] = useState(false);
   
   const [toast, setToast] = useState<{
     show: boolean;
@@ -63,30 +65,42 @@ const Materials = () => {
     setTimeout(() => setToast((prev) => ({ ...prev, show: false })), 3000);
   };
 
-  const isPrivileged = session?.user?.role === "instruktur" || session?.user?.role === "admin";
+  const role = session?.user?.role?.toLowerCase();
+  const isPrivileged = role === "instruktur" || role === "admin" || role === "instructor";
   const programCategories = ["Semua", "Program Wajib", "Program Ekstra", "Program Next Level"];
   const classCategories = ["Semua", "Kelas 10", "Kelas 11", "Kelas 12"];
 
   useEffect(() => {
     fetchMaterials();
+
+    // Listen for material-related actions (like accepting invitations) to refresh the list
+    const handleAction = () => {
+      console.log("[MaterialsPage] Action detected, refreshing list (with delay)...");
+      setTimeout(() => {
+        fetchMaterials();
+      }, 500); // delay 500ms agar backend pasti update
+    };
+
+    window.addEventListener("materialAction", handleAction);
+    return () => window.removeEventListener("materialAction", handleAction);
   }, []);
 
   useEffect(() => {
     filterMaterials();
-  }, [materials, selectedProgram, selectedGrade, searchQuery]);
+  }, [materials, selectedProgram, selectedGrade, searchQuery, showJoinedOnly]);
 
   const filterMaterials = async () => {
     const filtered = materials.filter((material) => {
-      const matchesProgram =
-        selectedProgram === "Semua" || material.category === selectedProgram;
-      const matchesGrade =
-        selectedGrade === "Semua" || material.grade === selectedGrade;
+      const matchesProgram = selectedProgram === "Semua" || material.category === selectedProgram;
+      const matchesGrade = selectedGrade === "Semua" || material.grade === selectedGrade;
       const matchesSearch =
         material.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         material.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
         material.instructor.toLowerCase().includes(searchQuery.toLowerCase());
+      // Logic: show only if isJoined (enrolled or accepted invite), hide if rejected/pending
+      const matchesJoined = !showJoinedOnly || (material.isJoined && !material.attendedAt);
 
-      return matchesProgram && matchesGrade && matchesSearch;
+      return matchesProgram && matchesGrade && matchesSearch && matchesJoined;
     });
 
     setFilteredMaterials(filtered);
@@ -109,8 +123,9 @@ const Materials = () => {
               const attendanceData = await attendanceRes.json();
               return {
                 ...material,
-                isJoined: attendanceData.isAttended,
                 attendedAt: attendanceData.attendedAt,
+                // isJoined tetap dari API (enrollment)
+                isJoined: material.isJoined,
               };
             }
             return material;
@@ -172,12 +187,12 @@ const Materials = () => {
         <div className="flex-1 w-full max-w-[100vw] overflow-x-hidden px-4 sm:px-6 lg:px-8 py-6 lg:py-12">
           <div className="max-w-7xl mx-auto">
             
-            <div className="mb-8 lg:mb-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="mb-6 lg:mb-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
-                <h1 className="text-3xl lg:text-4xl font-black text-slate-800 tracking-tight mb-2">
+                <h1 className="text-2xl lg:text-4xl font-black text-slate-800 tracking-tight mb-1.5">
                   {isPrivileged ? "Kelola Kajian" : "Jadwal Kajianku"}
                 </h1>
-                <p className="text-slate-500 font-medium text-sm lg:text-lg">
+                <p className="text-slate-500 font-medium text-xs lg:text-lg">
                   {isPrivileged
                     ? "Atur jadwal dan materi kajian untuk anggota"
                     : "Ikuti kajian seru bareng teman-teman!"}
@@ -197,20 +212,20 @@ const Materials = () => {
 
             {/* --- LATEST MATERIAL CARD --- */}
             {isPrivileged && getTodayMaterial() && (
-              <div className="mb-10 bg-linear-to-br from-teal-50 to-cyan-50 rounded-4xl lg:rounded-[2.5rem] border-2 border-teal-200 p-6 lg:p-8 shadow-[0_4px_0_0_#cbd5e1] relative overflow-hidden group hover:border-teal-300 transition-all">
+              <div className="mb-8 bg-linear-to-br from-teal-50 to-cyan-50 rounded-3xl lg:rounded-[2.5rem] border-2 border-teal-200 p-5 lg:p-8 shadow-[0_4px_0_0_#cbd5e1] relative overflow-hidden group hover:border-teal-300 transition-all">
                 <div className="absolute top-0 right-0 -mt-4 -mr-4 w-32 h-32 bg-teal-100 rounded-full blur-3xl opacity-60" />
 
                 <div className="relative z-10">
-                  <div className="flex items-center gap-2 mb-5">
-                    <div className="p-2 bg-white rounded-xl border border-teal-100 shadow-sm">
-                        <Sparkles className="h-5 w-5 text-teal-500" strokeWidth={2.5} />
+                  <div className="flex items-center gap-2 mb-4 lg:mb-5">
+                    <div className="p-1.5 lg:p-2 bg-white rounded-lg lg:rounded-xl border border-teal-100 shadow-sm">
+                        <Sparkles className="h-4 w-4 lg:h-5 lg:w-5 text-teal-500" strokeWidth={2.5} />
                     </div>
-                    <h2 className="text-lg font-black text-slate-800 tracking-tight">Jadwal Kajianmu Hari Ini</h2>
+                    <h2 className="text-sm lg:text-lg font-black text-slate-800 tracking-tight">Jadwal Kajianmu Hari Ini</h2>
                   </div>
 
-                  <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 lg:gap-8">
+                  <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 lg:gap-8">
                     <div className="flex-1 min-w-0">
-                      <h3 className="text-2xl md:text-3xl font-black text-slate-800 mb-3 leading-tight truncate">
+                      <h3 className="text-xl md:text-3xl font-black text-slate-800 mb-2 lg:mb-3 leading-tight truncate">
                         {getTodayMaterial()?.title}
                       </h3>
                       
@@ -231,7 +246,7 @@ const Materials = () => {
                       </div>
                     </div>
 
-                    <div className="flex flex-row items-center gap-3 w-full lg:w-auto shrink-0 mt-2 lg:mt-0">
+                    <div className="flex flex-row items-center gap-3 w-full lg:w-auto shrink-0 mt-1 lg:mt-0">
                       <button
                         onClick={() => router.push(`/materials/${getTodayMaterial()?.id}/edit`)}
                         className="flex-1 lg:flex-none lg:w-36 flex justify-center items-center px-6 py-2.5 rounded-xl bg-teal-400 text-white font-bold border-2 border-teal-600 border-b-4 hover:bg-teal-500 hover:border-b-4 active:border-b-2 active:translate-y-0.5 transition-all text-sm md:text-base"
@@ -256,7 +271,41 @@ const Materials = () => {
             )}
 
             {/* Filters */}
-            <div className="grid gap-6 mb-8 lg:grid-cols-[1fr_auto]">
+            <div className="flex flex-col gap-6 mb-8">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                {/* Toggle Filter (Mobile & Desktop) */}
+                <div className="flex p-1.5 bg-slate-100 rounded-2xl w-fit border border-slate-200">
+                  <button
+                    onClick={() => setShowJoinedOnly(false)}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs lg:text-sm font-black transition-all ${
+                      !showJoinedOnly
+                        ? "bg-white text-emerald-600 shadow-sm border border-slate-200"
+                        : "text-slate-500 hover:text-slate-700"
+                    }`}
+                  >
+                    <BookOpen className="h-4 w-4" />
+                    Semua Kajian
+                  </button>
+                  <button
+                    onClick={() => setShowJoinedOnly(true)}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs lg:text-sm font-black transition-all ${
+                      showJoinedOnly
+                        ? "bg-white text-emerald-600 shadow-sm border border-slate-200"
+                        : "text-slate-500 hover:text-slate-700"
+                    }`}
+                  >
+                    <CheckCheck className="h-4 w-4" />
+                    Kajian Diikuti
+                  </button>
+                </div>
+
+                <SearchInput
+                  placeholder="Cari materi / ustadz..."
+                  value={searchQuery}
+                  onChange={setSearchQuery}
+                />
+              </div>
+
               <div className="space-y-4">
                 <CategoryFilter
                   categories={programCategories}
@@ -267,12 +316,6 @@ const Materials = () => {
                   onSubCategoryChange={setSelectedGrade}
                 />
               </div>
-
-              <SearchInput
-                placeholder="Cari materi / ustadz..."
-                value={searchQuery}
-                onChange={setSearchQuery}
-              />
             </div>
 
             {/* Content Grid */}
@@ -319,10 +362,10 @@ const Materials = () => {
                   {filteredMaterials.map((material) => (
                     <div
                       key={material.id}
-                      className="bg-white rounded-[2.5rem] border-2 border-slate-200 shadow-[0_8px_0_0_#cbd5e1] hover:border-emerald-400 hover:shadow-[0_8px_0_0_#34d399] transition-all duration-300 overflow-hidden group hover:-translate-y-2 flex flex-col h-full"
+                      className="bg-white rounded-3xl lg:rounded-[2.5rem] border-2 border-slate-200 shadow-[0_6px_0_0_#cbd5e1] sm:shadow-[0_8px_0_0_#cbd5e1] hover:border-emerald-400 hover:shadow-[0_8px_0_0_#34d399] transition-all duration-300 overflow-hidden group hover:-translate-y-2 flex flex-col h-full"
                     >
                       {/* Thumbnail */}
-                      <div className="relative h-48 md:h-52 overflow-hidden border-b-2 border-slate-100">
+                      <div className="relative h-40 md:h-52 overflow-hidden border-b-2 border-slate-100">
                         <img
                           src={material.thumbnailUrl}
                           alt={material.title}
@@ -330,7 +373,7 @@ const Materials = () => {
                         />
                         <div className="absolute inset-0 bg-linear-to-t from-black/50 to-transparent" />
 
-                        {!material.isJoined && (
+                        {material.createdAt && (new Date().getTime() - new Date(material.createdAt).getTime() < 10 * 60 * 1000) && (
                           <span className="absolute top-4 right-4 bg-red-500 text-white text-[10px] font-black px-3 py-1 rounded-full border-2 border-white shadow-md animate-bounce">
                             BARU!
                           </span>
@@ -344,7 +387,7 @@ const Materials = () => {
                       </div>
 
                       {/* Content */}
-                      <div className="p-6 flex flex-col flex-1">
+                      <div className="p-4 sm:p-6 flex flex-col flex-1">
                         <div className="flex-1">
                           {material.grade && (
                             <span className="inline-block px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-600 text-[10px] font-black border border-emerald-200 mb-2 uppercase tracking-wide">

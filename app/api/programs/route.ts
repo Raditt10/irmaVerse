@@ -1,21 +1,20 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth";
-import { CourseCategory, Grade } from "@prisma/client";
 
 export async function GET() {
   try {
     // Fetch programs dari materials (yang adalah program/kursus)
-    const materials = await prisma.material.findMany({
+    const materials = await (prisma as any).material.findMany({
       where: { materialType: "program" },
       include: {
-        instructor: {
+        users: {
           select: {
             id: true,
             name: true,
           }
         },
-        enrollments: {
+        courseenrollment: {
           select: {
             id: true,
           }
@@ -27,7 +26,7 @@ export async function GET() {
     });
 
     // Transform data ke format yang diharapkan frontend
-    const formattedPrograms = materials.map(material => {
+    const formattedPrograms = materials.map((material: any) => {
       // Tentukan status berdasarkan tanggal
       const now = new Date();
       const materialDate = new Date(material.date);
@@ -39,19 +38,28 @@ export async function GET() {
         status = "in-progress";
       }
 
+      const GRADE_LABEL: Record<string, string> = {
+        X: "Kelas 10",
+        XI: "Kelas 11",
+        XII: "Kelas 12",
+        x: "Kelas 10",
+        xi: "Kelas 11",
+        xii: "Kelas 12",
+      };
+
       return {
         id: material.id,
         title: material.title,
         description: material.description,
         duration: material.startedAt ? `${material.startedAt}` : "Belum ditentukan",
-        level: material.grade || "X",
+        level: GRADE_LABEL[material.grade] || material.grade || "Kelas 10",
         quota: {
-          filled: material.enrollments?.length || 0,
+          filled: material.courseenrollment?.length || 0,
           total: material.participants ? parseInt(material.participants) : 0,
         },
         status: status,
         thumbnail: material.thumbnailUrl,
-        instructor: material.instructor?.name,
+        instructor: material.users?.name,
       };
     });
 
@@ -61,6 +69,7 @@ export async function GET() {
     return NextResponse.json({ error: "Failed to fetch programs" }, { status: 500 });
   }
 }
+
 export async function POST(req: Request) {
   try {
     const session = await auth();
@@ -106,12 +115,13 @@ export async function POST(req: Request) {
     });
 
     // Map categories and grades correctly to Prisma enums
-    const CATEGORY_MAP: Record<string, CourseCategory> = {
+    const CATEGORY_MAP: Record<string, any> = {
       "Program Wajib": "Wajib",
       "Wajib": "Wajib",
+      "Extra": "Extra",
     };
 
-    const GRADE_MAP: Record<string, Grade> = {
+    const GRADE_MAP: Record<string, any> = {
       "Semua": "X", 
       "Kelas 10": "X",
       "Kelas 11": "XI",
@@ -124,8 +134,9 @@ export async function POST(req: Request) {
     const mappedCategory = CATEGORY_MAP[category] || "Wajib";
     const mappedGrade = GRADE_MAP[grade] || "X";
 
-    const program = (await (prisma.material as any).create({
+    const program = await prisma.material.create({
       data: {
+        id: `prog-${Date.now()}`, // Added ID generation for safety
         title,
         description: description || null,
         grade: mappedGrade,
@@ -135,11 +146,9 @@ export async function POST(req: Request) {
         startedAt: duration || null, // StartedAt stores duration for programs
         materialType: "program",
         content: extraContent,
+        updatedAt: new Date(), // Explicitly setting updatedAt as it might be required
       },
-    })) as any;
-
-    // Sub-materials (Kajian) are now stored in JSON 'content' above.
-    // No longer creating separate records to avoid cluttering the materials list.
+    });
 
     return NextResponse.json(program);
   } catch (error) {

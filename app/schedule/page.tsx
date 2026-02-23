@@ -31,6 +31,11 @@ interface Schedule {
   status?: string;
   image?: string;
   category?: string;
+  instructor?: {
+    id: string;
+    name: string;
+    email: string;
+  };
 }
 
 const Schedule = () => {
@@ -258,7 +263,6 @@ const Schedule = () => {
                             </span>
                           )}
                           
-                          {/* Title */}
                           <h3 className="text-xl font-black text-slate-800 leading-tight group-hover:text-teal-600 transition-colors line-clamp-2">
                             {schedule.title}
                           </h3>
@@ -292,23 +296,30 @@ const Schedule = () => {
                           </div>
                         )}
                         
-                        {schedule.registeredCount !== undefined && (
-                          <div className="flex items-center gap-3 text-sm text-slate-600 font-medium">
-                            <Users className="h-4 w-4 text-teal-500" />
-                            <span>{schedule.registeredCount} peserta</span>
+                      {/* Bottom Row: Actions & Info aligned to fill space professionally */}
+                      </div>
+                      <div className="flex items-center justify-between mt-auto pt-2">
+                        {/* Instructor info on the left to balance the icon-only buttons as requested */}
+                        {schedule.instructor && (
+                          <div className="flex items-center gap-2 px-3 py-1.5 bg-teal-50 text-teal-700 rounded-xl border border-teal-100">
+                            <Users className="h-4 w-4" />
+                            <span className="text-[10px] font-black uppercase tracking-wider">
+                               Di Upload oleh {schedule.instructor.name}
+                            </span>
                           </div>
                         )}
-                      </div>
 
-                      {/* Button: Label diubah jadi 'Detail' agar muat */}
-                      <DetailButton
-                        role={session?.user?.role as any}
-                        onClick={() => router.push(`/schedule/${schedule.id}`)}
-                        onEdit={() => router.push(`/schedule/${schedule.id}/edit`)}
-                        onDelete={() => handleDeleteSchedule(schedule.id)}
-                        label="Detail"
-                        showConfirm={false}
-                      />
+                        <div className="flex items-center gap-2">
+                          <DetailButton
+                            role={session?.user?.role as any}
+                            onClick={() => router.push(`/schedule/${schedule.id}`)}
+                            onEdit={() => router.push(`/schedule/${schedule.id}/edit`)}
+                            onDelete={() => handleDeleteSchedule(schedule.id)}
+                            iconOnly
+                            showConfirm={false}
+                          />
+                        </div>
+                      </div>
                     </div>
                   </div>
                 ))}

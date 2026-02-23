@@ -10,30 +10,22 @@ export async function GET(
     const session = await auth();
     const { id } = await params;
 
-    const material = (await prisma.material.findUnique({
+    const material = (await (prisma as any).material.findUnique({
       where: { id },
       include: {
-        instructor: {
+        users: {
           select: {
             id: true,
             name: true,
             avatar: true,
           }
         },
-        enrollments: {
+        courseenrollment: {
           select: {
             id: true,
             userId: true,
           }
         },
-        subMaterials: {
-          select: {
-            id: true,
-            title: true,
-            description: true,
-            startedAt: true,
-          }
-        }
       }
     })) as any;
 
@@ -42,7 +34,7 @@ export async function GET(
     }
 
     // Parse extra content
-    let extraData = { syllabus: [], requirements: [], benefits: [] };
+    let extraData = { syllabus: [], requirements: [], benefits: [], sessions: [] };
     if (material.content) {
       try {
         extraData = JSON.parse(material.content);
@@ -51,7 +43,7 @@ export async function GET(
       }
     }
 
-    // Tentukan status berdasarkan tanggal (optional logic, can be customized)
+    // Tentukan status berdasarkan tanggal
     const now = new Date();
     const materialDate = new Date(material.date);
     let status: "in-progress" | "done" | "upcoming" = "upcoming";
@@ -64,21 +56,52 @@ export async function GET(
 
     // Check if current user is enrolled
     const isJoined = session?.user?.id 
-      ? material.enrollments.some((e: any) => e.userId === session.user.id)
+      ? material.courseenrollment.some((e: any) => e.userId === session.user.id)
       : false;
+
+    const GRADE_LABEL: Record<string, string> = {
+      X: "Kelas 10",
+      XI: "Kelas 11",
+      XII: "Kelas 12",
+      x: "Kelas 10",
+      xi: "Kelas 11",
+      xii: "Kelas 12",
+    };
+
+    // Fetch dynamic sessions (materials where parentId = programId)
+    const dynamicSessions = await (prisma as any).material.findMany({
+      where: { parentId: material.id },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        date: true,
+        startedAt: true,
+      },
+      orderBy: { date: "asc" },
+    });
+
+    const formattedSessions = [
+      ...(extraData.sessions || []),
+      ...dynamicSessions.map((s: any) => ({
+        id: s.id,
+        title: s.title,
+        description: s.description || `${new Date(s.date).toLocaleDateString("id-ID")} - ${s.startedAt || ""}`,
+      })),
+    ];
 
     const formattedProgram = {
       id: material.id,
       title: material.title,
       description: material.description,
       duration: material.startedAt || "Belum ditentukan",
-      level: material.grade || "Semua",
+      level: GRADE_LABEL[material.grade] || material.grade || "Semua",
       startDate: material.date.toISOString(),
       schedule: material.startedAt ? `Mulai pukul ${material.startedAt}` : "Belum ditentukan",
       location: "Aula Utama IRMA", // Default placeholder
-      instructor: material.instructor?.name || "Instruktur IRMA",
+      instructor: material.users?.name || "Instruktur IRMA",
       quota: {
-        filled: material.enrollments.length,
+        filled: material.courseenrollment.length,
         total: material.participants ? parseInt(material.participants) : 0,
       },
       status: status,
@@ -86,7 +109,7 @@ export async function GET(
       syllabus: extraData.syllabus || [],
       requirements: extraData.requirements || [],
       benefits: extraData.benefits || [],
-      sessions: (extraData as any).sessions || material.subMaterials || [],
+      sessions: formattedSessions,
       isJoined,
     };
 
@@ -163,17 +186,17 @@ export async function PUT(
     const mappedCategory = CATEGORY_MAP[category] || "Wajib";
     const mappedGrade = GRADE_MAP[grade] || "X";
 
-    // Fetch the existing program to get its instructorId for sub-materials
-    const existingProgram = (await prisma.material.findUnique({
+    // Fetch the existing program to check existence
+    const existingProgram = await prisma.material.findUnique({
       where: { id },
-      select: { instructorId: true, materialType: true }
-    })) as any;
+      select: { materialType: true }
+    });
 
     if (!existingProgram || existingProgram.materialType !== "program") {
       return NextResponse.json({ error: "Program tidak ditemukan" }, { status: 404 });
     }
 
-    const updatedProgram = await (prisma.material as any).update({
+    const updatedProgram = await prisma.material.update({
       where: { id },
       data: {
         title,
@@ -184,11 +207,9 @@ export async function PUT(
         startedAt: duration || null, // StartedAt stores duration for programs
         materialType: "program",
         content: extraContent,
+        updatedAt: new Date(),
       },
     });
-
-    // Sub-materials (Sessions) are now stored in JSON 'content' above.
-    // No longer synchronizing separate records to avoid cluttering.
 
     return NextResponse.json(updatedProgram);
   } catch (error) {
