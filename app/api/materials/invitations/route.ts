@@ -27,14 +27,14 @@ export async function GET(req: NextRequest) {
     // Get pending invitations for this user
     console.log("Fetching invitations for user:", user.id, user.email);
     
-    const invitations = await prisma.materialInvite.findMany({
+    const invitations = await prisma.materialinvite.findMany({
       where: {
         userId: user.id,
         status: "pending",
       },
       include: {
         material: true,
-        instructor: {
+        users_materialinvite_instructorIdTousers: {
           select: {
             id: true,
             name: true,
@@ -47,19 +47,19 @@ export async function GET(req: NextRequest) {
       },
     });
 
-    console.log("Found invitations:", invitations.length, invitations);
+    // Format for frontend (instructor mapping)
+    const formattedInvitations = invitations.map(inv => ({
+      ...inv,
+      instructor: inv.users_materialinvite_instructorIdTousers
+    }));
 
     return NextResponse.json({
       success: true,
-      invitations,
+      invitations: formattedInvitations,
       total: invitations.length,
     });
   } catch (error) {
     console.error("Get invitations error:", error);
-    if (error instanceof Error) {
-      console.error("Error message:", error.message);
-      console.error("Error stack:", error.stack);
-    }
     return NextResponse.json(
       { error: "Failed to fetch invitations", details: error instanceof Error ? error.message : String(error) },
       { status: 500 }
@@ -90,25 +90,39 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { token, status } = body; // status: accepted or rejected
+    const { token, status, reason, materialId } = body; // status: accepted or rejected
 
-    if (!token || !status) {
+    if (!status) {
       return NextResponse.json(
-        { error: "Token and status are required" },
+        { error: "Status is required" },
         { status: 400 }
       );
     }
 
-    const invite = await prisma.materialInvite.findUnique({
-      where: { token },
-      include: {
-        material: true,
-      },
-    });
+    // Attempt to find the invitation
+    let invite = null;
+    if (token) {
+      invite = await prisma.materialinvite.findUnique({
+        where: { token },
+        include: { material: true },
+      });
+    }
+
+    // SELF-HEALING FALLBACK: If token lookup fails, try finding by materialId + userId
+    if (!invite && materialId && user.id) {
+      console.log("[POST /api/materials/invitations] Token failed or missing, trying fallback with materialId:", materialId);
+      invite = await prisma.materialinvite.findFirst({
+        where: {
+          materialId: materialId,
+          userId: user.id
+        },
+        include: { material: true }
+      });
+    }
 
     if (!invite) {
       return NextResponse.json(
-        { error: "Invitation not found" },
+        { error: "Undangan tidak ditemukan. Silakan refresh halaman." },
         { status: 404 }
       );
     }
@@ -121,17 +135,34 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    console.log("=== HANDLING INVITATION ===");
-    console.log("Token:", token);
-    console.log("Status:", status);
-    console.log("User:", user.id, user.email);
-    console.log("Material:", invite.materialId);
-
     // Update invitation status
-    const updatedInvite = await prisma.materialInvite.update({
-      where: { token },
-      data: { status },
+    const updatedInvite = await prisma.materialinvite.update({
+      where: { id: invite.id },
+      data: { 
+        status, 
+        reason: status === "rejected" ? reason : null,
+        updatedAt: new Date() 
+      } as any,
     });
+
+    // Sync with notifications
+    try {
+      await prisma.notification.updateMany({
+        where: { 
+          OR: [
+            { inviteToken: invite.token },
+            { 
+              userId: user.id,
+              resourceId: invite.materialId,
+              type: "invitation"
+            }
+          ]
+        },
+        data: { status } as any,
+      });
+    } catch (error) {
+      console.warn("Failed to sync notification status:", error);
+    }
 
     // If accepted, create course enrollment
     if (status === "accepted") {
@@ -143,19 +174,23 @@ export async function POST(req: NextRequest) {
             userId: user.id,
           },
         },
-        update: { role: "user" },
+        update: { 
+          role: "user",
+          enrolledAt: new Date()
+        },
         create: {
+          id: `enr-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
           materialId: invite.materialId,
           userId: user.id,
           role: "user",
-              date: new Date(),
+          date: new Date(),
           time: "00:00",
           instructorArrival: "pending",
           StartAt: new Date(),
           EndTime: new Date(),
+          enrolledAt: new Date(),
         },
       });
-      console.log("CourseEnrollment created:", enrollment);
     }
 
     return NextResponse.json({

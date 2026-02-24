@@ -10,10 +10,10 @@ export default function MaterialRecapButton({ materialId }: MaterialRecapButtonP
 
   return (
     <button
-      onClick={() => router.push(`/materials/${materialId}/recap`)}
-      className="w-full py-3 rounded-xl bg-cyan-400 text-white font-black border-2 border-cyan-600 border-b-4 hover:bg-cyan-500 active:border-b-2 active:translate-y-0.5 transition-all"
+      onClick={() => router.push(`/materials/${materialId}`)} // SEMENTARA langsung ke halaman materi, nanti diganti ke recap khusus
+      className="w-full py-3 rounded-xl bg-emerald-500 text-white font-black border-2 border-emerald-600 border-b-4 hover:bg-emerald-400 active:border-b-2 active:translate-y-0.5 transition-all shadow-lg hover:shadow-emerald-200"
     >
-      Lihat Rekapan
+      Lihat Rekapan Materi
     </button>
   );
 }

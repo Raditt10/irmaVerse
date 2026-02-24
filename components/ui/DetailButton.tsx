@@ -9,6 +9,10 @@ interface DetailButtonProps {
   label?: string;
   className?: string;
   role?: "instruktur" | "admin" | "member" | null;
+  iconOnly?: boolean;
+  showConfirm?: boolean;
+  confirmTitle?: string;
+  confirmMessage?: string;
 }
 
 export default function DetailButton({
@@ -18,6 +22,10 @@ export default function DetailButton({
   label = "Detail",
   className = "",
   role,
+  iconOnly = false,
+  showConfirm = true,
+  confirmTitle,
+  confirmMessage,
 }: DetailButtonProps) {
   const isInstructor = role === "instruktur" || role === "admin";
 
@@ -45,20 +53,37 @@ export default function DetailButton({
     return (
       <div className={`flex items-center gap-2 w-full ${className}`}>
         {/* TOMBOL DETAIL (UTAMA) */}
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onClick();
-          }}
-          className={`
-            ${mainButtonClass}
-            bg-teal-400 text-white border-teal-600 
-            hover:bg-teal-500 hover:shadow-teal-100
-          `}
-        >
-          <Eye className="w-5 h-5 stroke-[2.5]" />
-          <span>{label}</span>
-        </button>
+        {iconOnly ? (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onClick();
+            }}
+            className={`
+              ${actionIconClass}
+              bg-teal-400 text-white border-teal-600 
+              hover:bg-teal-500 hover:shadow-teal-100
+            `}
+            title="Lihat Detail"
+          >
+            <Eye className="w-5 h-5 stroke-[2.5]" />
+          </button>
+        ) : (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onClick();
+            }}
+            className={`
+              ${mainButtonClass}
+              bg-teal-400 text-white border-teal-600 
+              hover:bg-teal-500 hover:shadow-teal-100
+            `}
+          >
+            <Eye className="w-5 h-5 stroke-[2.5]" />
+            <span>{label}</span>
+          </button>
+        )}
 
         {/* TOMBOL EDIT (ICON ONLY) */}
         <button
@@ -83,6 +108,9 @@ export default function DetailButton({
             variant="icon-only"
             className={`${actionIconClass} p-0!`} // Override padding bawaan DeleteButton
             iconClassName="w-5 h-5 stroke-[2.5]"
+            showConfirm={showConfirm}
+            confirmTitle={confirmTitle}
+            confirmMessage={confirmMessage}
           />
         )}
       </div>
@@ -90,6 +118,24 @@ export default function DetailButton({
   }
 
   // TAMPILAN MEMBER (FULL WIDTH DETAIL)
+  if (iconOnly) {
+    return (
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onClick && onClick();
+        }}
+        className={`
+          ${actionIconClass}
+          bg-teal-400 text-white border-teal-600 hover:bg-teal-500
+        `}
+        title="Lihat Detail"
+      >
+        <Eye className="w-5 h-5 stroke-[2.5]" />
+      </button>
+    );
+  }
+
   return (
     <button
       onClick={(e) => {

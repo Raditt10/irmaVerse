@@ -34,7 +34,7 @@ import { useRouter } from "next/navigation";
 
 // --- KOMPONEN LEVEL CARD YANG DIPERBARUI ---
 const LevelCardContent = () => (
-  <div className="bg-gradient-to-r from-emerald-400 to-teal-400 p-5 rounded-[2rem] text-white shadow-[0_6px_0_0_#047857] border-2 border-emerald-600 relative overflow-hidden group transition-transform hover:scale-[1.02]">
+  <div className="bg-linear-to-r from-emerald-400 to-teal-400 p-5 rounded-[2.5rem] text-white shadow-[0_8px_0_0_#047857] border-2 border-emerald-600 relative overflow-hidden group transition-transform hover:scale-[1.02]">
     {/* Dekorasi background */}
     <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -mr-10 -mt-10 blur-sm" />
     <div className="absolute bottom-0 left-0 w-16 h-16 bg-white/10 rounded-full -ml-8 -mb-8 blur-sm" />
@@ -84,6 +84,8 @@ const Dashboard = () => {
   const router = useRouter();
   const [favoriteInstructors, setFavoriteInstructors] = useState<any[]>([]);
   const [loadingInstructors, setLoadingInstructors] = useState(true);
+  const [finishedMaterials, setFinishedMaterials] = useState<any[]>([]);
+  const [loadingFinished, setLoadingFinished] = useState(true);
 
   // Redirect non-user roles away from overview
   React.useEffect(() => {
@@ -96,32 +98,66 @@ const Dashboard = () => {
     }
   }, [status, session, router]);
 
-  // Load favorite instructors
+  // Load data
   useEffect(() => {
-    const fetchInstructorsAndFavorites = async () => {
+    const fetchDashboardData = async () => {
       try {
-        const res = await fetch("/api/instructors");
-        if (!res.ok) throw new Error("Gagal mengambil data instruktur");
-        const data = await res.json();
+        // Load instructors, favorites, materials, and attendance
+        const [instructorsRes, favoritesRes, materialsRes, attendanceRes] = await Promise.all([
+          fetch("/api/instructors"),
+          fetch("/api/instructors/favorites"),
+          fetch("/api/materials"),
+          fetch("/api/materials/attendance"),
+        ]);
 
-        const favoritesJson = localStorage.getItem("favoriteInstructors");
-        const favoriteIds = favoritesJson ? JSON.parse(favoritesJson) : [];
+        if (instructorsRes.ok) {
+          const data = await instructorsRes.json();
+          let favoriteIds: string[] = [];
+          if (favoritesRes.ok) {
+            const favData = await favoritesRes.json();
+            favoriteIds = Array.isArray(favData.favoriteIds)
+              ? favData.favoriteIds.map((id: any) => String(id))
+              : [];
+          }
+          const favorites = data.filter((instructor: any) =>
+            favoriteIds.includes(String(instructor.id))
+          );
+          setFavoriteInstructors(favorites);
+        }
 
-        const favorites = data.filter((instructor: any) =>
-          favoriteIds.includes(instructor.id)
-        );
-        setFavoriteInstructors(favorites);
+        if (materialsRes.ok) {
+          const mData = await materialsRes.json();
+          setMaterials(mData.slice(0, 5));
+        }
+
+        if (attendanceRes.ok) {
+          const aData = await attendanceRes.json();
+          // Filter: only materials that have passed their date (status complete)
+          // and have an attendance record (can see recap)
+          const now = new Date();
+          const finished = Array.isArray(aData) 
+            ? aData
+                .sort((a: any, b: any) => 
+                  new Date(b.attendedAt).getTime() - new Date(a.attendedAt).getTime()
+                )
+            : [];
+          setFinishedMaterials(finished.slice(0, 5));
+        }
+
       } catch (error) {
-        console.error("Error loading favorites:", error);
+        console.error("Error loading dashboard data:", error);
       } finally {
         setLoadingInstructors(false);
+        setLoadingMaterials(false);
+        setLoadingFinished(false);
       }
     };
 
     if (status === "authenticated") {
-      fetchInstructorsAndFavorites();
+      fetchDashboardData();
     }
   }, [status]);
+
     
   // Random button colors for quizzes
   const quizButtonColors = [
@@ -173,11 +209,8 @@ const Dashboard = () => {
     }
   ];
 
-  const recentMaterials = [
-    { id: 1, title: "Tauhid - Konsep Ketauhidan", instructor: "Ust. Ahmad", progress: 65, duration: "45 menit" },
-    { id: 2, title: "Fiqih Ibadah - Tata Cara Shalat", instructor: "Ust. Hani", progress: 40, duration: "60 menit" },
-    { id: 3, title: "Tajweed - Hukum Nun Sukun dan Tanwin", instructor: "Ust. Fatima", progress: 85, duration: "50 menit" },
-  ];
+  const [materials, setMaterials] = useState<any[]>([]);
+  const [loadingMaterials, setLoadingMaterials] = useState(true);
 
   const upcomingQuizzes = [
     { id: 1, title: "Kuis Tauhid Bab 1", dueDate: "5 Feb 2026", difficulty: "Mudah", questions: 10 },
@@ -230,41 +263,50 @@ const Dashboard = () => {
             <div className="xl:col-span-8 space-y-8">
               
               {/* Stats Row */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                 {/* Stat 1 */}
-                <div className="bg-white p-5 rounded-[2rem] border-2 border-slate-100 shadow-[0_4px_0_0_#f1f5f9] hover:shadow-[0_4px_0_0_#cbd5e1] hover:border-slate-300 transition-all duration-300 group">
-                  <div className="flex justify-between items-start mb-3">
-                    <div className="p-3 bg-amber-50 border-2 border-amber-100 rounded-2xl group-hover:scale-110 transition-transform">
-                      <Award className="w-7 h-7 text-amber-500" strokeWidth={2.5} />
+                {/* Stat 1 - Badges (Amber) */}
+                <div className="bg-white p-5 md:p-6 rounded-[2.5rem] border-2 border-amber-100 shadow-[0_6px_0_0_#fef3c7] sm:shadow-[0_8px_0_0_#fef3c7] hover:shadow-[0_4px_0_0_#fef3c7] hover:translate-y-1 hover:border-amber-200 transition-all duration-300 group max-md:aspect-square flex flex-col justify-between">
+                  <div className="flex justify-between items-start md:mb-4">
+                    <div className="p-2.5 md:p-3 bg-amber-50 border-2 border-amber-100 rounded-2xl group-hover:scale-110 transition-transform">
+                      <Award className="w-6 h-6 md:w-7 md:h-7 text-amber-500" strokeWidth={2.5} />
                     </div>
-                    <span className="text-xs font-black px-3 py-1 bg-slate-100 text-slate-500 rounded-full border border-slate-200">Total</span>
+                    <span className="text-[10px] font-black px-2.5 py-1 md:px-3 bg-amber-100 text-amber-600 rounded-full border border-amber-200">Total</span>
                   </div>
-                  <div className="text-3xl font-black text-slate-800 mb-1">{stats.totalBadges}</div>
-                  <div className="text-sm text-slate-500 font-bold">Badges Dikoleksi</div>
+                  <div className="flex flex-col gap-1">
+                    <div className="text-2xl md:text-3xl font-black text-slate-800 leading-none">{stats.totalBadges}</div>
+                    <div className="text-[10px] text-slate-400 font-black tracking-wide uppercase">Badges Koleksi</div>
+                  </div>
                 </div>
 
                 {/* Stat 2 */}
-                <div className="bg-white p-5 rounded-[2rem] border-2 border-slate-100 shadow-[0_4px_0_0_#f1f5f9] hover:shadow-[0_4px_0_0_#cbd5e1] hover:border-slate-300 transition-all duration-300 group">
-                  <div className="flex justify-between items-start mb-3">
-                    <div className="p-3 bg-emerald-50 border-2 border-emerald-100 rounded-2xl group-hover:scale-110 transition-transform">
-                      <BarChart3 className="w-7 h-7 text-emerald-500" strokeWidth={2.5} />
+                {/* Stat 2 - Kuis (Emerald) */}
+                <div className="bg-white p-5 md:p-6 rounded-[2.5rem] border-2 border-emerald-100 shadow-[0_6px_0_0_#d1fae5] sm:shadow-[0_8px_0_0_#d1fae5] hover:shadow-[0_4px_0_0_#d1fae5] hover:translate-y-1 hover:border-emerald-200 transition-all duration-300 group max-md:aspect-square flex flex-col justify-between">
+                  <div className="flex justify-between items-start md:mb-4">
+                    <div className="p-2.5 md:p-3 bg-emerald-50 border-2 border-emerald-100 rounded-2xl group-hover:scale-110 transition-transform">
+                      <BarChart3 className="w-6 h-6 md:w-7 md:h-7 text-emerald-500" strokeWidth={2.5} />
                     </div>
-                    <span className="text-xs font-black px-3 py-1 bg-emerald-100 text-emerald-600 rounded-full border border-emerald-200">{stats.averageScore}%</span>
+                    <span className="text-[10px] font-black px-2.5 py-1 md:px-3 bg-emerald-100 text-emerald-600 rounded-full border border-emerald-200">{stats.averageScore}%</span>
                   </div>
-                  <div className="text-3xl font-black text-slate-800 mb-1">{stats.totalQuizzes}</div>
-                  <div className="text-sm text-slate-500 font-bold">Kuis Selesai</div>
+                  <div className="flex flex-col gap-1">
+                    <div className="text-2xl md:text-3xl font-black text-slate-800 leading-none">{stats.totalQuizzes}</div>
+                    <div className="text-[10px] text-slate-400 font-black tracking-wide uppercase">Kuis Selesai</div>
+                  </div>
                 </div>
 
                 {/* Stat 3 */}
-                <div className="bg-white p-5 rounded-[2rem] border-2 border-slate-100 shadow-[0_4px_0_0_#f1f5f9] hover:shadow-[0_4px_0_0_#cbd5e1] hover:border-slate-300 transition-all duration-300 group">
-                  <div className="flex justify-between items-start mb-3">
-                    <div className="p-3 bg-rose-50 border-2 border-rose-100 rounded-2xl group-hover:scale-110 transition-transform">
-                      <Flame className="w-7 h-7 text-rose-500" strokeWidth={2.5} />
+                {/* Stat 3 - Streak (Rose) */}
+                <div className="bg-white p-5 md:p-6 rounded-[2.5rem] border-2 border-rose-100 shadow-[0_6px_0_0_#ffe4e6] sm:shadow-[0_8px_0_0_#ffe4e6] hover:shadow-[0_4px_0_0_#ffe4e6] hover:translate-y-1 hover:border-rose-200 transition-all duration-300 group max-md:aspect-square flex flex-col justify-between">
+                  <div className="flex justify-between items-start md:mb-4">
+                    <div className="p-2.5 md:p-3 bg-rose-50 border-2 border-rose-100 rounded-2xl group-hover:scale-110 transition-transform">
+                      <Flame className="w-6 h-6 md:w-7 md:h-7 text-rose-500" strokeWidth={2.5} />
                     </div>
-                    <span className="text-xs font-black px-3 py-1 bg-rose-100 text-rose-600 rounded-full border border-rose-200">Mantap!</span>
+                    <span className="text-[10px] font-black px-2.5 py-1 md:px-3 bg-rose-100 text-rose-600 rounded-full border border-rose-200">Mantap!</span>
                   </div>
-                  <div className="text-3xl font-black text-slate-800 mb-1">{stats.streak} Hari</div>
-                  <div className="text-sm text-slate-500 font-bold">Konsistensi</div>
+                  <div className="flex flex-col gap-1">
+                    <div className="text-2xl md:text-3xl font-black text-slate-800 leading-none">{stats.streak} Hari</div>
+                    <div className="text-[10px] text-slate-400 font-black tracking-wide uppercase">Konsistensi</div>
+                  </div>
                 </div>
               </div>
 
@@ -279,7 +321,7 @@ const Dashboard = () => {
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   {newsItems.map((news) => (
-                    <div key={news.id} className="flex gap-4 p-4 bg-white rounded-[2rem] border-2 border-slate-100 hover:border-emerald-400 hover:shadow-[0_6px_0_0_#10b981] hover:-translate-y-1 transition-all cursor-pointer group">
+                    <div key={news.id} className="flex gap-4 p-4 bg-white rounded-4xl border-2 border-slate-100 hover:border-emerald-400 hover:shadow-[0_6px_0_0_#10b981] hover:-translate-y-1 transition-all cursor-pointer group">
                       <div className="w-24 h-24 rounded-2xl bg-slate-200 overflow-hidden shrink-0 border-2 border-slate-100 group-hover:border-emerald-200">
                         <img src={`https://picsum.photos/200/200?random=${news.imageId}`} alt={news.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                       </div>
@@ -314,32 +356,41 @@ const Dashboard = () => {
                 </div>
                 
                 <div className="space-y-3">
-                  {recentMaterials.map((material) => (
-                    <div key={material.id} className="bg-white p-4 rounded-2xl border-2 border-slate-100 hover:border-emerald-400 hover:shadow-[0_4px_0_0_#10b981] transition-all group cursor-pointer">
-                      <div className="flex items-start justify-between mb-3">
-                        <div>
-                          <h3 className="font-black text-slate-800 group-hover:text-emerald-600 transition-colors">{material.title}</h3>
-                          <p className="text-xs text-slate-500 font-bold mt-1">{material.instructor}</p>
+                  {loadingMaterials ? (
+                    <p className="text-center text-xs text-slate-400 font-bold py-10">Memuat kajian...</p>
+                  ) : materials.length === 0 ? (
+                    <p className="text-center text-xs text-slate-400 font-bold py-10">Belum ada kajian terbaru</p>
+                  ) : (
+                    materials.map((material) => (
+                      <div key={material.id} onClick={() => router.push(`/materials`)} className="bg-white p-4 rounded-2xl border-2 border-slate-100 hover:border-emerald-400 hover:shadow-[0_4px_0_0_#10b981] transition-all group cursor-pointer">
+                        <div className="flex items-start justify-between mb-3">
+                          <div>
+                            <h3 className="font-black text-slate-800 group-hover:text-emerald-600 transition-colors">{material.title}</h3>
+                            <p className="text-xs text-slate-500 font-bold mt-1">{material.instructor}</p>
+                          </div>
+                          {!material.isJoined && (
+                            <span className="px-2 py-1 bg-amber-100 text-amber-600 text-[10px] font-black rounded-lg border border-amber-200">Undangan</span>
+                          )}
+                          <button className="p-2 bg-emerald-50 border border-emerald-200 rounded-xl group-hover:bg-emerald-100 transition-colors">
+                            <Play className="h-4 w-4 text-emerald-600 fill-emerald-600" />
+                          </button>
                         </div>
-                        <button className="p-2 bg-emerald-50 border border-emerald-200 rounded-xl group-hover:bg-emerald-100 transition-colors">
-                          <Play className="w-4 h-4 text-emerald-600 fill-emerald-600" />
-                        </button>
-                      </div>
-                      
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="w-full bg-slate-100 rounded-full h-2 mr-3">
-                          <div 
-                            className="bg-gradient-to-r from-emerald-400 to-teal-400 h-2 rounded-full transition-all" 
-                            style={{ width: `${material.progress}%` }}
-                          />
+                        
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="w-full bg-slate-100 rounded-full h-2 mr-3">
+                            <div 
+                              className="bg-linear-to-r from-emerald-400 to-teal-400 h-2 rounded-full transition-all" 
+                              style={{ width: material.isJoined ? '100%' : '0%' }}
+                            />
+                          </div>
+                          <span className="text-xs font-black text-slate-600 whitespace-nowrap">{material.isJoined ? '100%' : '0%'}</span>
                         </div>
-                        <span className="text-xs font-black text-slate-600 whitespace-nowrap">{material.progress}%</span>
+                        <p className="text-xs text-slate-400 font-bold flex items-center gap-1">
+                          <Clock className="w-3 h-3" /> {new Date(material.date).toLocaleDateString()}
+                        </p>
                       </div>
-                      <p className="text-xs text-slate-400 font-bold flex items-center gap-1">
-                        <Clock className="w-3 h-3" /> {material.duration}
-                      </p>
-                    </div>
-                  ))}
+                    ))
+                  )}
                 </div>
               </section>
 
@@ -361,7 +412,7 @@ const Dashboard = () => {
                   {upcomingQuizzes.map((quiz, index) => {
                     const buttonColor = getRandomButtonColor(index);
                     return (
-                    <div key={quiz.id} className="bg-white p-4 rounded-[2rem] border-2 border-slate-100 hover:border-slate-300 hover:shadow-[0_4px_0_0_#cbd5e1] hover:-translate-y-1 transition-all group">
+                    <div key={quiz.id} className="bg-white p-5 rounded-4xl border-2 border-slate-100 hover:border-slate-300 shadow-[0_4px_0_0_#f1f5f9] hover:shadow-[0_6px_0_0_#cbd5e1] hover:-translate-y-1 transition-all group">
                       <div className="flex items-start justify-between mb-3">
                         <h3 className="font-bold text-slate-800 text-sm">{quiz.title}</h3>
                       </div>
@@ -477,34 +528,56 @@ const Dashboard = () => {
                   )}
                 </div>
 
-                {/* Program Aktif */}
+                {/* Kajian Selesai Section */}
                 <div className="bg-white p-5 rounded-[2rem] border-2 border-slate-100 shadow-sm">
                   <h4 className="font-black text-slate-800 mb-4 flex items-center gap-2">
-                    <Users className="w-5 h-5 text-slate-800" />
-                    Program Aktif
+                    <CheckCircle className="w-5 h-5 text-emerald-500" />
+                    Kajian Selesai Baru-baru Ini
                   </h4>
                   
-                  <div className="space-y-3">
-                    {programs.map((program) => {
-                      const IconComponent = program.icon;
-                      return (
-                        <div key={program.id} className="border-l-4 border-emerald-400 pl-4 py-2 hover:border-emerald-600 transition-colors cursor-pointer group">
-                          <div className="flex items-center justify-between mb-2">
-                            <h5 className="font-bold text-sm text-slate-800 group-hover:text-emerald-600 transition-colors">{program.title}</h5>
-                            <span className="text-xs font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">{program.progress}%</span>
-                          </div>
-                          
-                          <div className="w-full bg-slate-100 rounded-full h-1.5 mb-2">
-                            <div 
-                              className="bg-gradient-to-r from-emerald-400 to-teal-400 h-1.5 rounded-full" 
-                              style={{ width: `${program.progress}%` }}
-                            />
-                          </div>
-                          
-                          <p className="text-xs text-slate-400 font-bold">{program.members} peserta</p>
+                  <div className="space-y-4">
+                    {loadingFinished ? (
+                      <div className="flex flex-col items-center justify-center py-6 gap-2">
+                        <div className="w-6 h-6 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin" />
+                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Memuat data...</p>
+                      </div>
+                    ) : finishedMaterials.length === 0 ? (
+                      <div className="text-center py-8">
+                        <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto mb-3 border-2 border-slate-100">
+                          <BookOpen className="w-6 h-6 text-slate-200" />
                         </div>
-                      );
-                    })}
+                        <p className="text-xs text-slate-400 font-bold">Belum ada kajian yang diselesaikan</p>
+                      </div>
+                    ) : (
+                      finishedMaterials.map((item) => (
+                        <div 
+                          key={item.id} 
+                          className="group relative p-4 rounded-2xl border-2 border-slate-50 hover:border-emerald-100 bg-slate-50/30 hover:bg-white transition-all cursor-pointer"
+                          onClick={() => router.push(`/materials/${item.materialId}`)}
+                        >
+                          <div className="flex items-center justify-between mb-2">
+                            <h5 className="font-black text-sm text-slate-800 group-hover:text-emerald-600 transition-colors line-clamp-1 truncate pr-4">
+                              {item.materialTitle || item.material?.title || "Kajian"}
+                            </h5>
+                            <span className="flex items-center gap-1 text-[9px] font-black text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-100 whitespace-nowrap">
+                              <CheckCircle className="w-3 h-3 fill-emerald-500 text-white" /> SELESAI
+                            </span>
+                          </div>
+                          
+                          <div className="flex items-center justify-between">
+                            <p className="text-[10px] text-slate-400 font-bold tracking-tight">
+                              {item.instructorName || item.material?.instructor || "Instruktur"}
+                            </p>
+                            <p className="text-[9px] text-slate-300 font-black uppercase tracking-widest pl-2">
+                              {new Date(item.createdAt || item.attendedAt).toLocaleDateString("id-ID", {
+                                day: 'numeric',
+                                month: 'short'
+                              })}
+                            </p>
+                          </div>
+                        </div>
+                      ))
+                    )}
                   </div>
                 </div>
 

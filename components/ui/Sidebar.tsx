@@ -19,6 +19,7 @@ import {
   MessageSquare,
   Award,
   ChevronDown,
+  Contact, // Icon baru untuk variasi
 } from "lucide-react";
 
 // Custom scrollbar styles - Cartoon Style
@@ -69,6 +70,13 @@ const scrollbarStyles = `
 `;
 
 const Sidebar = () => {
+  interface MenuItem {
+    icon: any;
+    label: string;
+    path?: string;
+    id?: string;
+    submenu?: MenuItem[];
+  }
   const router = useRouter();
   const pathname = usePathname();
   const { data: session } = useSession();
@@ -121,7 +129,7 @@ const Sidebar = () => {
     }));
   };
 
-  const baseMenuItems = [
+  const baseMenuItems: MenuItem[] = [
     { 
       icon: LayoutGrid, 
       label: "Dashboard", 
@@ -152,7 +160,7 @@ const Sidebar = () => {
     },
   ];
 
-  const menuItems = [
+  const menuItems: MenuItem[] = [
     ...baseMenuItems,
     ...(!isInstruktur ? [
       { 
@@ -172,16 +180,6 @@ const Sidebar = () => {
       path: "/schedule" 
     },
     { 
-      icon: Users, 
-      label: "Daftar Instruktur", 
-      path: "/instructors" 
-    },
-    { 
-      icon: MessageCircle, 
-      label: isInstruktur ? "Chat Anggota" : "Chat Instruktur", 
-      path: isInstruktur ? "/academy/chat" : "/instructors/chat" 
-    },
-    { 
       icon: GraduationCap, 
       label: "Program Kurikulum", 
       path: "/programs" 
@@ -191,11 +189,58 @@ const Sidebar = () => {
       label: "Info Perlombaan", 
       path: "/competitions" 
     },
-    { 
-      icon: Users, 
-      label: "Daftar Anggota", 
-      path: "/members" 
-    },
+    // --- UPDATED SECTION: INSTRUKTUR & DAFTAR ANGGOTA ---
+    ...(isInstruktur 
+      ? [
+          { 
+            icon: Users, 
+            label: "Instruktur", 
+            path: "/instructors" 
+          },
+          { 
+            icon: Users, 
+            label: "Daftar Anggota", 
+            id: "menu-anggota",
+            submenu: [
+              {
+                icon: Users,
+                label: "List Anggota",
+                path: "/members"
+              },
+              {
+                icon: MessageCircle,
+                label: "Chat Anggota",
+                path: "/academy/chat"
+              }
+            ]
+          }
+        ]
+      : [
+          { 
+            icon: Users,
+            label: "Instruktur", 
+            id: "menu-instruktur",
+            submenu: [
+              {
+                icon: Contact,
+                label: "Daftar Instruktur",
+                path: "/instructors"
+              },
+              {
+                icon: MessageCircle,
+                label: "Chat Instruktur",
+                path: "/instructors/chat"
+              }
+            ]
+          },
+          { 
+            icon: Users, 
+            label: "Daftar Anggota", 
+            path: "/members" 
+          }
+        ]
+    ),
+    // ----------------------------------------------------
     { 
       icon: Newspaper, 
       label: isInstruktur ? "Kelola Berita" : "Berita IRMA", 
@@ -230,7 +275,7 @@ const Sidebar = () => {
 
         {/* Menu Items Container */}
         <div className="flex-1 overflow-y-auto sidebar-scrollbar px-4 pb-8 space-y-1">
-          {menuItems.map((item, idx) => {
+          {menuItems.map((item: MenuItem, idx) => {
             const IconComponent = item.icon;
             const isActive = pathname === item.path;
             const hasSubmenu = item.submenu && item.submenu.length > 0;
@@ -304,54 +349,53 @@ const Sidebar = () => {
         </div>
       </div>
 
-      {/* --- MOBILE SIDEBAR DRAWER (DIBUAT RAMAI/PADAT) --- */}
+      {/* --- MOBILE SIDEBAR DRAWER --- */}
       {isMobileOpen && (
         <div className="lg:hidden">
-          {/* Backdrop */}
+            {/* Backdrop with enhanced blur */}
           <div
-            className="fixed inset-0 z-40 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300"
+            className="fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-md animate-in fade-in duration-500"
             onClick={() => setIsMobileOpen(false)}
           />
           
-          {/* Drawer Panel */}
-          <div className="fixed z-50 top-0 left-0 h-dvh w-[85%] max-w-[320px] shadow-2xl animate-in slide-in-from-left duration-300 rounded-r-[3rem] overflow-hidden flex flex-col">
+          {/* Drawer Panel - iOS style spring animation */}
+          <div className="fixed z-50 top-0 left-0 h-dvh w-[82%] max-w-75 shadow-2xl animate-in slide-in-from-left duration-500 ease-out rounded-r-[2.5rem] overflow-hidden flex flex-col" style={{ zIndex: 2147483647 }}>
             
-            {/* Background Decorations (Supaya Ramai) */}
-            <div className="absolute inset-0 bg-[#FDFBF7] z-0" /> {/* Base Color */}
-            <div className="absolute top-0 right-0 w-full h-full opacity-5 bg-[radial-gradient(#14b8a6_1.5px,transparent_1.5px)] bg-size-[16px_16px] z-0 pointer-events-none" /> {/* Polka Dots */}
+            {/* Background Decorations */}
+            <div className="absolute inset-0 bg-white z-0 pointer-events-none" />
+            <div className="absolute top-0 right-0 w-full h-full opacity-5 bg-[radial-gradient(#14b8a6_1.5px,transparent_1.5px)] bg-size-[16px_16px] z-0 pointer-events-none" />
             
-            {/* Colorful Blobs */}
-            <div className="absolute -top-20 -right-20 w-64 h-64 bg-teal-200/40 rounded-full blur-3xl pointer-events-none z-0" />
-            <div className="absolute top-1/3 -left-10 w-48 h-48 bg-amber-200/40 rounded-full blur-3xl pointer-events-none z-0" />
-            <div className="absolute bottom-0 right-0 w-64 h-64 bg-emerald-200/40 rounded-full blur-3xl pointer-events-none z-0" />
+            <div className="absolute -top-20 -right-20 w-64 h-64 bg-teal-100/30 rounded-full blur-3xl pointer-events-none z-0" />
+            <div className="absolute top-1/4 -left-10 w-48 h-48 bg-amber-100/30 rounded-full blur-3xl pointer-events-none z-0" />
+            <div className="absolute bottom-0 right-0 w-64 h-64 bg-emerald-100/30 rounded-full blur-3xl pointer-events-none z-0" />
 
-            {/* --- Content Container (z-10 agar di atas background) --- */}
-            <div className="relative z-10 flex flex-col h-full">
+            {/* --- Content Container --- */}
+            <div className="relative z-20 flex flex-col h-full pointer-events-auto">
               
-              {/* Header Card */}
-              <div className="px-5 pt-6 pb-2">
-                <div className="bg-white/80 backdrop-blur-md p-4 rounded-3xl border-2 border-white shadow-sm flex items-center justify-between">
+              {/* Header Card - More compact */}
+              <div className="px-5 pt-7 pb-3">
+                <div className="bg-white/90 backdrop-blur-lg p-3.5 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-2xl flex items-center justify-center shadow-lg">
-                          <img src="/logo.webp" alt="IRMA Logo" className="h-10 w-10 object-contain" />
+                      <div className="w-9 h-9 flex items-center justify-center">
+                          <img src="/logo.webp" alt="IRMA Logo" className="h-9 w-9 object-contain" />
                       </div>
                       <div>
-                        <h2 className="text-lg font-black text-slate-800 leading-none">IRMA VERSE</h2>
-                        <p className="text-[10px] font-bold text-teal-600 uppercase tracking-widest mt-0.5">Aplikasi IRMA13</p>
+                        <h2 className="text-base font-black text-slate-800 leading-none">IRMA VERSE</h2>
+                        <p className="text-[9px] font-extrabold text-teal-600 uppercase tracking-widest mt-1">MOBILE APP</p>
                       </div>
                    </div>
                    <button
-                    className="w-9 h-9 flex items-center justify-center rounded-xl bg-red-50 text-red-400 hover:bg-red-500 hover:text-white transition-all active:scale-90"
+                    className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-50 text-slate-400 hover:bg-red-50 hover:text-red-500 transition-all active:scale-95 border border-slate-100"
                     onClick={() => setIsMobileOpen(false)}
                   >
-                    <X className="h-5 w-5 stroke-3" />
+                    <X className="h-4 w-4 stroke-3" />
                   </button>
                 </div>
               </div>
 
               {/* Menu Items - Card Style per Item */}
               <div className="flex-1 overflow-y-auto mobile-sidebar-scrollbar px-5 py-2 space-y-3">
-                {menuItems.map((item, idx) => {
+                {menuItems.map((item: MenuItem, idx) => {
                   const IconComponent = item.icon;
                   const isActive = pathname === item.path;
                   const hasSubmenu = item.submenu && item.submenu.length > 0;
@@ -369,20 +413,20 @@ const Sidebar = () => {
                           }
                         }}
                         className={`
-                          w-full flex items-center gap-4 px-5 py-4 transition-all duration-200 text-left relative
+                          w-full flex items-center gap-4 px-4 py-3.5 transition-all duration-300 text-left relative
                           ${isActive && !hasSubmenu
-                            ? "bg-linear-to-r from-teal-400 to-emerald-500 text-white"
+                            ? "bg-linear-to-r from-teal-400 to-emerald-500 text-white shadow-lg shadow-teal-100"
                             : "text-slate-600 hover:bg-white/50 active:bg-white/80"
                           }
                         `}
                       >
-                        <div className={`p-2 rounded-xl ${isActive && !hasSubmenu ? 'bg-white/20' : 'bg-slate-100'}`}>
-                           <IconComponent className={`h-5 w-5 shrink-0 stroke-[2.5] ${isActive && !hasSubmenu ? 'text-white' : 'text-slate-500'}`} />
+                        <div className={`p-1.5 rounded-lg ${isActive && !hasSubmenu ? 'bg-white/20' : 'bg-slate-50'}`}>
+                           <IconComponent className={`h-4.5 w-4.5 shrink-0 stroke-[2.5] ${isActive && !hasSubmenu ? 'text-white' : 'text-slate-400'}`} />
                         </div>
-                        <span className="text-base font-bold flex-1">{item.label}</span>
+                        <span className={`text-[15px] font-bold flex-1 ${isActive && !hasSubmenu ? 'font-black' : ''}`}>{item.label}</span>
                         {hasSubmenu && (
                           <ChevronDown 
-                            className={`h-5 w-5 stroke-3 transition-transform duration-300 ${isSubmenuOpen ? 'rotate-180 text-teal-500' : 'text-slate-300'}`}
+                            className={`h-4 w-4 stroke-3 transition-transform duration-300 ${isSubmenuOpen ? 'rotate-180 text-teal-500' : 'text-slate-300'}`}
                           />
                         )}
                       </button>

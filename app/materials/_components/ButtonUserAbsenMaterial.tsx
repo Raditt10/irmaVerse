@@ -17,25 +17,9 @@ export default function MaterialUserActions({
 }: MaterialUserActionsProps) {
   const router = useRouter();
 
-  if (isJoined) {
-    return (
-      <div className="space-y-3">
-        <div className="flex items-center justify-center gap-2 text-emerald-500 font-bold text-xs bg-emerald-50 py-2 px-3 rounded-lg text-center">
-          <span className="w-full text-center">
-            Kamu sudah mengikuti kajian ini, pada tanggal{" "}
-            {attendedAt
-              ? new Date(attendedAt).toLocaleDateString("id-ID", {
-                  day: "numeric",
-                  month: "long",
-                  year: "numeric",
-                })
-              : materialDate}
-            .
-          </span>
-        </div>
-        <MaterialRecapButton materialId={materialId} />
-      </div>
-    );
+  if (attendedAt) {
+    // Sudah absen, tombol utama recap
+    return <MaterialRecapButton materialId={materialId} />;
   }
 
   return (

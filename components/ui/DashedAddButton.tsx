@@ -19,16 +19,17 @@ export default function DashedAddButton({
   className = "",
   emptyLabel,
 }: DashedAddButtonProps) {
-  const displayLabel =
-    count === 0 && emptyLabel ? emptyLabel : count > 0 ? `${label} (Saat ini: ${count})` : label;
+  const displayLabel = count === 0 && emptyLabel ? emptyLabel : label;
 
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`w-full py-3 rounded-2xl bg-emerald-100 text-emerald-700 font-bold border-2 border-dashed border-emerald-300 hover:bg-emerald-200 hover:border-emerald-400 transition-all flex items-center justify-center gap-2 text-sm lg:text-base ${className}`}
+      className={`w-full py-4 rounded-2xl bg-slate-50 text-slate-500 font-bold border-2 border-dashed border-slate-200 hover:bg-teal-50 hover:text-teal-600 hover:border-teal-300 transition-all flex items-center justify-center gap-2 text-sm lg:text-base group ${className}`}
     >
-      {icon}
+      <div className="p-1 rounded-lg bg-white border border-slate-200 group-hover:border-teal-200 group-hover:bg-white transition-all">
+        {icon}
+      </div>
       {displayLabel}
     </button>
   );

@@ -37,7 +37,8 @@ const Instructors = () => {
   const [instructors, setInstructors] = useState<Instructor[]>([]);
   const [loading, setLoading] = useState(true);
   const [favoriteInstructorIds, setFavoriteInstructorIds] = useState<Set<string>>(new Set());
-  
+  const [togglingId, setTogglingId] = useState<string | null>(null);
+
   // State untuk Search & Filter
   const [searchTerm, setSearchTerm] = useState("");
   const [specializationFilter, setSpecializationFilter] = useState("all");
@@ -58,24 +59,23 @@ const Instructors = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // Load instruktur & favorit dari database
   useEffect(() => {
     fetchInstructors();
-    // Load favorites from localStorage on mount
-    const favoritesJson = localStorage.getItem("favoriteInstructors");
-    if (favoritesJson) {
-      try {
-        const favoriteIds = JSON.parse(favoritesJson);
-        setFavoriteInstructorIds(new Set(favoriteIds));
-      } catch (error) {
-        console.error("Error parsing favorites:", error);
-      }
-    }
+    fetchFavorites();
   }, []);
 
-  // Save favorites to localStorage whenever they change
-  useEffect(() => {
-    localStorage.setItem("favoriteInstructors", JSON.stringify(Array.from(favoriteInstructorIds)));
-  }, [favoriteInstructorIds]);
+  const fetchFavorites = async () => {
+    try {
+      const res = await fetch("/api/instructors/favorites");
+      if (!res.ok) return;
+      const data = await res.json();
+      const ids = Array.isArray(data.favoriteIds) ? data.favoriteIds.map((id: any) => String(id)) : [];
+      setFavoriteInstructorIds(new Set(ids));
+    } catch (error) {
+      console.error("Error fetching favorites:", error);
+    }
+  };
 
   const fetchInstructors = async () => {
     try {
@@ -108,15 +108,34 @@ const Instructors = () => {
   // Mendapatkan list spesialisasi unik untuk dropdown
   const uniqueSpecializations = ["all", ...Array.from(new Set(instructors.map(i => i.specialization)))];
 
-  // Toggle favorite instructor
-  const toggleFavorite = (instructorId: string) => {
+  // Toggle favorite instruktur — simpan ke database
+  const toggleFavorite = async (instructorId: string) => {
+    const idStr = String(instructorId);
+    if (togglingId === idStr) return; // prevent double click
+    setTogglingId(idStr);
+
+    // Optimistic UI update
     const newFavorites = new Set(favoriteInstructorIds);
-    if (newFavorites.has(instructorId)) {
-      newFavorites.delete(instructorId);
+    if (newFavorites.has(idStr)) {
+      newFavorites.delete(idStr);
     } else {
-      newFavorites.add(instructorId);
+      newFavorites.add(idStr);
     }
     setFavoriteInstructorIds(newFavorites);
+
+    try {
+      await fetch("/api/instructors/favorites", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ instructorId: idStr }),
+      });
+    } catch (error) {
+      console.error("Error toggling favorite:", error);
+      // Rollback jika gagal
+      setFavoriteInstructorIds(favoriteInstructorIds);
+    } finally {
+      setTogglingId(null);
+    }
   };
 
   // Logic Filtering
@@ -124,7 +143,7 @@ const Instructors = () => {
     const matchesSearch = instructor.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
                           instructor.specialization.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesFilter = specializationFilter === "all" || instructor.specialization === specializationFilter;
-    const matchesFavorite = !showFavoritesOnly || favoriteInstructorIds.has(instructor.id);
+    const matchesFavorite = !showFavoritesOnly || favoriteInstructorIds.has(String(instructor.id));
     
     return matchesSearch && matchesFilter && matchesFavorite;
   });
@@ -271,8 +290,8 @@ const Instructors = () => {
                           key={instructor.id}
                           className={`bg-white rounded-[2.5rem] border-2 transition-all duration-300 overflow-hidden group hover:-translate-y-2 flex flex-col relative ${
                             instructor.featured 
-                              ? 'border-amber-400 shadow-[0_8px_0_0_#fbbf24]' 
-                              : 'border-slate-200 shadow-[0_8px_0_0_#cbd5e1] hover:border-emerald-400 hover:shadow-[0_8px_0_0_#34d399]'
+                            ? 'border-amber-400 shadow-[0_8px_0_0_#fbbf24]' 
+                            : 'border-slate-200 shadow-[0_8px_0_0_#cbd5e1] hover:border-emerald-400 hover:shadow-[0_8px_0_0_#34d399]'
                           }`}
                         >
                           {/* Featured Badge & Favorite Button */}
@@ -287,14 +306,14 @@ const Instructors = () => {
                               onClick={() => toggleFavorite(instructor.id)}
                               className="bg-white border-2 border-slate-200 rounded-full p-2.5 shadow-md hover:bg-rose-50 hover:border-rose-300 transition-all hover:-translate-y-1"
                             >
-                              <Heart 
-                                className={`h-5 w-5 transition-colors ${
-                                  favoriteInstructorIds.has(instructor.id)
-                                    ? 'fill-rose-500 text-rose-500'
-                                    : 'text-slate-400 hover:text-rose-400'
-                                }`} 
-                                strokeWidth={2.5} 
-                              />
+                                <Heart 
+                                  className={`h-5 w-5 transition-colors ${
+                                    favoriteInstructorIds.has(String(instructor.id))
+                                      ? 'fill-rose-500 text-rose-500'
+                                      : 'text-slate-400 hover:text-rose-400'
+                                  }`} 
+                                  strokeWidth={2.5} 
+                                />
                             </button>
                           </div>
 

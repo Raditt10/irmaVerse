@@ -1,40 +1,39 @@
 "use client";
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
+import React, { useEffect, useState, useMemo } from "react";
 import DashboardHeader from "@/components/ui/Header";
 import Sidebar from "@/components/ui/Sidebar";
-import ChatbotButton from "@/components/ui/Chatbot";
-import Loading from "@/components/ui/Loading";
-import SearchInput from "@/components/ui/SearchInput";
-import CartoonNotification from "@/components/ui/Notification";
 import { 
-  UserCircle2, 
-  UserPlus, 
-  UserMinus,
-  Sparkles, 
+  Users, 
   Search, 
-  Trophy
+  UserPlus, 
+  MessageCircle, 
+  MoreVertical, 
+  Trophy, 
+  Zap,
+  Filter,
+  User as UserIcon
 } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
-interface Friends {
-  rowId: string,
-  id: string,
-  name: string,
-  role: string,
-  avatar: string,
-  class: string,
-  points: string,
-  status: "Pending" | "Friend",
+// --- MOCK DATA TEMAN ---
+interface Friend {
+  id: string;
+  name: string;
+  email: string;
+  avatar?: string;
+  level: number;
+  xp: number;
+  status: "online" | "offline";
+  lastSeen?: string;
 }
 
-export default function FriendPage() {
-  const [friends, setFriends] = useState<Friends[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
-  const [pendingFriends, setPendingFriends] = useState<Friends[]>([]);
-
-  // Notification State
+export default function FriendsPage() {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [friends, setFriends] = useState<Friend[]>([]);
+  const [pendingFriends, setPendingFriends] = useState<Friend[]>([]);
+  const [loading, setLoading] = useState(false);
   const [notification, setNotification] = useState<{
     type: "success" | "error" | "warning" | "info";
     title: string;
@@ -42,13 +41,13 @@ export default function FriendPage() {
   } | null>(null);
 
   const router = useRouter();
-
   const { data: session } = useSession({
     required: true,
     onUnauthenticated() {
       window.location.href = "/auth";
     }
   });
+
   useEffect(() => {
     fetchFriends();
   }, []);
@@ -204,246 +203,123 @@ export default function FriendPage() {
     }
   }
 
-  const filteredFriends = search 
-  ? friends.filter((m) => m.name.toLowerCase().includes(search.toLowerCase()))
+  const filteredFriends = searchQuery 
+  ? friends.filter((m) => m.name.toLowerCase().includes(searchQuery.toLowerCase()))
   : friends;
 
   return (
-    <div className="min-h-screen bg-[#FDFBF7]">
-      {/* <p className="text-slate-500 min-h-screen text-center">Halaman pertemanan dalam pengembangan</p> */}
+    <div className="min-h-screen bg-[#FDFBF7] flex flex-col font-sans" style={{ fontFamily: "'Inter', 'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', cursive, sans-serif" }}>
       <DashboardHeader />
-      <div className="flex">
-        <Sidebar />
-        
-        {/* Main Content Area */}
-        <div className="flex-1 w-full max-w-[100vw] overflow-x-hidden px-4 sm:px-6 lg:px-8 py-6 lg:py-12">
-          <div className="max-w-7xl mx-auto"></div>
+      
+      <div className="flex flex-1">
+        {/* Sidebar Desktop */}
+        <div className="hidden lg:block h-[calc(100vh-80px)] sticky top-20">
+          <Sidebar />
+        </div>
 
-          {/* Search & Suggestions */}
-          <div className="space-y-6 mb-8 lg:mb-10">
-            <div className="w-full md:max-w-md">
-              <SearchInput
-                placeholder="Cari nama teman..."
-                value={search}
-                onChange={setSearch}
-              />
+        <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-10">
+          
+          {/* --- HEADER SECTON --- */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
+            <div>
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-100 border border-emerald-200 text-xs font-black text-emerald-700 uppercase tracking-wider mb-3">
+                <Users className="h-4 w-4" /> Komunitas
+              </div>
+              <h1 className="text-3xl lg:text-4xl font-black text-slate-800 leading-tight">
+                Teman Belajar
+              </h1>
+              <p className="text-slate-500 font-medium mt-1">
+                Temukan dan berinteraksi dengan teman sesama pejuang ilmu.
+              </p>
             </div>
 
-            {/* Suggestion Box */}
-            {search && filteredFriends.length > 0 && (
-              <div className="inline-flex items-center gap-2 px-4 py-2 bg-teal-50 border-2 border-teal-100 rounded-xl text-teal-700 animate-in fade-in slide-in-from-left-2">
-                  <Sparkles className="h-4 w-4 text-teal-500 fill-teal-500" />
-                  <p className="text-xs md:text-sm font-bold">
-                      Menemukan: <span className="underline decoration-2 underline-offset-2">{filteredFriends[0].name}</span>
-                      {filteredFriends.length > 1 && <span className="font-normal opacity-80"> +{filteredFriends.length - 1} lainnya</span>}
-                  </p>
-              </div>
-            )}
+            <button className="flex items-center justify-center gap-2 px-6 py-3.5 bg-emerald-500 text-white font-black rounded-2xl border-b-4 border-emerald-700 hover:bg-emerald-600 active:translate-y-1 active:border-b-0 transition-all shadow-lg shadow-emerald-100">
+              <UserPlus className="h-5 w-5" strokeWidth={3} />
+              Cari Teman Baru
+            </button>
           </div>
 
-          {loading ? (
-            <div className="text-center py-20">
-              <Loading text="Sedang memanggil teman..." />
+          {/* --- SEARCH & FILTER --- */}
+          <div className="bg-white border-2 border-slate-200 rounded-[2rem] p-4 lg:p-6 mb-8 shadow-[0_6px_0_0_#cbd5e1]">
+            <div className="relative group">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-emerald-500 transition-colors" />
+              <input
+                type="text"
+                placeholder="Cari nama atau email teman..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-12 pr-4 py-4 bg-slate-50 border-2 border-transparent focus:border-emerald-400 focus:bg-white rounded-2xl transition-all font-bold text-slate-700 outline-none"
+              />
+            </div>
+          </div>
+
+          {/* --- FRIENDS GRID --- */}
+          {filteredFriends.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 bg-white rounded-[3rem] border-4 border-slate-100 border-dashed">
+              <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mb-4">
+                <Users className="h-10 w-10 text-slate-300" />
+              </div>
+              <h3 className="text-xl font-black text-slate-700">Tidak ada teman ditemukan</h3>
+              <p className="text-slate-400 font-medium">Coba gunakan kata kunci pencarian lain.</p>
             </div>
           ) : (
-            <>
-              {friends.length <= 0 ? (
-                <div className="flex flex-col items-center justify-center py-12 md:py-20 text-center animate-in fade-in zoom-in duration-300 bg-white rounded-[2.5rem] border-2 border-slate-200 border-dashed">
-                  <div className="w-20 h-20 md:w-24 md:h-24 bg-slate-50 rounded-full flex items-center justify-center mb-4 md:mb-6 shadow-inner border border-slate-100">
-                      <Search className="h-8 w-8 md:h-10 md:w-10 text-slate-300" />
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 lg:gap-8">
+              {filteredFriends.map((friend) => (
+                <div 
+                  key={friend.id}
+                  className="bg-white border-2 border-slate-200 rounded-[2rem] p-6 shadow-[0_6px_0_0_#cbd5e1] hover:border-emerald-400 hover:shadow-[0_6px_0_0_#34d399] transition-all duration-300 group relative overflow-hidden"
+                >
+                  {/* Status Indicator */}
+                  <div className="absolute top-6 right-6 flex items-center gap-1.5">
+                    <span className={`h-2.5 w-2.5 rounded-full ${friend.status === 'online' ? 'bg-emerald-500 animate-pulse' : 'bg-slate-300'}`} />
+                    <span className="text-[10px] font-black uppercase text-slate-400 tracking-tighter">
+                      {friend.status === 'online' ? 'Online' : friend.lastSeen}
+                    </span>
                   </div>
-                  <h3 className="text-xl md:text-2xl font-black text-slate-700 mb-2">
-                      kamu belum memiliki teman
-                  </h3>
-                  <p className="text-slate-500 max-w-xs md:max-w-md text-sm md:text-base px-4">
-                      Cobalah menambahkan teman terlebih dahulu.
-                  </p>
-                  <button
-                    onClick={() => router.push(`/members`)}
-                    className="flex items-center justify-center gap-2 py-2.5 rounded-xl bg-white border-2 border-slate-200 text-slate-600 font-bold text-sm shadow-[0_2px_0_0_#cbd5e1] hover:border-teal-400 hover:text-teal-600 hover:shadow-[0_4px_0_0_#34d399] active:border-b-2 active:translate-y-0.5 transition-all"
-                  >
-                    <UserCircle2 className="h-4 w-4" />
-                    Pergi ke halaman anggota
-                  </button>
-                </div>
-              ) : (
-                <>
-                {/* --- FRIENDS GRID --- */}
-                <h2 className="text-2xl font-black text-slate-800 mt-12 mb-6">
-                  Temanmu
-                </h2>
-                {filteredFriends.length > 0 ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {filteredFriends.map((friends) => (
-                      <div
-                        key={friends.id}
-                        className="bg-white rounded-4xl border-2 border-slate-200 shadow-[4px_4px_0_0_#cbd5e1] hover:border-teal-400 hover:shadow-[4px_4px_0_0_#34d399] transition-all duration-300 overflow-hidden group hover:-translate-y-1 flex flex-col"
-                      >
-                        {/* Header Card (Banner & Avatar) */}
-                        <div className="pt-6 px-6 flex flex-col items-center">
-                            {/* Avatar Wrapper (Tanpa Badge Status) */}
-                            <div className="relative mb-3 group-hover:scale-105 transition-transform duration-500">
-                                <div className="w-24 h-24 rounded-full p-1 bg-white border-4 border-slate-100 shadow-md overflow-hidden">
-                                    <img
-                                        src={friends.avatar}
-                                        alt={friends.name}
-                                        className="w-full h-full object-cover rounded-full bg-slate-50"
-                                    />
-                                </div>
-                            </div>
-                            
-                            {/* Name & Role */}
-                            <div className="text-center w-full">
-                                <h3 className="text-xl font-black text-slate-800 truncate px-2">
-                                    {friends.name}
-                                </h3>
-                                <p className="text-sm font-bold text-teal-600 bg-teal-50 px-3 py-0.5 rounded-full inline-block border border-teal-100 mt-1">
-                                    {friends.role}
-                                </p>
-                                <p className="text-xs font-bold text-slate-400 mt-1 uppercase tracking-wider">
-                                    {friends.class}
-                                </p>
-                            </div>
-                        </div>
 
-                        {/* Points Section */}
-                        <div className="mt-4 px-6">
-                            <div className="bg-amber-50 rounded-2xl p-3 border-2 border-amber-100 flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                    <div className="p-1.5 bg-amber-100 rounded-lg text-amber-600">
-                                        <Trophy className="h-4 w-4" />
-                                    </div>
-                                    <span className="text-xs font-bold text-amber-800">Poin Keaktifan</span>
-                                </div>
-                                <span className="text-lg font-black text-amber-600">{friends.points}</span>
-                            </div>
-                        </div>
-
-                        {/* Spacer */}
-                        <div className="flex-1 min-h-4"></div>
-
-                        {/* Action Buttons */}
-                        <div className="p-4 bg-slate-50 border-t-2 border-slate-100 grid grid-cols-2 gap-3">
-                            <button
-                                onClick={() => router.push(`/members/${friends.id}`)}
-                                className="flex items-center justify-center gap-2 py-2.5 rounded-xl bg-white border-2 border-slate-200 text-slate-600 font-bold text-sm shadow-[0_2px_0_0_#cbd5e1] hover:border-teal-400 hover:text-teal-600 hover:shadow-[0_4px_0_0_#34d399] active:border-b-2 active:translate-y-0.5 transition-all"
-                            >
-                                <UserCircle2 className="h-4 w-4" />
-                                Profile
-                            </button>
-                        </div>
+                  <div className="flex items-start gap-4 mb-6">
+                    <div className="relative">
+                      <Avatar className="h-16 w-16 border-4 border-slate-50 shadow-sm">
+                        <AvatarImage src={friend.avatar} alt={friend.name} />
+                        <AvatarFallback className="bg-emerald-500 text-white font-black text-xl">
+                          {friend.name.substring(0, 2).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="absolute -bottom-2 -right-2 bg-yellow-400 text-white p-1.5 rounded-xl border-2 border-white shadow-sm">
+                        <Trophy className="h-4 w-4" fill="currentColor" />
                       </div>
-                    ))}
-                  </div>
-                ) : (
-                  /* --- EMPTY STATE --- */
-                  <div className="flex flex-col items-center justify-center py-12 md:py-20 text-center animate-in fade-in zoom-in duration-300 bg-white rounded-[2.5rem] border-2 border-slate-200 border-dashed">
-                    <div className="w-20 h-20 md:w-24 md:h-24 bg-slate-50 rounded-full flex items-center justify-center mb-4 md:mb-6 shadow-inner border border-slate-100">
-                        <Search className="h-8 w-8 md:h-10 md:w-10 text-slate-300" />
                     </div>
-                    <h3 className="text-xl md:text-2xl font-black text-slate-700 mb-2">
-                        Teman Tidak Ditemukan
-                    </h3>
-                    <p className="text-slate-500 max-w-xs md:max-w-md text-sm md:text-base px-4">
-                        Kami tidak dapat menemukan Teman dengan nama <span className="font-bold text-teal-600">"{search}"</span>.
-                    </p>
-                    <button 
-                        onClick={() => setSearch("")}
-                        className="mt-6 md:mt-8 px-6 py-2.5 bg-slate-100 border-2 border-slate-200 text-slate-600 rounded-xl hover:bg-white hover:border-teal-400 hover:text-teal-600 font-bold transition-all shadow-sm"
-                    >
-                        Hapus Pencarian
+
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-black text-slate-800 truncate group-hover:text-emerald-600 transition-colors">
+                        {friend.name}
+                      </h3>
+                      <p className="text-xs font-bold text-slate-400 truncate mb-2">{friend.email}</p>
+                      
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-1 bg-amber-50 text-amber-600 px-2 py-1 rounded-lg border border-amber-100 text-[10px] font-black uppercase">
+                          <Zap className="h-3 w-3" fill="currentColor" />
+                          Lvl {friend.level}
+                        </div>
+                        <span className="text-[10px] font-black text-slate-300 uppercase">{friend.xp} XP</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="grid grid-cols-2 gap-3 mt-4">
+                    <button className="flex items-center justify-center gap-2 py-3 bg-emerald-50 text-emerald-600 font-black rounded-xl border-2 border-emerald-100 hover:bg-emerald-100 transition-colors text-xs">
+                      <MessageCircle className="h-4 w-4" /> Chat
+                    </button>
+                    <button className="flex items-center justify-center gap-2 py-3 bg-slate-50 text-slate-600 font-black rounded-xl border-2 border-slate-100 hover:bg-slate-100 transition-colors text-xs">
+                      <UserIcon className="h-4 w-4" /> Profil
                     </button>
                   </div>
-                )}
-                </>
-              )}
-
-              {/* --- PENDING FRIEND REQUESTS --- */}
-              {pendingFriends.length > 0 && (
-                <>
-                  <h2 className="text-2xl font-black text-slate-800 mt-12 mb-6">
-                    Permintaan Pertemanan
-                  </h2>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {pendingFriends.map((friend) => (
-                      <div
-                        key={friend.id}
-                        className="bg-white rounded-4xl border-2 border-slate-200 shadow-[4px_4px_0_0_#cbd5e1] hover:border-teal-400 hover:shadow-[4px_4px_0_0_#34d399] transition-all duration-300 overflow-hidden group hover:-translate-y-1 flex flex-col"
-                      >
-                        {/* Header Card (Banner & Avatar) */}
-                        <div className="pt-6 px-6 flex flex-col items-center">
-                          {/* Avatar Wrapper (Tanpa Badge Status) */}
-                          <div className="relative mb-3 group-hover:scale-105 transition-transform duration-500">
-                            <div className="w-24 h-24 rounded-full p-1 bg-white border-4 border-slate-100 shadow-md overflow-hidden">
-                              <img
-                                src={friend.avatar}
-                                alt={friend.name}
-                                className="w-full h-full object-cover rounded-full bg-slate-50"
-                              />
-                            </div>
-                          </div>
-                            
-                          {/* Name & Role */}
-                          <div className="text-center w-full">
-                            <h3 className="text-xl font-black text-slate-800 truncate px-2">
-                              {friend.name}
-                            </h3>
-                            <p className="text-sm font-bold text-teal-600 bg-teal-50 px-3 py-0.5 rounded-full inline-block border border-teal-100 mt-1">
-                              {friend.role}
-                            </p>
-                            <p className="text-xs font-bold text-slate-400 mt-1 uppercase tracking-wider">
-                              {friend.class}
-                            </p>
-                          </div>
-                        </div>
-
-                        {/* Spacer */}
-                        <div className="flex-1 min-h-4"></div>
-
-                        {/* Action Buttons */}
-                        <div className="p-4 bg-slate-50 border-t-2 border-slate-100 grid grid-cols-2 gap-3">
-                          <button
-                            onClick={() => router.push(`/members/${friend.id}`)}
-                            className="flex items-center justify-center gap-2 py-2.5 rounded-xl bg-white border-2 border-slate-200 text-slate-600 font-bold text-sm shadow-[0_2px_0_0_#cbd5e1] hover:border-teal-400 hover:text-teal-600 hover:shadow-[0_4px_0_0_#34d399] active:border-b-2 active:translate-y-0.5 transition-all"
-                          >
-                            <UserCircle2 className="h-4 w-4" />
-                            Profile
-                          </button>
-                          <button
-                            onClick={() =>handleAcceptFriend(friend.rowId, friend.id, friend.name)}
-                            className="flex items-center justify-center gap-2 py-2.5 rounded-xl bg-white border-2 border-slate-200 text-slate-600 font-bold text-sm shadow-[0_2px_0_0_#cbd5e1] hover:border-teal-400 hover:text-teal-600 hover:shadow-[0_4px_0_0_#34d399] active:border-b-2 active:translate-y-0.5 transition-all"
-                          >
-                            <UserPlus className="h-4 w-4" />
-                            Terima Pertemanan
-                          </button>
-                          <button
-                            onClick={() =>handleRejectFriend(friend.rowId, friend.id, friend.name)}
-                            className="flex items-center justify-center gap-2 py-2.5 rounded-xl bg-white border-2 border-slate-200 text-slate-600 font-bold text-sm shadow-[0_2px_0_0_#cbd5e1] hover:border-teal-400 hover:text-teal-600 hover:shadow-[0_4px_0_0_#34d399] active:border-b-2 active:translate-y-0.5 transition-all"
-                          >
-                            <UserMinus className="h-4 w-4" />
-                            Tolak Pertemanan
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </>
-              )}
-            </>
-          )} 
-          <ChatbotButton />
-
-          {/* --- NOTIFIKASI --- */}
-          {notification && (
-            <CartoonNotification
-              type={notification.type}
-              title={notification.title}
-              message={notification.message}
-              duration={3000}
-              onClose={() => setNotification(null)}
-            />
+                </div>
+              ))}
+            </div>
           )}
-        </div>
+        </main>
       </div>
     </div>
   );

@@ -5,48 +5,49 @@ import { useSession } from "next-auth/react";
 import DashboardHeader from "@/components/ui/Header";
 import Sidebar from "@/components/ui/Sidebar";
 import ChatbotButton from "@/components/ui/Chatbot";
-import { ArrowLeft, Download, Eye, MessageSquare } from "lucide-react";
+import Loading from "@/components/ui/Loading";
+import {
+  Users,
+  Calendar,
+  Clock,
+  ArrowLeft,
+  Search,
+  Download,
+  CheckCircle2,
+  User,
+  History,
+} from "lucide-react";
+import SearchInput from "@/components/ui/SearchInput";
 
-interface AttendanceUser {
-  id: string;
-  name: string;
-  email: string;
-  avatar?: string;
-}
-
-interface Attendance {
+interface AttendanceRecord {
   id: string;
   userId: string;
-  materialId: string;
-  status: string;
-  session?: string;
-  date?: string;
-  time?: string;
-  location?: string;
-  notes?: string;
-  reason?: string;
-  instructorArrival?: string;
-  startTime?: string;
-  endTime?: string;
-  rating?: number;
-  clarity?: string;
-  relevance?: string;
-  feedback?: string;
   createdAt: string;
-  updatedAt: string;
-  user?: AttendanceUser;
+  user: {
+    id: string;
+    name: string | null;
+    email: string;
+    avatar: string | null;
+  };
 }
 
-interface Material {
+interface MaterialInfo {
   id: string;
   title: string;
   date: string;
 }
 
-const AttendanceViewer = () => {
+const AttendanceList = () => {
+  const [attendances, setAttendances] = useState<AttendanceRecord[]>([]);
+  const [material, setMaterial] = useState<MaterialInfo | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  
   const router = useRouter();
   const params = useParams();
-  const { data: session } = useSession({
+  const materialId = params.id as string;
+
+  const { data: session, status } = useSession({
     required: true,
     onUnauthenticated() {
       if (typeof window !== "undefined") {
@@ -55,90 +56,50 @@ const AttendanceViewer = () => {
     },
   });
 
-  const [material, setMaterial] = useState<Material | null>(null);
-  const [attendances, setAttendances] = useState<Attendance[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [expandedId, setExpandedId] = useState<string | null>(null);
-
-  const materialId = params?.id as string;
+  const role = session?.user?.role?.toLowerCase();
+  const isPrivileged = role === "instruktur" || role === "admin" || role === "instructor";
 
   useEffect(() => {
-    if (materialId) {
-      fetchAttendances();
+    if (status === "authenticated" && !isPrivileged) {
+      router.push("/overview");
     }
-  }, [materialId]);
+  }, [status, isPrivileged, router]);
 
-  const fetchAttendances = async () => {
+  useEffect(() => {
+    if (materialId && isPrivileged) {
+      fetchAttendance();
+    }
+  }, [materialId, isPrivileged]);
+
+  const fetchAttendance = async () => {
     try {
+      setLoading(true);
       const res = await fetch(`/api/materials/${materialId}/attendance`);
-
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        console.error("API Error:", res.status, errorData);
-        
-        if (res.status === 403) {
-          alert("Anda tidak memiliki akses untuk melihat data ini");
-          router.push("/materials");
-          return;
-        }
-        throw new Error(`Failed to fetch attendance: ${res.status} ${errorData.error || ""}`);
-      }
-
+      if (!res.ok) throw new Error("Gagal mengambil data absensi");
       const data = await res.json();
-      setMaterial(data.material);
-      setAttendances(data.attendances);
-    } catch (error: any) {
+      setAttendances(data.attendances || []);
+      setMaterial(data.material || null);
+    } catch (error) {
       console.error("Error fetching attendance:", error);
-      alert(`Gagal memuat data absensi: ${error.message}`);
-      router.push("/materials");
     } finally {
       setLoading(false);
     }
   };
 
-  const exportToCSV = () => {
-    const headers = [
-      "Nama",
-      "Email",
-      "Status",
-      "Tanggal Absen",
-      "Catatan",
-      "Rating",
-      "Feedback",
-    ];
-    const rows = attendances.map((att) => [
-      att.user?.name || "N/A",
-      att.user?.email || "N/A",
-      att.status || "-",
-      att.date || "-",
-      att.notes || "-",
-      att.rating || "-",
-      att.feedback || "-",
-    ]);
+  const filteredAttendances = attendances.filter((record) =>
+    (record.user.name || record.user.email)
+      .toLowerCase()
+      .includes(searchQuery.toLowerCase())
+  );
 
-    const csv = [
-      headers.join(","),
-      ...rows.map((row) =>
-        row.map((cell) => `"${cell}"`).join(",")
-      ),
-    ].join("\n");
-
-    const blob = new Blob([csv], { type: "text/csv" });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `attendance-${materialId}.csv`;
-    a.click();
-  };
-
-  if (loading) {
+  if (status === "loading" || loading) {
     return (
-      <div className="min-h-screen bg-slate-50">
+      <div className="min-h-screen bg-[#FDFBF7]">
         <DashboardHeader />
         <div className="flex">
           <Sidebar />
-          <div className="flex-1 flex items-center justify-center">
-            <p className="text-slate-500">Memuat data...</p>
+          <div className="flex-1 flex flex-col items-center justify-center min-h-[calc(100vh-80px)]">
+            <Loading text="Memuat daftar absensi..." size="lg" />
           </div>
         </div>
       </div>
@@ -146,250 +107,148 @@ const AttendanceViewer = () => {
   }
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-slate-50 via-white to-slate-100">
+    <div className="min-h-screen bg-[#FDFBF7]">
       <DashboardHeader />
       <div className="flex">
         <Sidebar />
 
-        <div className="flex-1 px-6 lg:px-8 py-12">
-          <div className="max-w-6xl mx-auto space-y-6">
-            {/* Header */}
-            <div className="flex items-center justify-between gap-4 flex-wrap">
-              <div className="flex items-center gap-4">
+        <div className="flex-1 px-4 sm:px-6 lg:px-8 py-8 lg:py-12 w-full max-w-[100vw] overflow-x-hidden">
+          <div className="max-w-6xl mx-auto space-y-8">
+            {/* Header section with back button */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+              <div className="space-y-4">
                 <button
-                  onClick={() => router.push("/materials")}
-                  className="p-2 rounded-lg hover:bg-slate-200 transition"
+                  onClick={() => router.push(`/materials/${materialId}`)}
+                  className="inline-flex items-center gap-2 text-slate-500 hover:text-teal-600 font-bold transition-all group px-4 py-2 rounded-xl border-2 border-transparent hover:border-slate-200 hover:bg-white"
                 >
-                  <ArrowLeft className="h-5 w-5 text-slate-600" />
+                  <ArrowLeft className="h-5 w-5 group-hover:-translate-x-1 transition-transform" />
+                  Kembali ke Materi
                 </button>
                 <div>
-                  <h1 className="text-3xl font-black text-slate-800">
-                    Data Absensi
+                  <h1 className="text-3xl lg:text-4xl font-black text-slate-800 tracking-tight flex items-center gap-3">
+                    <History className="w-8 h-8 md:w-10 md:h-10 text-teal-500" />
+                    Absensi Siswa
                   </h1>
-                  <p className="text-slate-600">
-                    {material?.title} - {material?.date && new Date(material.date).toLocaleDateString("id-ID")}
+                  <p className="text-slate-500 font-bold mt-1 text-sm md:text-base">
+                    {material?.title || "Daftar hadir peserta kajian"}
                   </p>
                 </div>
               </div>
 
-              <button
-                onClick={exportToCSV}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-400 text-white font-bold border-2 border-emerald-600 border-b-4 hover:bg-emerald-500 active:border-b-2 active:translate-y-0.5 transition-all"
-              >
-                <Download className="h-4 w-4" />
-                Export CSV
-              </button>
-            </div>
-
-            {/* Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-white rounded-xl border-2 border-slate-200 p-4 shadow-sm">
-                <p className="text-sm font-semibold text-slate-600 mb-1">
-                  Total Peserta
-                </p>
-                <p className="text-3xl font-black text-slate-800">
-                  {attendances.length}
-                </p>
-              </div>
-
-              <div className="bg-white rounded-xl border-2 border-slate-200 p-4 shadow-sm">
-                <p className="text-sm font-semibold text-slate-600 mb-1">
-                  Hadir
-                </p>
-                <p className="text-3xl font-black text-emerald-600">
-                  {attendances.filter((a) => a.status === "hadir").length}
-                </p>
-              </div>
-
-              <div className="bg-white rounded-xl border-2 border-slate-200 p-4 shadow-sm">
-                <p className="text-sm font-semibold text-slate-600 mb-1">
-                  Rating Rata-rata
-                </p>
-                <p className="text-3xl font-black text-amber-600">
-                  {attendances.length > 0
-                    ? (
-                        attendances.reduce((sum, a) => sum + (a.rating || 0), 0) /
-                        attendances.filter((a) => a.rating).length
-                      ).toFixed(1)
-                    : "-"}
-                </p>
+              {/* Action Buttons */}
+              <div className="flex gap-3">
+                <button className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-white border-2 border-slate-200 text-slate-700 font-bold hover:border-teal-400 hover:text-teal-600 transition-all shadow-sm">
+                  <Download className="h-5 w-5" />
+                  Export Excel
+                </button>
               </div>
             </div>
 
-            {/* Attendance List */}
-            <div className="space-y-3">
-              <h2 className="text-xl font-bold text-slate-800">
-                Daftar Peserta
-              </h2>
-
-              {attendances.length === 0 ? (
-                <div className="bg-white rounded-xl border-2 border-slate-200 p-8 text-center">
-                  <p className="text-slate-500">Belum ada data absensi</p>
-                </div>
-              ) : (
-                attendances.map((att) => (
-                  <div
-                    key={att.id}
-                    className="bg-white rounded-xl border-2 border-slate-200 shadow-sm overflow-hidden"
-                  >
-                    {/* Header */}
-                    <button
-                      onClick={() =>
-                        setExpandedId(expandedId === att.id ? null : att.id)
-                      }
-                      className="w-full px-6 py-4 flex items-center justify-between hover:bg-slate-50 transition group"
-                    >
-                      <div className="flex items-center gap-4 flex-1 text-left">
-                        {att.user?.avatar ? (
-                          <img
-                            src={att.user.avatar}
-                            alt={att.user.name}
-                            className="w-10 h-10 rounded-full"
-                          />
-                        ) : (
-                          <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center">
-                            <span className="text-sm font-bold text-slate-600">
-                              {att.user?.name?.charAt(0).toUpperCase()}
-                            </span>
-                          </div>
-                        )}
-
-                        <div className="flex-1">
-                          <p className="font-bold text-slate-800">
-                            {att.user?.name || "Unknown"}
-                          </p>
-                          <p className="text-sm text-slate-500">
-                            {att.user?.email}
-                          </p>
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                          <span
-                            className={`px-3 py-1 rounded-full text-xs font-bold ${
-                              att.status === "hadir"
-                                ? "bg-emerald-100 text-emerald-700"
-                                : "bg-slate-100 text-slate-700"
-                            }`}
-                          >
-                            {att.status || "Tidak diketahui"}
-                          </span>
-
-                          {att.rating && (
-                            <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-700">
-                              ⭐ {att.rating}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-
-                      <Eye className="h-5 w-5 text-slate-400 group-hover:text-slate-600 ml-2" />
-                    </button>
-
-                    {/* Expanded Details */}
-                    {expandedId === att.id && (
-                      <div className="border-t-2 border-slate-100 px-6 py-4 bg-slate-50 space-y-3">
-                        <div className="grid grid-cols-2 gap-4">
-                          {att.date && (
-                            <div>
-                              <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide">
-                                Tanggal Absen
-                              </p>
-                              <p className="text-sm text-slate-800 font-semibold">
-                                {new Date(att.date).toLocaleDateString(
-                                  "id-ID"
-                                )}
-                              </p>
-                            </div>
-                          )}
-
-                          {att.time && (
-                            <div>
-                              <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide">
-                                Waktu
-                              </p>
-                              <p className="text-sm text-slate-800 font-semibold">
-                                {att.time}
-                              </p>
-                            </div>
-                          )}
-
-                          {att.location && (
-                            <div>
-                              <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide">
-                                Lokasi
-                              </p>
-                              <p className="text-sm text-slate-800 font-semibold">
-                                {att.location}
-                              </p>
-                            </div>
-                          )}
-
-                          {att.startTime && att.endTime && (
-                            <div>
-                              <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide">
-                                Durasi
-                              </p>
-                              <p className="text-sm text-slate-800 font-semibold">
-                                {att.startTime} - {att.endTime}
-                              </p>
-                            </div>
-                          )}
-
-                          {att.rating && (
-                            <div>
-                              <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide">
-                                Rating
-                              </p>
-                              <p className="text-sm text-slate-800 font-semibold">
-                                {att.rating} / 5 ⭐
-                              </p>
-                            </div>
-                          )}
-
-                          {att.clarity && (
-                            <div>
-                              <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide">
-                                Kejelasan Materi
-                              </p>
-                              <p className="text-sm text-slate-800 font-semibold capitalize">
-                                {att.clarity}
-                              </p>
-                            </div>
-                          )}
-                        </div>
-
-                        {att.notes && (
-                          <div>
-                            <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1">
-                              Catatan
-                            </p>
-                            <p className="text-sm text-slate-700 bg-white rounded-lg p-3 border border-slate-200">
-                              {att.notes}
-                            </p>
-                          </div>
-                        )}
-
-                        {att.feedback && (
-                          <div>
-                            <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1 flex items-center gap-2">
-                              <MessageSquare className="h-3 w-3" />
-                              Feedback
-                            </p>
-                            <p className="text-sm text-slate-700 bg-white rounded-lg p-3 border border-slate-200">
-                              {att.feedback}
-                            </p>
-                          </div>
-                        )}
-
-                        <p className="text-xs text-slate-500 pt-2">
-                          Dikirim pada:{" "}
-                          {new Date(att.createdAt).toLocaleString("id-ID")}
-                        </p>
-                      </div>
-                    )}
+            {/* Quick Stats Grid */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="bg-white p-5 rounded-5xl border-2 border-teal-100 shadow-[0_8px_0_0_#d1fae5] flex flex-col justify-between max-md:aspect-square">
+                <div className="flex justify-between items-start md:mb-5">
+                  <div className="p-2.5 md:p-3 bg-teal-50 border-2 border-teal-100 rounded-2xl">
+                    <Users className="w-6 h-6 md:w-8 md:h-8 text-teal-500" strokeWidth={2.5} />
                   </div>
-                ))
-              )}
+                </div>
+                <div className="flex flex-col gap-1">
+                  <div className="text-3xl md:text-4xl font-black text-slate-800 leading-none">{attendances.length}</div>
+                  <div className="text-[10px] md:text-sm text-slate-400 font-black tracking-wide uppercase">Total Hadir</div>
+                </div>
+              </div>
+              
+              <div className="bg-white p-5 rounded-5xl border-2 border-blue-100 shadow-[0_8px_0_0_#dbeafe] flex flex-col justify-between max-md:aspect-square">
+                <div className="flex justify-between items-start md:mb-5">
+                  <div className="p-2.5 md:p-3 bg-blue-50 border-2 border-blue-100 rounded-2xl">
+                    <Calendar className="w-6 h-6 md:w-8 md:h-8 text-blue-500" strokeWidth={2.5} />
+                  </div>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <div className="text-xs md:text-sm font-black text-slate-800 leading-tight">
+                    {material ? new Date(material.date).toLocaleDateString("id-ID", { day: 'numeric', month: 'short' }) : "-"}
+                  </div>
+                  <div className="text-[10px] md:text-sm text-slate-400 font-black tracking-wide uppercase">Tanggal</div>
+                </div>
+              </div>
+
+              <div className="hidden md:flex bg-white p-6 rounded-5xl border-2 border-slate-100 shadow-[0_8px_0_0_#f1f5f9] flex-col justify-center text-center">
+                <div className="text-teal-500 mb-2">
+                  <CheckCircle2 className="w-10 h-10 mx-auto" />
+                </div>
+                <div className="text-xl font-black text-slate-800 leading-tight">Kehadiran Aktif</div>
+                <div className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">Status Sesi</div>
+              </div>
+
+              <div className="hidden md:flex bg-white p-6 rounded-5xl border-2 border-slate-100 shadow-[0_8px_0_0_#f1f5f9] flex-col justify-center text-center">
+                <div className="text-slate-400 mb-2">
+                  <Clock className="w-10 h-10 mx-auto" />
+                </div>
+                <div className="text-xl font-black text-slate-800 leading-tight">Tercatat Link</div>
+                <div className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">Metode</div>
+              </div>
+            </div>
+
+            {/* List and Search Container */}
+            <div className="space-y-4">
+              <div className="bg-white rounded-3xl border-2 border-slate-200 p-4 shadow-sm flex flex-col md:flex-row gap-4 items-center justify-between">
+                <div className="w-full md:w-96">
+                  <SearchInput
+                    placeholder="Cari nama siswa..."
+                    value={searchQuery}
+                    onChange={setSearchQuery}
+                    className="w-full border-2 border-teal-100 focus-within:border-teal-400 rounded-2xl shadow-none"
+                  />
+                </div>
+                <div className="flex gap-2 w-full md:w-auto">
+                  <span className="px-4 py-2 bg-teal-50 text-teal-600 rounded-xl text-xs font-black border-2 border-teal-100 uppercase tracking-wide">
+                    {filteredAttendances.length} Siswa Ditemukan
+                  </span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+                {filteredAttendances.length > 0 ? (
+                  filteredAttendances.map((att) => (
+                    <div
+                      key={att.id}
+                      className="bg-white p-5 rounded-4xl border-2 border-slate-100 shadow-[0_4px_0_0_#f1f5f9] hover:shadow-[0_4px_0_0_#d1fae5] hover:border-teal-200 transition-all duration-300 group flex items-center gap-4"
+                    >
+                      <div className="w-14 h-14 rounded-full bg-slate-100 overflow-hidden border-2 border-slate-50 group-hover:border-teal-100 transition-colors shrink-0">
+                        {att.user.avatar ? (
+                          <img src={att.user.avatar} alt={att.user.name || ""} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-teal-500 text-white font-black text-xl">
+                            {(att.user.name || att.user.email).charAt(0).toUpperCase()}
+                          </div>
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <h3 className="font-black text-slate-800 group-hover:text-teal-600 transition-colors truncate">
+                          {att.user.name || "Siswa Tanpa Nama"}
+                        </h3>
+                        <div className="flex flex-col gap-1 mt-0.5">
+                          <p className="text-[10px] text-slate-400 font-bold truncate">
+                            {att.user.email}
+                          </p>
+                          <div className="flex items-center gap-1.5 text-[10px] font-black text-teal-600 bg-teal-50 px-2 py-0.5 rounded-lg border border-teal-100 w-fit">
+                            <Clock className="w-3 h-3" />
+                            {new Date(att.createdAt).toLocaleTimeString("id-ID", { hour: '2-digit', minute: '2-digit' })} WIB
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="col-span-full py-20 flex flex-col items-center justify-center text-center bg-white rounded-5xl border-2 border-dashed border-slate-300">
+                    <div className="p-6 bg-slate-50 rounded-full mb-4">
+                      <Users className="h-12 w-12 text-slate-300" />
+                    </div>
+                    <h3 className="text-xl font-black text-slate-800 mb-2">Belum Ada Absensi</h3>
+                    <p className="text-slate-500 max-w-xs mx-auto">Siswa yang melakukan absensi pada materi ini akan muncul di sini.</p>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -399,4 +258,4 @@ const AttendanceViewer = () => {
   );
 };
 
-export default AttendanceViewer;
+export default AttendanceList;

@@ -17,9 +17,10 @@ export default function DatePicker({
   placeholder = "Pilih tanggal",
 }: DatePickerProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [currentMonth, setCurrentMonth] = useState(
-    value ? new Date(value) : new Date()
-  );
+  const [currentMonth, setCurrentMonth] = useState(() => {
+    const d = value ? new Date(value) : new Date();
+    return isNaN(d.getTime()) ? new Date() : d;
+  });
 
   const monthNames = [
     "Januari",
@@ -71,7 +72,13 @@ export default function DatePicker({
 
   const formatDisplayDate = (dateString: string) => {
     if (!dateString) return placeholder;
-    const date = new Date(dateString + "T00:00:00");
+    
+    // Validasi apakah string sudah memiliki format waktu (ISO)
+    const hasTime = dateString.includes("T");
+    const date = new Date(hasTime ? dateString : dateString + "T00:00:00");
+    
+    if (isNaN(date.getTime())) return placeholder;
+
     const day = String(date.getDate()).padStart(2, "0");
     const month = String(date.getMonth() + 1).padStart(2, "0");
     const year = date.getFullYear();
@@ -101,7 +108,9 @@ export default function DatePicker({
 
   const isSelected = (day: number) => {
     if (!value || !day) return false;
-    const date = new Date(value + "T00:00:00");
+    const hasTime = value.includes("T");
+    const date = new Date(hasTime ? value : value + "T00:00:00");
+    if (isNaN(date.getTime())) return false;
     return (
       day === date.getDate() &&
       currentMonth.getMonth() === date.getMonth() &&
@@ -118,6 +127,7 @@ export default function DatePicker({
       )}
 
       <button
+        type="button"
         onClick={() => setIsOpen(!isOpen)}
         className="w-full px-4 py-3 rounded-2xl border-2 border-slate-300 bg-white text-slate-700 font-bold flex items-center justify-between gap-2 shadow-[0_4px_0_0_#cbd5e1] hover:border-teal-400 hover:shadow-[0_4px_0_0_#14b8a6] transition-all active:translate-y-[2px] active:shadow-none"
       >
@@ -137,6 +147,7 @@ export default function DatePicker({
           {/* Header */}
           <div className="flex items-center justify-between mb-4">
             <button
+              type="button"
               onClick={handlePrevMonth}
               className="p-2 hover:bg-slate-100 rounded-xl transition-colors"
             >
@@ -150,6 +161,7 @@ export default function DatePicker({
             </div>
 
             <button
+              type="button"
               onClick={handleNextMonth}
               className="p-2 hover:bg-slate-100 rounded-xl transition-colors"
             >
@@ -173,6 +185,7 @@ export default function DatePicker({
           <div className="grid grid-cols-7 gap-1 mb-4">
             {days.map((day, index) => (
               <button
+                type="button"
                 key={index}
                 onClick={() => day && handleDateSelect(day)}
                 disabled={!day}
@@ -205,6 +218,7 @@ export default function DatePicker({
 
           {/* Close button */}
           <button
+            type="button"
             onClick={() => setIsOpen(false)}
             className="w-full px-4 py-2 bg-slate-200 text-slate-700 font-bold rounded-xl hover:bg-slate-300 transition-colors"
           >

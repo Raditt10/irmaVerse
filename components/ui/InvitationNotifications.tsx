@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Check, X, Bell, BookOpen, Calendar, Sparkles } from "lucide-react";
 import { useSocket } from "@/lib/socket";
 import { useSession } from "next-auth/react";
+import Toast from "./Toast";
 
 interface Material { id: string; title: string; date: string; instructorId: string; }
 interface Instructor { id: string; name: string; email: string; }
@@ -13,6 +14,13 @@ export default function InvitationNotifications() {
   const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [loading, setLoading] = useState(true);
   const [responding, setResponding] = useState<string | null>(null);
+  const [decliningToken, setDecliningToken] = useState<string | null>(null);
+  const [declineReason, setDeclineReason] = useState("");
+  const [toast, setToast] = useState<{ show: boolean; message: string; type: "success" | "error" }>({
+    show: false,
+    message: "",
+    type: "success",
+  });
   const { socket } = useSocket();
   const { data: session, status } = useSession();
 
@@ -38,14 +46,22 @@ export default function InvitationNotifications() {
   useEffect(() => {
     if (!socket) return;
     
-    console.log("[InviteNotif] Setting up socket listener");
+    console.log("[InviteNotif] Setting up socket and event listeners");
     socket.on("invitation:new", (data: any) => {
       console.log("[InviteNotif] Received new invitation via socket:", data);
       fetchInvitations();
     });
+
+    // Listen for header updates to stay in sync
+    const handleCountUpdate = () => {
+      console.log("[InviteNotif] Sync update detected, fetching...");
+      fetchInvitations();
+    };
+    window.addEventListener("invitationCountUpdate", handleCountUpdate);
     
     return () => {
       socket.off("invitation:new");
+      window.removeEventListener("invitationCountUpdate", handleCountUpdate);
     };
   }, [socket]);
 
@@ -92,21 +108,48 @@ export default function InvitationNotifications() {
     }
   };
 
-  const handleResponse = async (token: string, status: "accepted" | "rejected") => {
+  const handleResponse = async (token: string, status: "accepted" | "rejected", materialId?: string, reason?: string) => {
     setResponding(token);
     try {
       const res = await fetch("/api/materials/invitations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token, status }),
+        body: JSON.stringify({ token, status, reason, materialId }),
       });
       if (res.ok) {
         setInvitations(invitations.filter((inv) => inv.token !== token));
+        setDecliningToken(null);
+        setDeclineReason("");
+        
+        // Dispatch event so materials page can refresh
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new Event("materialAction"));
+        }
+
+        setToast({
+          show: true,
+          message: status === "accepted" ? "Berhasil bergabung ke kajian!" : "Undangan telah ditolak.",
+          type: "success",
+        });
+      } else {
+        const errorData = await res.json().catch(() => ({}));
+        setToast({
+          show: true,
+          message: errorData.error || "Gagal menanggapi undangan.",
+          type: "error",
+        });
       }
     } catch (error) {
       console.error("Error responding:", error);
+      setToast({
+        show: true,
+        message: "Terjadi kesalahan koneksi.",
+        type: "error",
+      });
     } finally {
       setResponding(null);
+      // Auto hide toast after 3 seconds
+      setTimeout(() => setToast((prev) => ({ ...prev, show: false })), 3000);
     }
   };
 
@@ -159,27 +202,58 @@ export default function InvitationNotifications() {
             </div>
 
             {/* Actions Area - 3D Buttons */}
-            <div className="grid grid-cols-2 gap-3">
-              {/* Tombol Terima (Hijau Kuat) */}
-              <button
-                onClick={() => handleResponse(invitation.token, "accepted")}
-                disabled={responding === invitation.token}
-                className="relative flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-emerald-500 text-white font-black text-sm border-b-[6px] border-emerald-800 active:border-b-0 active:translate-y-1 hover:bg-emerald-400 transition-all disabled:opacity-50 group/btn"
-              >
-                <Check className="h-5 w-5 group-hover/btn:scale-125 transition-transform" />
-                Terima
-              </button>
-              
-              {/* Tombol Nanti (Putih dengan Border Hijau Tipis) */}
-              <button
-                onClick={() => handleResponse(invitation.token, "rejected")}
-                disabled={responding === invitation.token}
-                className="flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-white text-slate-400 font-black text-sm border-2 border-slate-200 border-b-[6px] active:border-b-2 active:translate-y-0.5 hover:text-emerald-600 hover:border-emerald-200 hover:bg-emerald-50 transition-all disabled:opacity-50"
-              >
-                <X className="h-5 w-5" />
-                Nanti
-              </button>
-            </div>
+            {decliningToken === invitation.token ? (
+              <div className="space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
+                <textarea
+                  value={declineReason}
+                  onChange={(e) => setDeclineReason(e.target.value)}
+                  placeholder="Alasan menolak (Opsional)..."
+                  className="w-full px-4 py-3 rounded-2xl bg-white border-2 border-emerald-100 text-sm font-bold text-emerald-950 focus:border-emerald-400 focus:outline-none transition-all resize-none shadow-inner"
+                  rows={2}
+                  autoFocus
+                />
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    onClick={() => handleResponse(invitation.token, "rejected", invitation.materialId, declineReason)}
+                    disabled={responding === invitation.token}
+                    className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-rose-500 text-white font-black text-xs border-b-4 border-rose-800 active:border-b-0 active:translate-y-1 hover:bg-rose-400 transition-all disabled:opacity-50"
+                  >
+                    Kirim & Tolak
+                  </button>
+                  <button
+                    onClick={() => {
+                      setDecliningToken(null);
+                      setDeclineReason("");
+                    }}
+                    className="flex items-center justify-center px-4 py-2.5 rounded-xl bg-white text-slate-400 font-black text-xs border-2 border-slate-200 hover:text-slate-600 hover:border-slate-300 transition-all shadow-sm"
+                  >
+                    Batal
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-3">
+                {/* Tombol Terima (Hijau Kuat) */}
+                <button
+                  onClick={() => handleResponse(invitation.token, "accepted", invitation.materialId)}
+                  disabled={responding === invitation.token}
+                  className="relative flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-emerald-500 text-white font-black text-sm border-b-[6px] border-emerald-800 active:border-b-0 active:translate-y-1 hover:bg-emerald-400 transition-all disabled:opacity-50 group/btn"
+                >
+                  <Check className="h-5 w-5 group-hover/btn:scale-125 transition-transform" />
+                  Terima
+                </button>
+                
+                {/* Tombol Nanti (Putih dengan Border Hijau Tipis) */}
+                <button
+                  onClick={() => setDecliningToken(invitation.token)}
+                  disabled={responding === invitation.token}
+                  className="flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-white text-slate-400 font-black text-sm border-2 border-slate-200 border-b-[6px] active:border-b-2 active:translate-y-0.5 hover:text-emerald-600 hover:border-emerald-200 hover:bg-emerald-50 transition-all disabled:opacity-50"
+                >
+                  <X className="h-5 w-5" />
+                  Nanti
+                </button>
+              </div>
+            )}
           </div>
         </div>
       ))}
@@ -213,6 +287,13 @@ export default function InvitationNotifications() {
           animation: bounce-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
         }
       `}</style>
+
+      <Toast
+        show={toast.show}
+        message={toast.message}
+        type={toast.type}
+        onClose={() => setToast((prev) => ({ ...prev, show: false }))}
+      />
     </div>
   );
 }

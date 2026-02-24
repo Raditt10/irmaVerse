@@ -60,6 +60,7 @@ export async function POST(req: NextRequest) {
     // Create new attendance record with form data
     const attendance = await prisma.attendance.create({
       data: {
+        id: `att-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
         userId: user.id,
         materialId: materialId,
         status: attendanceData?.status || "hadir",
@@ -77,6 +78,25 @@ export async function POST(req: NextRequest) {
         relevance: surveyData?.relevance,
         feedback: surveyData?.feedback,
         createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    });
+
+    // Ensure user is enrolled when they attend
+    await prisma.courseenrollment.upsert({
+      where: {
+        materialId_userId: {
+          materialId: materialId,
+          userId: user.id,
+        },
+      },
+      update: {},
+      create: {
+        id: `ce-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+        materialId: materialId,
+        userId: user.id,
+        role: "user",
+        enrolledAt: new Date(),
       },
     });
 
@@ -109,14 +129,6 @@ export async function GET(req: NextRequest) {
     }
 
     const materialId = req.nextUrl.searchParams.get("materialId");
-
-    if (!materialId) {
-      return NextResponse.json(
-        { error: "Material ID is required" },
-        { status: 400 }
-      );
-    }
-
     const user = await prisma.user.findUnique({
       where: { email: session.user.email },
     });
@@ -128,18 +140,41 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    // Check attendance
-    const attendance = await prisma.attendance.findFirst({
-      where: {
-        userId: user.id,
-        materialId: materialId,
-      },
-    });
+    if (materialId) {
+      // Check specific attendance
+      const attendance = await prisma.attendance.findFirst({
+        where: {
+          userId: user.id,
+          materialId: materialId,
+        },
+      });
 
-    return NextResponse.json({
-      isAttended: !!attendance,
-      attendedAt: attendance?.createdAt || null,
-    });
+      return NextResponse.json({
+        isAttended: !!attendance,
+        attendedAt: attendance?.createdAt || null,
+      });
+    } else {
+      // Return all attendance for user (for dashboard)
+      const allAttendance = await prisma.attendance.findMany({
+        where: { userId: user.id },
+        include: {
+          material: true, // This will only work if relation exists. Let's check relation.
+        } as any, // Cast to any because relation might be missing in some setups
+        orderBy: { createdAt: "desc" },
+      });
+
+      // Map to expected dynamic format
+      const formatted = allAttendance.map((att: any) => ({
+        id: att.id,
+        materialId: att.materialId,
+        materialTitle: att.material?.title || "Kajian",
+        instructorName: att.material?.instructor || "TBA",
+        attendedAt: att.createdAt,
+        status: att.status
+      }));
+
+      return NextResponse.json(formatted);
+    }
   } catch (error) {
     console.error("Get attendance error:", error);
     return NextResponse.json(

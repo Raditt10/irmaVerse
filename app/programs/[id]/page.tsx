@@ -16,7 +16,8 @@ import {
   BookOpen,
   Target,
   MessageCircle,
-  Hourglass
+  Hourglass,
+  ListChecks,
 } from "lucide-react";
 
 interface Program {
@@ -30,15 +31,12 @@ interface Program {
   schedule?: string;
   location: string | null;
   instructor: string | null;
-  quota: {
-    filled: number;
-    total: number;
-  };
   status: "in-progress" | "done" | "upcoming";
   image?: string;
   syllabus?: string[];
   requirements?: string[];
   benefits?: string[];
+  sessions?: { id: string; title: string; description: string | null }[];
 }
 
 const ProgramDetail = () => {
@@ -68,62 +66,19 @@ const ProgramDetail = () => {
 
   const fetchProgramDetail = async () => {
     try {
-      // Mock Data (Sama seperti sebelumnya, disesuaikan strukturnya)
-      const mockPrograms: Program[] = [
-        {
-          id: "1",
-          title: "Kedudukan akal dan wahyu",
-          description: "Program pelatihan komprehensif untuk memahami hubungan akal dan wahyu dalam Islam. Peserta akan mempelajari berbagai pendekatan filosofis dan teologis.",
-          duration: "3 bulan",
-          level: "Pemula",
-          startDate: "2024-12-01",
-          schedule: "Sabtu, 14:00 WIB",
-          location: "Aula Utama IRMA",
-          instructor: "Dr. Ahmad Zaki, M.Ag",
-          quota: { filled: 18, total: 30 },
-          status: "in-progress",
-          image: "https://picsum.photos/seed/program1/1200/600",
-          syllabus: [
-            "Pengantar Epistemologi Islam",
-            "Hakikat Akal dalam Perspektif Al-Quran",
-            "Wahyu sebagai Sumber Pengetahuan",
-            "Integrasi Akal dan Wahyu",
-            "Studi Kasus: Isu Kontemporer"
-          ],
-          requirements: [
-            "Telah mengikuti orientasi IRMA",
-            "Komitmen mengikuti seluruh sesi",
-            "Membawa Al-Quran dan alat tulis"
-          ],
-          benefits: [
-            "Pemahaman mendalam epistemologi",
-            "Sertifikat resmi dari IRMA",
-            "Akses ke perpustakaan digital"
-          ]
-        },
-         {
-          id: "2",
-          title: "Kursus Bahasa Arab",
-          description: "Program intensif pembelajaran Bahasa Arab dari tingkat dasar hingga mahir. Fokus pada kemampuan membaca, menulis, berbicara, dan memahami teks.",
-          duration: "6 bulan",
-          level: "Menengah",
-          startDate: "2024-11-01",
-          schedule: "Senin & Kamis, 18:30 WIB",
-          location: "Ruang Multimedia",
-          instructor: "Ust. Muhammad Ali, Lc.",
-          quota: { filled: 22, total: 25 },
-          status: "done",
-          image: "https://picsum.photos/seed/program2/1200/600",
-          syllabus: ["Nahwu dan Shorof Dasar", "Mufrodat dan Muhadatsah", "Membaca Kitab Kuning", "Praktik Komunikasi Arab"],
-          requirements: ["Mampu membaca huruf hijaiyah", "Memiliki kamus Arab-Indonesia", "Minimal kehadiran 80%"],
-          benefits: ["Kemampuan membaca kitab kuning", "Sertifikat kemahiran", "Workshop native speaker"]
-        },
-      ];
+      setLoading(true);
+      const res = await fetch(`/api/programs/${programId}`);
+      
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Gagal mengambil data program");
+      }
 
-      const foundProgram = mockPrograms.find(p => p.id === programId) || mockPrograms[0]; 
-      setProgram(foundProgram || null);
+      const data = await res.json();
+      setProgram(data);
     } catch (error) {
       console.error("Error loading program:", error);
+      setProgram(null);
     } finally {
       setLoading(false);
     }
@@ -222,6 +177,10 @@ const ProgramDetail = () => {
                      <span className="px-3 py-1.5 rounded-xl text-xs font-black bg-white/90 text-slate-800 border-2 border-white uppercase tracking-wide backdrop-blur-sm">
                        Level: {program.level}
                      </span>
+                     <span className="px-3 py-1.5 rounded-xl text-xs font-black bg-teal-500/90 text-white border-2 border-teal-400 uppercase tracking-wide backdrop-blur-sm flex items-center gap-1.5">
+                       <Clock className="h-3.5 w-3.5" strokeWidth={3} />
+                       {program.duration}
+                     </span>
                   </div>
                   <h1 className="text-2xl md:text-4xl lg:text-5xl font-black text-white mb-3 drop-shadow-md leading-tight">
                     {program.title}
@@ -238,35 +197,6 @@ const ProgramDetail = () => {
               
               {/* LEFT COLUMN (Details) */}
               <div className="lg:col-span-2 space-y-6 lg:space-y-8">
-                
-                {/* Quick Stats Tiles */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    {/* Durasi */}
-                    <div className="bg-white p-5 rounded-3xl border-2 border-slate-200 shadow-[0_4px_0_0_#cbd5e1] flex flex-col items-center text-center hover:-translate-y-1 transition-transform">
-                        <div className="w-12 h-12 rounded-2xl bg-teal-50 flex items-center justify-center mb-3 border-2 border-teal-100">
-                            <Clock className="h-6 w-6 text-teal-500" strokeWidth={2.5} />
-                        </div>
-                        <span className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-1">Durasi</span>
-                        <span className="text-slate-800 font-black text-lg">{program.duration}</span>
-                    </div>
-                    {/* Jadwal */}
-                    <div className="bg-white p-5 rounded-3xl border-2 border-slate-200 shadow-[0_4px_0_0_#cbd5e1] flex flex-col items-center text-center hover:-translate-y-1 transition-transform">
-                        <div className="w-12 h-12 rounded-2xl bg-indigo-50 flex items-center justify-center mb-3 border-2 border-indigo-100">
-                            <Calendar className="h-6 w-6 text-indigo-500" strokeWidth={2.5} />
-                        </div>
-                        <span className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-1">Jadwal</span>
-                        <span className="text-slate-800 font-black text-sm px-2 leading-tight">{program.schedule}</span>
-                    </div>
-                    {/* Lokasi */}
-                    <div className="bg-white p-5 rounded-3xl border-2 border-slate-200 shadow-[0_4px_0_0_#cbd5e1] flex flex-col items-center text-center hover:-translate-y-1 transition-transform">
-                        <div className="w-12 h-12 rounded-2xl bg-rose-50 flex items-center justify-center mb-3 border-2 border-rose-100">
-                            <MapPin className="h-6 w-6 text-rose-500" strokeWidth={2.5} />
-                        </div>
-                        <span className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-1">Lokasi</span>
-                        <span className="text-slate-800 font-black text-sm px-2 leading-tight">{program.location}</span>
-                    </div>
-                </div>
-
                 {/* Syllabus */}
                 {program.syllabus && (
                   <div className="bg-white p-6 lg:p-8 rounded-[2.5rem] border-2 border-slate-200 shadow-[0_6px_0_0_#cbd5e1]">
@@ -286,6 +216,45 @@ const ProgramDetail = () => {
                         </li>
                       ))}
                     </ul>
+                  </div>
+                )}
+
+                {/* --- JADWAL KAJIAN (SESSIONS) --- */}
+                {program.sessions && program.sessions.length > 0 && (
+                  <div className="bg-white p-6 lg:p-8 rounded-[2.5rem] border-2 border-slate-200 shadow-[0_6px_0_0_#cbd5e1]">
+                    <div className="flex items-center gap-4 mb-8">
+                        <div className="p-2.5 bg-teal-100 rounded-2xl border-2 border-teal-200">
+                            <ListChecks className="h-6 w-6 text-teal-600" strokeWidth={3} />
+                        </div>
+                        <div>
+                            <h2 className="text-xl lg:text-2xl font-black text-slate-800">Jadwal Kajian</h2>
+                            <p className="text-sm text-slate-500 font-bold italic">Bagian-bagian pembelajaran dalam program ini.</p>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-4">
+                      {program.sessions.map((session, idx) => (
+                        <div key={session.id || idx} className="flex gap-4 md:gap-6 p-5 md:p-6 rounded-[2rem] bg-slate-50 border-2 border-slate-100 hover:border-teal-200 hover:bg-teal-50/30 transition-all group">
+                          <div className="flex flex-col items-center gap-2">
+                             <div className="w-12 h-12 rounded-2xl bg-white border-2 border-slate-200 flex items-center justify-center text-teal-600 font-black shadow-sm group-hover:border-teal-300 transition-colors">
+                               {idx + 1}
+                             </div>
+                             <div className="w-0.5 flex-1 bg-slate-200 rounded-full last:hidden" />
+                          </div>
+                          
+                          <div className="flex-1 space-y-2 py-1">
+                             <h4 className="text-slate-800 font-black text-lg md:text-xl leading-tight group-hover:text-teal-700 transition-colors">
+                               {session.title}
+                             </h4>
+                             {session.description && (
+                               <p className="text-slate-500 font-bold text-sm md:text-base leading-relaxed">
+                                 {session.description}
+                               </p>
+                             )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
 
@@ -371,7 +340,7 @@ const ProgramDetail = () => {
                         
                         <h3 className="text-2xl font-black mb-2 relative z-10">Tertarik Bergabung?</h3>
                         <p className="text-teal-50 text-sm font-bold mb-6 leading-relaxed relative z-10">
-                            Jangan lewatkan kesempatan untuk belajar langsung dari ahlinya. Kuota terbatas!
+                            Jangan lewatkan kesempatan untuk belajar langsung dari ahlinya.
                         </p>
                         <button className="w-full py-4 rounded-2xl bg-white text-teal-600 font-black border-2 border-teal-100 shadow-lg hover:bg-teal-50 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 relative z-10">
                             Daftar Sekarang

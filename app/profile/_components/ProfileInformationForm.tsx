@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import ImageCropDialog from "./ImageCropDialog";
+import Toast from "@/components/ui/Toast";
 
 interface UserProfile {
   id: string;
@@ -330,15 +331,23 @@ const ProfileInformationForm = ({ stats, level, rank }: any) => {
           
           {/* Badge Container: Center di mobile, Start di desktop */}
           <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 pt-1">
-            <span className="px-3 py-1 rounded-full bg-linear-to-r from-emerald-400 to-cyan-500 text-white text-xs font-bold shadow-sm">
-              Level {level}
-            </span>
-            <span className="px-3 py-1 rounded-full bg-linear-to-r from-amber-400 to-orange-500 text-white text-xs font-bold shadow-sm">
-              Mashaallah
-            </span>
-            <span className="px-3 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-100 text-xs font-bold">
-              Peringkat #{rank}
-            </span>
+            {session?.user?.role === "user" ? (
+              <>
+                <span className="px-3 py-1 rounded-full bg-linear-to-r from-emerald-400 to-cyan-500 text-white text-xs font-bold shadow-sm">
+                  Level {level}
+                </span>
+                <span className="px-3 py-1 rounded-full bg-linear-to-r from-amber-400 to-orange-500 text-white text-xs font-bold shadow-sm">
+                  Mashaallah
+                </span>
+                <span className="px-3 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-100 text-xs font-bold">
+                  Peringkat #{rank}
+                </span>
+              </>
+            ) : (
+              <span className="px-3 py-1 rounded-full bg-linear-to-r from-emerald-400 to-teal-500 text-white text-xs font-bold shadow-sm">
+                Instruktur
+              </span>
+            )}
           </div>
         </div>
       </div>
@@ -459,43 +468,15 @@ const ProfileInformationForm = ({ stats, level, rank }: any) => {
         />
       )}
 
+
       {/* --- TOAST NOTIFICATION --- */}
       {toast && (
-        <div className={`
-          fixed z-100 transition-all duration-300
-          top-4 left-1/2 -translate-x-1/2 w-[90%] max-w-sm
-          md:top-auto md:left-auto md:bottom-8 md:right-8 md:translate-x-0
-        `}>
-          <div className={`
-            flex items-center justify-between gap-3 px-5 py-4 
-            rounded-2xl shadow-2xl border-2 backdrop-blur-md
-            ${toast.type === 'success' 
-              ? 'bg-emerald-500 text-white border-emerald-600 shadow-emerald-200' 
-              : 'bg-red-500 text-white border-red-600 shadow-red-200'
-            }
-            animate-[slideDown_0.5s_cubic-bezier(0.16,1,0.3,1)] 
-            md:animate-[slideUp_0.5s_cubic-bezier(0.16,1,0.3,1)]
-          `}>
-            <div className="flex items-center gap-3.5 flex-1 min-w-0">
-              <div className="shrink-0 bg-white/20 rounded-full p-1.5 flex items-center justify-center">
-                {toast.type === 'success' ? (
-                  <Check className="h-4 w-4 text-white stroke-3" />
-                ) : (
-                  <AlertCircle className="h-4 w-4 text-white stroke-3" />
-                )}
-              </div>
-              <p className="text-sm font-bold leading-snug wrap-break-word">
-                {toast.message}
-              </p>
-            </div>
-            <button 
-              onClick={() => setToast(null)}
-              className="shrink-0 ml-1 p-1.5 hover:bg-white/20 rounded-lg transition-colors"
-            >
-              <X className="h-4 w-4 text-white stroke-3" />
-            </button>
-          </div>
-        </div>
+        <Toast
+          show={toast.show}
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
       )}
 
       <style jsx>{`
