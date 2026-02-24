@@ -1,4 +1,6 @@
 ignoredBuiltDependencies:
+  - '@prisma/client'
+  - esbuild
   - sharp
   - unrs-resolver
 

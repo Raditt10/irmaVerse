@@ -1,6 +1,5 @@
 "use client";
-
-import React, { useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import DashboardHeader from "@/components/ui/Header";
 import Sidebar from "@/components/ui/Sidebar";
 import { 
@@ -15,6 +14,8 @@ import {
   User as UserIcon
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 // --- MOCK DATA TEMAN ---
 interface Friend {
@@ -28,52 +29,183 @@ interface Friend {
   lastSeen?: string;
 }
 
-const MOCK_FRIENDS: Friend[] = [
-  {
-    id: "f1",
-    name: "Ahmad Zaki",
-    email: "zaki@irmaverse.com",
-    level: 12,
-    xp: 2450,
-    status: "online",
-  },
-  {
-    id: "f2",
-    name: "Siti Rahma",
-    email: "rahma@irmaverse.com",
-    level: 8,
-    xp: 1200,
-    status: "offline",
-    lastSeen: "2 jam yang lalu",
-  },
-  {
-    id: "f3",
-    name: "Budi Santoso",
-    email: "budi@irmaverse.com",
-    level: 15,
-    xp: 5000,
-    status: "online",
-  },
-  {
-    id: "f4",
-    name: "Luthfi Hakim",
-    email: "luthfi@irmaverse.com",
-    level: 5,
-    xp: 450,
-    status: "offline",
-    lastSeen: "Kemarin",
-  }
-];
-
 export default function FriendsPage() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [friends, setFriends] = useState<Friend[]>([]);
+  const [pendingFriends, setPendingFriends] = useState<Friend[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [notification, setNotification] = useState<{
+    type: "success" | "error" | "warning" | "info";
+    title: string;
+    message: string;
+  } | null>(null);
 
-  const filteredFriends = useMemo(() => {
-    return MOCK_FRIENDS.filter((friend) =>
-      friend.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      friend.email.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  }, [searchQuery]);
+  const router = useRouter();
+  const { data: session } = useSession({
+    required: true,
+    onUnauthenticated() {
+      window.location.href = "/auth";
+    }
+  });
+
+  useEffect(() => {
+    fetchFriends();
+  }, []);
+
+  const fetchFriends = async () => {
+    setLoading(true);
+    try{  
+      const res = await fetch("/api/friends", {
+        cache: "no-store",
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        switch(data.code){
+          case "NOT_FOUND":
+            throw new Error("Belum ada data pertemanan");
+          case "NO_FRIENDS":
+            throw new Error("Kamu belum memiliki teman dan belum ada permintaan pertemanan");
+          default:
+            throw new Error("Gagal Mengambil data pertemanan");
+        }
+      };
+
+      const friends = data.filter(
+        (f) => f.status == "Friend"
+      );
+      
+      const pendingFriends = data.filter(
+        (f) => f.status == "Pending"
+      );
+      
+      setPendingFriends(pendingFriends);
+      setFriends(friends);
+    }catch(error){
+      console.error("Error fetching friend requests: ", error);
+    }finally{
+      setLoading(false);
+    }
+  };
+
+  const handleAcceptFriend = async (rowid: string, id: string, name: string) => {
+    setLoading(true);
+    try {
+      const req = await fetch(`/api/friends/accept`, {
+        method: "POST",
+        body: JSON.stringify({ 
+          rowId: rowid,
+          targetId: id
+        }),
+        headers: {
+          "Content-Type": "application/json"
+        }
+      });
+      const res = await req.json();
+
+      if(!req.ok){
+        switch(res.code){
+          case "NOT_FOUND":
+            setNotification({
+              type: "error",
+              title: "Permintaan Gagal Tidak ada!",
+              message: `Permintaan pertemanan dengan ${name} tidak ditemukan.`,
+            });
+            throw new Error("Permintaan pertemanan tidak ditemukan");
+          case "SELF_ACCEPT":
+            setNotification({
+              type: "error",
+              title: "Tidak Bisa Menerima Permintaan Pertemanan!",
+              message: `Anda tidak dapat menerima permintaan pertemanan dari diri sendiri.`,
+            });
+            throw new Error("Permintaan pertemanan tidak valid");
+          case "ALREADY_FRIENDS":
+            setNotification({
+              type: "error",
+              title: "Sudah Berteman!",
+              message: `Kamu sudah berteman dengan ${name}.`,
+            });
+            throw new Error("Kamu sudah berteman dengan pengguna ini");
+          default:
+            setNotification({
+              type: "error",
+              title: "Permintaan Gagal Diterima!",
+              message: `Permintaan pertemanan dengan ${name} gagal diterima`,
+            });
+            throw new Error("Permintaan pertemanan gagal diterima: " + res.message);
+        }
+      }
+      setNotification({
+          type: "success",
+          title: "Permintaan Diterima!",
+          message: `Permintaan pertemanan ${name}diterima`,
+        });
+    }
+    catch (error){
+      console.error("Error accepting friend request:", error);
+    }finally{
+      setLoading(false);
+    }
+  };
+
+  const handleRejectFriend = async (rowId: string, id: string, name: string) => {
+    setLoading(true);
+    try{
+      const req = await fetch('/api/friends/reject',{
+        method: "POST",
+        body: JSON.stringify({
+          rowId: rowId,
+          targetId: id
+        }),
+        headers: {
+          "Content-Type": "application/json"
+         }
+      });
+      const res = await req.json();
+
+      if (!req.ok) {
+        switch(res.code){
+          case "NOT_FOUND":
+            setNotification({
+              type: "error",
+              title: "Gagal Menolak Permintaan Pertemanan!",
+              message: `Data pertemanan dengan ${name} tidak ditemukan.`,
+            });
+            throw new Error("Data pertemanan tidak ditemukan");
+          case "SELF_REJECT":
+            setNotification({
+              type: "error",
+              title: "Gagal Menolak Permintaan Pertemanan!",
+              message: `Anda tidak dapat menolak permintaan pertemanan sendiri.`,
+            });
+            throw new Error("Tidak dapat menolak permintaan pertemanan sendiri");
+          case "DUPLICATE":
+            setNotification({
+              type: "error",
+              title: "Permintaan pertemanan duplikat!",
+              message: `Gagal menolak permintaan pertemanan dengan ${name}.`,
+            });
+            throw new Error("Data duplikat");
+          default:
+            throw new Error("Gagal Mengambil data pertemanan. " + res.message);
+        }
+      };
+
+      setNotification({
+        type: "success",
+        title: "Permintaan pertemanan ditolak",
+        message: `Permintaan pertemanan ${name} berhasil ditolak`,
+      });
+    }catch(error){
+      throw new Error("Error rejecting friend request: " + error);
+    }finally{
+      setLoading(false);
+    }
+  }
+
+  const filteredFriends = searchQuery 
+  ? friends.filter((m) => m.name.toLowerCase().includes(searchQuery.toLowerCase()))
+  : friends;
 
   return (
     <div className="min-h-screen bg-[#FDFBF7] flex flex-col font-sans" style={{ fontFamily: "'Inter', 'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', cursive, sans-serif" }}>
@@ -191,4 +323,4 @@ export default function FriendsPage() {
       </div>
     </div>
   );
-}`  `
+}

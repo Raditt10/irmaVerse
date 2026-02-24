@@ -47,10 +47,6 @@ export async function POST(req: NextRequest) {
     if (!session || !session.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-
-    // Debug session
-    console.log('Session:', JSON.stringify(session, null, 2));
-    console.log('User ID:', session.user.id);
     
     // Check if user exists
     const userExists = await prisma.user.findUnique({

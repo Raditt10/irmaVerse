@@ -1,7 +1,9 @@
-import { createServer } from "http";
-import { parse } from "url";
-import next from "next";
-import { Server as SocketIOServer } from "socket.io";
+import { createServer } from 'http';
+import { parse } from 'url';
+import prisma from '@/lib/prisma';
+import next from 'next';
+import { redis } from '@/lib/redis';
+import { Server as SocketIOServer } from 'socket.io';
 
 const dev = process.env.NODE_ENV !== "production";
 const hostname = "localhost";
@@ -9,11 +11,17 @@ const port = parseInt(process.env.PORT || "3000", 10);
 
 const app = next({ dev, hostname, port });
 const handle = app.getRequestHandler();
+const PRESENCE_TTL = 90;
 
 // Store online users: { userId: { socketId, role, name } }
 const onlineUsers = new Map<
   string,
-  { socketId: string; role: string; name: string }
+  {
+    socketId: string;
+    name: string;
+    role: string;
+    lastPing?: number;
+  }
 >();
 // Store typing status: { conversationId: userId[] }
 const typingUsers = new Map<string, Set<string>>();
@@ -107,9 +115,7 @@ app.prepare().then(() => {
     console.log("User connected:", socket.id);
 
     // User joins with their info
-    socket.on(
-      "user:join",
-      (userData: { userId: string; role: string; name: string }) => {
+    socket.on("user:join", (userData: { userId: string; role: string; name: string }) => {
         onlineUsers.set(userData.userId, {
           socketId: socket.id,
           role: userData.role,
@@ -335,17 +341,23 @@ app.prepare().then(() => {
     });
 
     // Handle disconnect
-    socket.on("disconnect", () => {
+    socket.on("disconnect", async () => {
       // Find and remove the disconnected user
       for (const [userId, userData] of onlineUsers.entries()) {
         if (userData.socketId === socket.id) {
           onlineUsers.delete(userId);
+          await redis.srem(`presence:sockets:${userId}`, socket.id);
 
           // Broadcast offline status
           io.emit("presence:update", {
             userId,
             status: "offline",
             name: userData.name,
+          });
+          await redis.del(`presence:${userId}`);
+          await prisma.user.update({
+            where: { id: userId },
+            data: { lastSeen: new Date() },
           });
 
           console.log(`User ${userData.name} (${userId}) disconnected`);
@@ -374,3 +386,4 @@ app.prepare().then(() => {
     console.log("> Socket.IO server is running");
   });
 });
+

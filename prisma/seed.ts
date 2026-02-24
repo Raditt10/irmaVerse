@@ -18,7 +18,7 @@ async function main() {
 
   await prisma.notification.deleteMany();
   await prisma.materialInvite.deleteMany();
-  await prisma.courseEnrollment.deleteMany();
+  await prisma.courseEnrollments.deleteMany();
 
   await prisma.material.deleteMany();
   await prisma.news.deleteMany();
@@ -346,6 +346,7 @@ Hadis dibagi menjadi beberapa tingkatan berdasarkan kualitasnya...`,
         category: mapCourseCategory(mt.category),
         thumbnailUrl: mt.thumbnailUrl,
         instructorId: mt.instructorId.toString(),
+        capacity: mt.capacity,
         date: new Date(mt.date),
         startedAt: mt.startedAt,
         participants: mt.participants.toString(),

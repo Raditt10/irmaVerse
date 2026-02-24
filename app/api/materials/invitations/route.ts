@@ -166,7 +166,8 @@ export async function POST(req: NextRequest) {
 
     // If accepted, create course enrollment
     if (status === "accepted") {
-      await prisma.courseenrollment.upsert({
+      console.log("Creating CourseEnrollment...");
+      const enrollment = await prisma.courseEnrollments.upsert({
         where: {
           materialId_userId: {
             materialId: invite.materialId,
@@ -182,6 +183,11 @@ export async function POST(req: NextRequest) {
           materialId: invite.materialId,
           userId: user.id,
           role: "user",
+          date: new Date(),
+          time: "00:00",
+          instructorArrival: "pending",
+          StartAt: new Date(),
+          EndTime: new Date(),
           enrolledAt: new Date(),
         },
       });

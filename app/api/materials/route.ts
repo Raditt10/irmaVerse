@@ -1,5 +1,5 @@
 import prisma from "@/lib/prisma";
-import { Prisma } from "@prisma/client";
+import { CourseCategory, Grade, CourseRole, Prisma } from "@prisma/client";
 import { auth } from "@/lib/auth";
 import { NextResponse, NextRequest } from "next/server";
 import { createBulkNotifications } from "@/lib/notifications";
@@ -254,8 +254,8 @@ export async function POST(req: NextRequest) {
         description,
         date: new Date(date),
         startedAt: time || null,
-        category: mappedCategory as any,
-        grade: mappedGrade as any,
+        category: mappedCategory as CourseCategory,
+        grade: mappedGrade as Grade,
         thumbnailUrl: thumbnailUrl || null,
         instructorId: session.user.id,
         parentId: programId || null,
@@ -287,7 +287,7 @@ export async function POST(req: NextRequest) {
         updatedAt: new Date(),
       }));
 
-      await prisma.materialinvite.createMany({ data: inviteData });
+      await prisma.materialInvite.createMany({ data: inviteData });
 
       // Fetch instructor name for notification message
       const instructor = await prisma.user.findUnique({

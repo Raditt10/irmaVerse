@@ -5,7 +5,7 @@
 
 */
 -- AlterTable
-ALTER TABLE `materialinvite` ADD COLUMN `userId` VARCHAR(191) NOT NULL;
+ALTER TABLE `MaterialInvite` ADD COLUMN `userId` VARCHAR(191) NOT NULL;
 
 -- CreateIndex
 CREATE INDEX `MaterialInvite_userId_idx` ON `MaterialInvite`(`userId`);

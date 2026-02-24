@@ -21,6 +21,7 @@ import {
   CheckCircle2,
   Crosshair,
 } from "lucide-react";
+import { useSession } from "next-auth/react";
 
 interface MemberDetail {
   id: string;

@@ -6,6 +6,8 @@ import Sidebar from "@/components/ui/Sidebar";
 import ChatbotButton from "@/components/ui/Chatbot";
 import Loading from "@/components/ui/Loading";
 import SearchInput from "@/components/ui/SearchInput";
+import { useSession } from "next-auth/react";
+import { useRef } from "react";
 import CartoonNotification from "@/components/ui/Notification";
 import Toast from "@/components/ui/Toast";
 import { 
@@ -50,14 +52,31 @@ const Members = () => {
 
   const router = useRouter();
 
-  useEffect(() => {
-    fetchMembers();
-  }, []);
+  const { data: session } = useSession({
+    required: true,
+    onUnauthenticated() {
+      window.location.href = "/auth";
+    }
+  });
 
+  useEffect(() => {
+    if(session?.user?.id){
+      fetchMembers();
+    }
+  }, [session]);
+
+  
+  const lastFetchRef = useRef<number>(0);
   const fetchMembers = async () => {
+    const now = Date.now();
+    if (now - lastFetchRef.current < 30000) {
+      return;                      // Hold fetch around 30s after the first fetch
+    }
+    lastFetchRef.current = now;
     try {
       const res = await fetch("/api/members");
       if (!res.ok) throw new Error("Gagal mengambil data anggota");
+
       const data = await res.json();
       const mapped = data.map((u: any) => ({
         id: u.id,
@@ -85,8 +104,63 @@ const Members = () => {
     ? members.filter((m) => m.name.toLowerCase().includes(search.toLowerCase()))
     : members;
 
-  const handleAddFriend = (name: string) => {
-    setToast({ show: true, message: `Permintaan pertemanan dikirim ke ${name}`, type: 'success' });
+  const handleAddFriend = async (id: string, name: string) => {
+    setLoading(true);
+    try {
+      const req = await fetch(`/api/friends`, {
+        method: "POST",
+        body: JSON.stringify({ 
+          targetId: id
+        }),
+        headers: {
+          "Content-Type": "application/json"
+        }
+      });
+      const res = await req.json();
+
+      if(!req.ok){
+        switch(res.code){
+          case "ALREADY_FRIENDS":
+            setNotification({
+              type: "info",
+              title: "Sudah Berteman!",
+              message: `Kamu sudah berteman dengan ${name}`,
+            });
+            throw new Error("Kamu sudah berteman");
+          case "ALREADY_SENT":
+            setNotification({
+              type: "warning",
+              title: "Permintaan Sudah Dikirim!",
+              message: `Permintaan pertemanan sudah dikirim ke ${name}`,
+            });
+            throw new Error("Request pertemanan sudah ada");
+          case "USER_BLOCKED":
+            setNotification({
+              type: "error",
+              title: "Permintaan Dblokir!",
+              message: `Kamu diblokir oleh ${name}`,
+            });
+            throw new Error("Pertemanan diblokir");
+          default:
+            setNotification({
+              type: "error",
+              title: "Permintaan Gagal Dikirim!",
+              message: `Permintaan pertemanan gagal dikirim ke ${name}`,
+            });
+            throw new Error("gagal mengirim request pertemanan");
+        }
+      } 
+      
+      setNotification({
+        type: "success",
+        title: "Permintaan Terkirim!",
+        message: `Permintaan pertemanan dikirim ke ${name}`,
+      });
+    }catch (error){
+      console.error("Error sending friend request:", error);
+    }finally{
+      setLoading(false);
+    }
   };
 
   return (
@@ -201,7 +275,7 @@ const Members = () => {
                             </button>
 
                             <button
-                                onClick={() => handleAddFriend(member.name)}
+                                onClick={() => handleAddFriend(member.id, member.name)}
                                 className="flex items-center justify-center gap-2 py-2.5 rounded-xl bg-teal-400 border-2 border-teal-600 text-white font-bold text-sm shadow-[0_2px_0_0_#0f766e] hover:bg-teal-500 active:border-b-2 active:translate-y-0.5 transition-all"
                             >
                                 <UserPlus className="h-4 w-4" />

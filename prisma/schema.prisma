@@ -8,42 +8,54 @@ datasource db {
   shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
 }
 
+
 model User {
-  id                                                String               @id @default(cuid())
-  email                                             String               @unique
-  name                                              String?
-  password                                          String
-  createdAt                                         DateTime             @default(now())
-  updatedAt                                         DateTime             @updatedAt
-  address                                           String?
-  bio                                               String?
-  notelp                                            String?
-  role                                              Role                 @default(user)
-  bidangKeahlian                                    String?
-  pengalaman                                        String?
-  avatar                                            String?
-  lastSeen                                          DateTime             @default(now())
-  averageScore                                      Int                  @default(0)
-  badges                                            Int                  @default(0)
-  level                                             Int                  @default(1)
-  points                                            Int                  @default(0)
-  quizzes                                           Int                  @default(0)
-  streak                                            Int                  @default(0)
-  instructorConversations                           ChatConversation[]   @relation("instructorConversations")
+  id         String   @id @default(cuid())
+  email      String   @unique
+  name       String?
+  password   String
+  notelp     String?                  // Nomor telepon (opsional)
+  address    String?                  // Alamat (opsional) 
+  bio        String?                  // Bio (opsional)
+  avatar     String?                  // URL foto profil (opsional)
+  role       Role                @default(user) // Role: user, admin, instruktur
+  lastSeen   DateTime @default(now()) // Last active timestamp
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  // Instruktur profile
+  bidangKeahlian String? // Bidang keahlian (hanya untuk instruktur)
+  pengalaman     String? // Pengalaman (hanya untuk instruktur)
+
+  // Dashboard progress fields
+  class         Grade    @default(X)
+  points        Int      @default(0) // Total points
+  badges        Int      @default(0) // Total badges
+  level         Int      @default(1) // User level
+  quizzes       Int      @default(0) // Total quizzes completed
+  streak        Int      @default(0) // Current streak (days)
+  averageScore  Int      @default(0) // Average quiz score
+
+  // Relations
+  newsArticles                                      News[]               @relation("authorNews")
   userConversations                                 ChatConversation[]   @relation("userConversations")
+  instructorConversations                           ChatConversation[]   @relation("instructorConversations")
   sentMessages                                      ChatMessage[]        @relation("sentMessages")
-  forumMessages                                     ForumMessage[]       @relation("forumMessages")
+  schedules                                         Schedule[]           @relation("instructorSchedules")
+  material                                          Material[]
+  invitesAsInstructor                               MaterialInvite[]     @relation("MaterialInviteInstructor")
+  invitesAsUser                                     MaterialInvite[]     @relation("MaterialInviteUser")
+  courseEnrollments                                 CourseEnrollment[]
   competitions                                      Competition[]        @relation("competitionInstructor")
-  courseenrollment                                  courseenrollment[]
+  friends1                                          Friendship[]         @relation("Friends1")
+  friends2                                          Friendship[]         @relation("Friends2")
+  forumMessages                                     ForumMessage[]       @relation("forumMessages")
   favoritedByUsers                                  FavoriteInstructor[] @relation("InstructorFavorites")
   favoritedInstructors                              FavoriteInstructor[] @relation("UserFavorites")
-  material                                          material[]
-  materialinvite_materialinvite_instructorIdTousers materialinvite[]     @relation("materialinvite_instructorIdTousers")
-  materialinvite_materialinvite_userIdTousers       materialinvite[]     @relation("materialinvite_userIdTousers")
-  newsArticles                                      News[]               @relation("authorNews")
+  materialinvite_materialinvite_instructorIdTousers MaterialInvite[]     @relation("materialinvite_instructorIdTousers")
+  materialinvite_materialinvite_userIdTousers       MaterialInvite[]     @relation("materialinvite_userIdTousers")
   sentNotifications                                 Notification[]       @relation("senderNotifications")
   notifications                                     Notification[]       @relation("userNotifications")
-  schedules                                         Schedule[]           @relation("instructorSchedules")
 
   @@map("users")
 }
@@ -204,7 +216,7 @@ model Notification {
   @@map("notifications")
 }
 
-model attendance {
+model Attendance {
   id                String   @id @default(cuid())
   userId            String
   materialId        String
@@ -230,67 +242,92 @@ model attendance {
   @@index([userId], map: "Attendance_userId_idx")
 }
 
-model courseenrollment {
+model CourseEnrollment {
   id         String                @id @default(cuid())
   materialId String
   userId     String
-  role       courseenrollment_role
+  role       CourseEnrollment_Role
   enrolledAt DateTime              @default(now())
-  material   material              @relation(fields: [materialId], references: [id], onDelete: Cascade, map: "CourseEnrollment_materialId_fkey")
+  material   Material              @relation(fields: [materialId], references: [id], onDelete: Cascade, map: "CourseEnrollment_materialId_fkey")
   users      User                  @relation(fields: [userId], references: [id], onDelete: Cascade, map: "CourseEnrollment_userId_fkey")
 
   @@unique([materialId, userId], map: "CourseEnrollment_materialId_userId_key")
   @@index([userId], map: "CourseEnrollment_userId_idx")
 }
 
-model material {
+model Material {
   id                                             String             @id @default(cuid())
   title                                          String
   description                                    String?
-  grade                                          material_grade
+  grade                                          Material_Grade
   thumbnailUrl                                   String?
   instructorId                                   String
   nextCourseId                                   String?
   createdAt                                      DateTime           @default(now())
   updatedAt                                      DateTime           @updatedAt
   date                                           DateTime           @default(now())
-  category                                       material_category
+  category                                       Material_Category
   participants                                   String?
   startedAt                                      String?
   content                                        String?            @db.LongText
   link                                           String?
   materialType                                   String?
   parentId                                       String?
-  courseenrollment                               courseenrollment[]
+  courseenrollment                               CourseEnrollment[]
   users                                          User               @relation(fields: [instructorId], references: [id], map: "Material_instructorId_fkey")
-  material_material_nextCourseIdTomaterial       material?          @relation("material_nextCourseIdTomaterial", fields: [nextCourseId], references: [id], map: "Material_nextCourseId_fkey")
-  other_material_material_nextCourseIdTomaterial material[]         @relation("material_nextCourseIdTomaterial")
-  material_material_parentIdTomaterial           material?          @relation("material_parentIdTomaterial", fields: [parentId], references: [id], map: "Material_parentId_fkey")
-  other_material_material_parentIdTomaterial     material[]         @relation("material_parentIdTomaterial")
-  materialinvite                                 materialinvite[]
+  material_material_nextCourseIdTomaterial       Material?          @relation("material_nextCourseIdTomaterial", fields: [nextCourseId], references: [id], map: "Material_nextCourseId_fkey")
+  other_material_material_nextCourseIdTomaterial Material[]         @relation("material_nextCourseIdTomaterial")
+  material_material_parentIdTomaterial           Material?          @relation("material_parentIdTomaterial", fields: [parentId], references: [id], map: "Material_parentId_fkey")
+  other_material_material_parentIdTomaterial     Material[]         @relation("material_parentIdTomaterial")
+  materialinvite                                 MaterialInvite[]
 
   @@index([instructorId], map: "Material_instructorId_fkey")
   @@index([nextCourseId], map: "Material_nextCourseId_fkey")
   @@index([parentId], map: "Material_parentId_fkey")
 }
 
-model materialinvite {
+model MaterialInvite {
   id                                       String                @id @default(cuid())
   materialId                               String
   instructorId                             String
   token                                    String                @unique(map: "MaterialInvite_token_key")
-  status                                   materialinvite_status @default(pending)
+  status                                   MaterialInvite_Status @default(pending)
   reason                                   String?               @db.Text
   createdAt                                DateTime              @default(now())
   updatedAt                                DateTime              @updatedAt
   userId                                   String
   users_materialinvite_instructorIdTousers User                  @relation("materialinvite_instructorIdTousers", fields: [instructorId], references: [id], map: "MaterialInvite_instructorId_fkey")
-  material                                 material              @relation(fields: [materialId], references: [id], onDelete: Cascade, map: "MaterialInvite_materialId_fkey")
+  material                                 Material              @relation(fields: [materialId], references: [id], onDelete: Cascade, map: "MaterialInvite_materialId_fkey")
   users_materialinvite_userIdTousers       User                  @relation("materialinvite_userIdTousers", fields: [userId], references: [id], onDelete: Cascade, map: "MaterialInvite_userId_fkey")
 
   @@index([instructorId], map: "MaterialInvite_instructorId_fkey")
   @@index([materialId], map: "MaterialInvite_materialId_idx")
   @@index([userId], map: "MaterialInvite_userId_idx")
+}
+
+model Friendship {
+  id             String        @id @default(cuid())
+  requesterId    String
+  addresseeId    String
+  status         FriendshipStatus
+
+  requester      User @relation("Friends1", fields: [requesterId], references: [id], map: "fk_friendship_requester")
+  addressee      User @relation("Friends2", fields: [addresseeId], references: [id], map: "fk_friendship_addressee")
+
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  
+  @@index([requesterId])
+  @@index([addresseeId])
+  @@index([status])
+}
+
+enum Grade {
+  X
+  XI
+  XII
+  XIII
+  Alumni
 }
 
 enum Role {
@@ -325,26 +362,33 @@ enum NotificationStatus {
   expired
 }
 
-enum courseenrollment_role {
+enum CourseEnrollment_Role {
   user
   instructor
   assistant
 }
 
-enum material_grade {
+enum FriendshipStatus {
+  Pending
+  Friend
+  Rejected
+  Blocked
+}
+
+enum Material_Grade {
   X
   XI
   XII
 }
 
-enum materialinvite_status {
+enum MaterialInvite_Status {
   pending
   accepted
   rejected
   expired
 }
 
-enum material_category {
+enum Material_Category {
   Wajib
   Extra
   NextLevel
