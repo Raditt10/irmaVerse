@@ -54,7 +54,7 @@ export async function GET(req: NextRequest) {
           materialinvite: {
             some: {
               userId: User.id,
-              status: { in: ["accepted", "pending"] },
+              status: "accepted",
             },
           },
         },

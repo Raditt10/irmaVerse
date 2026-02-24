@@ -81,7 +81,8 @@ const MaterialDetail = () => {
   });
 
   const role = session?.user?.role?.toLowerCase();
-  const isPrivileged = role === "instruktur" || role === "admin" || role === "instructor";
+  const isPrivileged =
+    role === "instruktur" || role === "admin" || role === "instructor";
 
   const showToast = (message: string, type: "success" | "error") => {
     setToast({ show: true, message, type });
@@ -517,7 +518,7 @@ const MaterialDetail = () => {
                     <div className="space-y-3">
                       <button
                         onClick={() =>
-                          router.push(`/materials/${material.id}/attendance-list`)
+                          router.push(`/materials/${material.id}/attendance`)
                         }
                         className="w-full flex items-center justify-center gap-2 py-4 rounded-xl bg-teal-400 text-white font-black border-2 border-teal-600 border-b-4 hover:bg-teal-500 active:border-b-2 active:translate-y-0.5 transition-all shadow-sm group"
                       >
@@ -552,7 +553,8 @@ const MaterialDetail = () => {
                           Alhamdulillah! ✨
                         </h3>
                         <p className="text-teal-50 text-sm font-bold mb-6 leading-relaxed relative z-10">
-                          Kamu sudah mengisi absensi untuk kajian ini. Semoga ilmunya berkah dan bermanfaat ya!
+                          Kamu sudah mengisi absensi untuk kajian ini. Semoga
+                          ilmunya berkah dan bermanfaat ya!
                         </p>
                         <div className="w-full py-4 rounded-2xl bg-white/20 text-white font-black border-2 border-white/30 backdrop-blur-sm flex items-center justify-center gap-2 relative z-10">
                           <CheckCircle2 className="w-5 h-5 text-white" />
@@ -565,8 +567,8 @@ const MaterialDetail = () => {
                           Siap Hadir?
                         </h3>
                         <p className="text-teal-50 text-sm font-bold mb-6 leading-relaxed relative z-10">
-                          Jangan lupa isi absensi saat kegiatan berlangsung untuk
-                          mencatat kehadiranmu.
+                          Jangan lupa isi absensi saat kegiatan berlangsung
+                          untuk mencatat kehadiranmu.
                         </p>
                         <button
                           onClick={() =>

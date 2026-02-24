@@ -44,9 +44,9 @@ export async function GET(
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    if (material.instructorId !== user.id && user.role !== "admin") {
+    if (user.role !== "instruktur" && user.role !== "admin") {
       return NextResponse.json(
-        { error: "Forbidden: Only instructor can view attendance" },
+        { error: "Forbidden: Only instructor or admin can view attendance" },
         { status: 403 },
       );
     }

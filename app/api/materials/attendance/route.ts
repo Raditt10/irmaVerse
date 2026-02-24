@@ -139,20 +139,25 @@ export async function GET(req: NextRequest) {
       });
     } else {
       // Return all attendance for user (for dashboard)
-      const allAttendance = await (prisma.attendance as any).findMany({
+      const allAttendance = await prisma.attendance.findMany({
         where: { userId: user.id },
-        include: {
-          material: true,
-        },
         orderBy: { createdAt: "desc" },
       });
 
+      // Fetch related material titles separately (attendance has no Prisma relation to material)
+      const materialIds = [...new Set(allAttendance.map((a) => a.materialId))];
+      const materials = await prisma.material.findMany({
+        where: { id: { in: materialIds } },
+        select: { id: true, title: true },
+      });
+      const materialMap = new Map(materials.map((m) => [m.id, m]));
+
       // Map to expected dynamic format
-      const formatted = allAttendance.map((att: any) => ({
+      const formatted = allAttendance.map((att) => ({
         id: att.id,
         materialId: att.materialId,
-        materialTitle: att.material?.title || "Kajian",
-        instructorName: att.material?.instructor || "TBA",
+        materialTitle: materialMap.get(att.materialId)?.title || "Kajian",
+        instructorName: "TBA",
         attendedAt: att.createdAt,
         status: att.status,
       }));

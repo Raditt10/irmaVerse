@@ -78,6 +78,20 @@ export async function GET(
       );
     }
 
+    const isPrivileged = User.role === "instruktur" || User.role === "admin";
+
+    // Access control: non-privileged users must be enrolled (courseenrollment)
+    // OR have an accepted invitation to view this material
+    if (!isPrivileged) {
+      const hasEnrollment = (material as any).courseenrollment?.length > 0;
+      const hasAcceptedInvite = ((material as any).materialinvite || []).some(
+        (inv: any) => inv.status === "accepted",
+      );
+      if (!hasEnrollment && !hasAcceptedInvite) {
+        return NextResponse.json({ error: "Akses ditolak" }, { status: 403 });
+      }
+    }
+
     const CATEGORY_LABEL = {
       Wajib: "Program Wajib",
       Extra: "Program Ekstra",
@@ -93,8 +107,6 @@ export async function GET(
       xi: "Kelas 11",
       xii: "Kelas 12",
     };
-
-    const isPrivileged = User.role === "instruktur" || User.role === "admin";
 
     const m = material as any; // Cast to any to bypass stale linting issues
     const result = {
