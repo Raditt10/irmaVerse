@@ -24,7 +24,9 @@ export async function GET(req: NextRequest) {
     }
     console.log('User found:', User.email, User.role);
 
-
+    if(!courseId){
+      return NextResponse.json({ error: "Course ID is required" }, { status: 400 });
+    }
 
     const where: Prisma.MaterialWhereInput = {};
     const category = searchParams.get("category");

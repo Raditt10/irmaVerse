@@ -3,6 +3,7 @@ import { FriendshipStatus } from "@prisma/client";
 import { auth } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
 import { redis } from "@/lib/redis";
+export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {       // Request
   try{
@@ -56,8 +57,10 @@ export async function POST(req: NextRequest) {       // Request
         status: FriendshipStatus.Pending
       },
     });
-    if(!friendship) return NextResponse.json({ message: "QUERY FAILED" }, { status: 500})
+    if(!friendship) return NextResponse.json({ message: "QUERY FAILED" }, { status: 500});
 
+    const cachekey = `friends:${User.id}`;
+    await redis.del(cachekey);
     return NextResponse.json({ message: "Berhasil mengirim request pertemanan" }, { status: 201 });
   } catch(error){
     return NextResponse.json({ message: "gagal mengirim request pertemanan" }, { status: 500 })

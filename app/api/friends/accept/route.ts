@@ -2,7 +2,7 @@ import prisma from '@/lib/prisma';
 import { FriendshipStatus } from '@prisma/client';
 import { auth } from '@/lib/auth';
 import { NextRequest, NextResponse } from "next/server";
-
+import { redis } from '@/lib/redis';
 
 export async function POST(req: NextRequest) {
   try{
@@ -45,6 +45,8 @@ export async function POST(req: NextRequest) {
       data: { status: FriendshipStatus.Friend },
     });
 
+    const cachekey = `friends:${targetId}`;
+    await redis.del(cachekey);
     return NextResponse.json(updated);
   } catch(error){
     return NextResponse.json({ error: "Failed to fetch and accept request: " + error }, { status: 500})

@@ -58,13 +58,10 @@ const Members = () => {
   const lastFetchRef = useRef<number>(0);
   const fetchMembers = async () => {
     const now = Date.now();
-
     if (now - lastFetchRef.current < 30000) {
       return;                      // Hold fetch around 30s after the first fetch
     }
-
     lastFetchRef.current = now;
-  
     try {
       const res = await fetch("/api/members");
       if (!res.ok) throw new Error("Gagal mengambil data anggota");
@@ -118,7 +115,7 @@ const Members = () => {
               title: "Sudah Berteman!",
               message: `Kamu sudah berteman dengan ${name}`,
             });
-            throw new Error("gagal mengirim request pertemanan");
+            throw new Error("Kamu sudah berteman");
           case "ALREADY_SENT":
             setNotification({
               type: "warning",

@@ -56,7 +56,9 @@ export default function FriendPage() {
   const fetchFriends = async () => {
     setLoading(true);
     try{  
-      const res = await fetch("/api/friends");
+      const res = await fetch("/api/friends", {
+        cache: "no-store",
+      });
       const data = await res.json();
 
       if (!res.ok) {
@@ -66,7 +68,7 @@ export default function FriendPage() {
           case "NO_FRIENDS":
             throw new Error("Kamu belum memiliki teman dan belum ada permintaan pertemanan");
           default:
-            throw new Error("Gagal Mengambil data pertemanan. " + data.message);
+            throw new Error("Gagal Mengambil data pertemanan");
         }
       };
 
@@ -184,7 +186,7 @@ export default function FriendPage() {
               title: "Permintaan pertemanan duplikat!",
               message: `Gagal menolak permintaan pertemanan dengan ${name}.`,
             });
-            throw new Error("Query gagal: " + res.message);
+            throw new Error("Data duplikat");
           default:
             throw new Error("Gagal Mengambil data pertemanan. " + res.message);
         }
