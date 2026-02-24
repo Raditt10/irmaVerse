@@ -10,6 +10,7 @@ import Link from "next/link";
 import { useSession } from "next-auth/react";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import CartoonNotification from "@/components/ui/Notification";
+import EmptyState from "@/components/ui/EmptyState";
 
 interface NewsItem {
   id: string;
@@ -286,20 +287,14 @@ const News = () => {
                 <p className="text-slate-500">Memuat berita...</p>
               </div>
             ) : filteredNews.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-16 bg-white rounded-3xl shadow-sm border border-slate-100">
-                <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">
-                    <Search className="h-8 w-8 text-slate-300" />
-                </div>
-                <h3 className="text-lg font-bold text-slate-700 mb-1">Tidak ada berita ditemukan</h3>
-                <p className="text-slate-500 text-sm">Coba kata kunci lain atau ubah filter kategori.</p>
-                {suggestion && (
-                    <button 
-                        onClick={handleSuggestionClick}
-                        className="mt-4 text-sm px-4 py-2 bg-teal-50 text-teal-700 rounded-full font-medium hover:bg-teal-100 transition-colors"
-                    >
-                        Cari "{suggestion}" saja
-                    </button>
-                )}
+              <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+                <EmptyState
+                  icon="search"
+                  title="Tidak ada berita ditemukan"
+                  description="Coba kata kunci lain atau ubah filter kategori."
+                  actionLabel={suggestion ? `Cari "${suggestion}" saja` : undefined}
+                  onAction={suggestion ? handleSuggestionClick : undefined}
+                />
               </div>
             ) : (
               <div className="space-y-6">

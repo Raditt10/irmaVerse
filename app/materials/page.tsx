@@ -90,6 +90,9 @@ const Materials = () => {
   }, [materials, selectedProgram, selectedGrade, searchQuery, showJoinedOnly]);
 
   const filterMaterials = async () => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
     const filtered = materials.filter((material) => {
       const matchesProgram = selectedProgram === "Semua" || material.category === selectedProgram;
       const matchesGrade = selectedGrade === "Semua" || material.grade === selectedGrade;
@@ -97,10 +100,22 @@ const Materials = () => {
         material.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         material.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
         material.instructor.toLowerCase().includes(searchQuery.toLowerCase());
-      // Logic: show only if isJoined (enrolled or accepted invite), hide if rejected/pending
-      const matchesJoined = !showJoinedOnly || (material.isJoined && !material.attendedAt);
+      
+      // Dynamic logic for second filter button
+      let matchesFilter = true;
+      if (showJoinedOnly) {
+        if (isPrivileged) {
+          // Instructors/Admins: filter by today's date
+          const materialDate = new Date(material.date);
+          materialDate.setHours(0, 0, 0, 0);
+          matchesFilter = materialDate.getTime() === today.getTime();
+        } else {
+          // Regular users: show enrolled/joined materials
+          matchesFilter = material.isJoined && !material.attendedAt;
+        }
+      }
 
-      return matchesProgram && matchesGrade && matchesSearch && matchesJoined;
+      return matchesProgram && matchesGrade && matchesSearch && matchesFilter;
     });
 
     setFilteredMaterials(filtered);
@@ -294,8 +309,8 @@ const Materials = () => {
                         : "text-slate-500 hover:text-slate-700"
                     }`}
                   >
-                    <CheckCheck className="h-4 w-4" />
-                    Kajian Diikuti
+                    {isPrivileged ? <Calendar className="h-4 w-4" /> : <CheckCheck className="h-4 w-4" />}
+                    {isPrivileged ? "Kajian Hari Ini" : "Kajian Diikuti"}
                   </button>
                 </div>
 
