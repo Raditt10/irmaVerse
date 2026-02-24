@@ -7,23 +7,16 @@ export async function POST(req: NextRequest) {
     const session = await auth();
 
     if (!session?.user?.email) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const body = await req.json();
-    const { 
-      materialId, 
-      attendanceData,
-      surveyData 
-    } = body;
+    const { materialId, attendanceData, surveyData } = body;
 
     if (!materialId) {
       return NextResponse.json(
         { error: "Material ID is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -33,10 +26,7 @@ export async function POST(req: NextRequest) {
     });
 
     if (!user) {
-      return NextResponse.json(
-        { error: "User not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
     // Check if user already attended
@@ -49,11 +39,11 @@ export async function POST(req: NextRequest) {
 
     if (existingAttendance) {
       return NextResponse.json(
-        { 
+        {
           message: "Already attended",
-          attendedAt: existingAttendance.createdAt
+          attendedAt: existingAttendance.createdAt,
         },
-        { status: 200 }
+        { status: 200 },
       );
     }
 
@@ -106,13 +96,13 @@ export async function POST(req: NextRequest) {
         message: "Attendance recorded successfully",
         attendance,
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (error) {
     console.error("Attendance error:", error);
     return NextResponse.json(
       { error: "Failed to record attendance" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -122,10 +112,7 @@ export async function GET(req: NextRequest) {
     const session = await auth();
 
     if (!session?.user?.email) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const materialId = req.nextUrl.searchParams.get("materialId");
@@ -134,10 +121,7 @@ export async function GET(req: NextRequest) {
     });
 
     if (!user) {
-      return NextResponse.json(
-        { error: "User not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
     if (materialId) {
@@ -155,11 +139,11 @@ export async function GET(req: NextRequest) {
       });
     } else {
       // Return all attendance for user (for dashboard)
-      const allAttendance = await prisma.attendance.findMany({
+      const allAttendance = await (prisma.attendance as any).findMany({
         where: { userId: user.id },
         include: {
-          material: true, // This will only work if relation exists. Let's check relation.
-        } as any, // Cast to any because relation might be missing in some setups
+          material: true,
+        },
         orderBy: { createdAt: "desc" },
       });
 
@@ -170,7 +154,7 @@ export async function GET(req: NextRequest) {
         materialTitle: att.material?.title || "Kajian",
         instructorName: att.material?.instructor || "TBA",
         attendedAt: att.createdAt,
-        status: att.status
+        status: att.status,
       }));
 
       return NextResponse.json(formatted);
@@ -179,7 +163,7 @@ export async function GET(req: NextRequest) {
     console.error("Get attendance error:", error);
     return NextResponse.json(
       { error: "Failed to fetch attendance" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

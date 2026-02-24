@@ -51,6 +51,12 @@ export async function GET(
             title: true,
           },
         },
+        program: {
+          select: {
+            id: true,
+            title: true,
+          },
+        },
         materialinvite: {
           include: {
             users_materialinvite_userIdTousers: {
@@ -66,7 +72,10 @@ export async function GET(
     });
 
     if (!material) {
-      return NextResponse.json({ error: "Materi tidak ditemukan" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Materi tidak ditemukan" },
+        { status: 404 },
+      );
     }
 
     const CATEGORY_LABEL = {
@@ -95,7 +104,8 @@ export async function GET(
       date: m.date,
       instructor: m.users?.name || null,
       instructorEmail: m.users?.email || null,
-      category: CATEGORY_LABEL[m.category as keyof typeof CATEGORY_LABEL] || m.category,
+      category:
+        CATEGORY_LABEL[m.category as keyof typeof CATEGORY_LABEL] || m.category,
       grade: GRADE_LABEL[m.grade as keyof typeof GRADE_LABEL] || m.grade,
       startedAt: m.startedAt,
       thumbnailUrl: m.thumbnailUrl,
@@ -109,9 +119,17 @@ export async function GET(
             title: m.material_material_parentIdTomaterial.title,
           }
         : null,
+      program: m.program
+        ? {
+            id: m.program.id,
+            title: m.program.title,
+          }
+        : null,
       // For editing: flat email list of all invited users
       invites: (m.materialinvite || [])
-        .map((inv: any) => inv.users_materialinvite_userIdTousers?.email || null)
+        .map(
+          (inv: any) => inv.users_materialinvite_userIdTousers?.email || null,
+        )
         .filter(Boolean),
       // For instructor view: rich invite status data
       inviteDetails: isPrivileged
@@ -272,7 +290,7 @@ export async function PUT(
         startedAt: time || null,
         grade: mappedGrade as any,
         thumbnailUrl: thumbnailUrl || null,
-        parentId: programId || null,
+        programId: programId || null,
         materialType: materialType || null,
         content: materialContent || null,
         link: materialLink || null,

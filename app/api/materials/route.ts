@@ -20,7 +20,10 @@ export async function GET(req: NextRequest) {
     });
 
     if (!User) {
-      console.log("[GET /api/materials] User not found for email:", session.user.email);
+      console.log(
+        "[GET /api/materials] User not found for email:",
+        session.user.email,
+      );
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
@@ -28,7 +31,7 @@ export async function GET(req: NextRequest) {
 
     const where: any = {};
     const categoryQuery = searchParams.get("category");
-    const categories = (Prisma as any).material_category || {}; 
+    const categories = (Prisma as any).material_category || {};
     if (
       categoryQuery &&
       Object.values(categories).includes(categoryQuery as any)
@@ -38,8 +41,8 @@ export async function GET(req: NextRequest) {
 
     // If user is not instructor/admin, only show materials where they are enrolled or invited
     // Normalizing role check to include both 'instruktur' and 'instructor'
-    const isPrivileged = User.role === "instruktur" || User.role === "admin" || User.role === "instructor";
-    
+    const isPrivileged = User.role === "instruktur" || User.role === "admin";
+
     if (!isPrivileged) {
       where.OR = [
         {
@@ -51,7 +54,7 @@ export async function GET(req: NextRequest) {
           materialinvite: {
             some: {
               userId: User.id,
-              status: { in: ["accepted", "pending"] }, 
+              status: { in: ["accepted", "pending"] },
             },
           },
         },
@@ -95,17 +98,25 @@ export async function GET(req: NextRequest) {
           where: { userId: User.id },
           select: { status: true },
         },
+        program: {
+          select: { id: true, title: true },
+        },
       },
       orderBy: { date: "desc" },
     });
 
-    console.log("[GET /api/materials] Found materials count:", materials.length);
+    console.log(
+      "[GET /api/materials] Found materials count:",
+      materials.length,
+    );
 
     // normalize ke format frontend
     const result = materials.map((m: any) => {
       const hasEnrollment = (m.courseenrollment || []).length > 0;
       // Only treat as joined if invite is accepted (not pending/rejected)
-      const hasAcceptedInvite = (m.materialinvite || []).some((inv: any) => inv.status === "accepted");
+      const hasAcceptedInvite = (m.materialinvite || []).some(
+        (inv: any) => inv.status === "accepted",
+      );
       const isJoined = hasEnrollment || hasAcceptedInvite;
 
       return {
@@ -120,10 +131,16 @@ export async function GET(req: NextRequest) {
         thumbnailUrl: m.thumbnailUrl,
         createdAt: m.createdAt,
         isJoined: isJoined,
+        program: m.program
+          ? { id: m.program.id, title: m.program.title }
+          : null,
       };
     });
 
-    console.log("[GET /api/materials] Returning mapped result count:", result.length);
+    console.log(
+      "[GET /api/materials] Returning mapped result count:",
+      result.length,
+    );
 
     return NextResponse.json(result);
   } catch (error) {
@@ -226,7 +243,8 @@ export async function POST(req: NextRequest) {
     }
 
     // Map category from label to enum
-    const CATEGORY_MAP: Record<string, any> = { // Changed CourseCategory to any
+    const CATEGORY_MAP: Record<string, any> = {
+      // Changed CourseCategory to any
       "Program Wajib": "Wajib",
       "Program Ekstra": "Extra",
       "Program Next Level": "NextLevel",
@@ -248,7 +266,7 @@ export async function POST(req: NextRequest) {
     // Temporary workaround: manually provide ID since prisma generate is blocked by file lock
     const material = await prisma.material.create({
       data: {
-        id: `cl${Math.random().toString(36).substring(2, 11)}`, // Simple cuid-like fallback
+        id: `cl${Math.random().toString(36).substring(2, 11)}`,
         title,
         description,
         date: new Date(date),
@@ -257,7 +275,7 @@ export async function POST(req: NextRequest) {
         grade: mappedGrade as any,
         thumbnailUrl: thumbnailUrl || null,
         instructorId: session.user.id,
-        parentId: programId || null,
+        programId: programId || null,
         materialType: materialType || null,
         content: materialContent || null,
         link: materialLink || null,
