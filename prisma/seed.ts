@@ -1,7 +1,7 @@
 import {
   PrismaClient,
-  Grade,
-  CourseCategory,
+  material_grade,
+  material_category,
   NotificationType,
   NotificationStatus,
 } from "@prisma/client";
@@ -17,8 +17,8 @@ async function main() {
   await prisma.chatConversation.deleteMany();
 
   await prisma.notification.deleteMany();
-  await prisma.materialInvite.deleteMany();
-  await prisma.courseEnrollment.deleteMany();
+  await prisma.materialinvite.deleteMany();
+  await prisma.courseenrollment.deleteMany();
 
   await prisma.material.deleteMany();
   await prisma.news.deleteMany();
@@ -407,8 +407,8 @@ Hadis dibagi menjadi beberapa tingkatan berdasarkan kualitasnya...`,
     Math.random().toString(36).substring(2, 15) +
     Math.random().toString(36).substring(2, 15);
 
-  // Create the MaterialInvite first
-  await prisma.materialInvite.create({
+  // Create the materialinvite first
+  await prisma.materialinvite.create({
     data: {
       materialId: (await prisma.material.findFirst({
         where: { instructorId: "101" },
@@ -448,7 +448,7 @@ Hadis dibagi menjadi beberapa tingkatan berdasarkan kualitasnya...`,
     where: { instructorId: "102" },
   });
 
-  await prisma.materialInvite.create({
+  await prisma.materialinvite.create({
     data: {
       materialId: material102!.id,
       instructorId: "102",
@@ -489,28 +489,28 @@ Hadis dibagi menjadi beberapa tingkatan berdasarkan kualitasnya...`,
   console.log('   - "rafa" (untuk mencari pengguna)');
 }
 
-function mapGrade(value: string): Grade {
+function mapGrade(value: string): material_grade {
   switch (value) {
     case "X":
-      return Grade.X;
+      return material_grade.X;
     case "XI":
-      return Grade.XI;
+      return material_grade.XI;
     case "XII":
-      return Grade.XII;
+      return material_grade.XII;
     default:
       throw new Error(`Invalid grade: ${value}`);
   }
 }
-function mapCourseCategory(value: string): CourseCategory {
+function mapCourseCategory(value: string): material_category {
   switch (value) {
     case "Wajib":
-      return CourseCategory.Wajib;
+      return material_category.Wajib;
     case "Ekstra":
-      return CourseCategory.Extra;
+      return material_category.Extra;
     case "Next Level":
-      return CourseCategory.NextLevel;
+      return material_category.NextLevel;
     case "Susulan":
-      return CourseCategory.Susulan;
+      return material_category.Susulan;
     default:
       throw new Error(`Invalid course category: ${value}`);
   }
