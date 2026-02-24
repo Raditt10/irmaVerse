@@ -32,6 +32,7 @@ model User {
   instructorConversations                           ChatConversation[]   @relation("instructorConversations")
   userConversations                                 ChatConversation[]   @relation("userConversations")
   sentMessages                                      ChatMessage[]        @relation("sentMessages")
+  forumMessages                                     ForumMessage[]       @relation("forumMessages")
   competitions                                      Competition[]        @relation("competitionInstructor")
   courseenrollment                                  courseenrollment[]
   favoritedByUsers                                  FavoriteInstructor[] @relation("InstructorFavorites")
@@ -77,6 +78,18 @@ model News {
   @@index([slug])
   @@index([authorId])
   @@map("news")
+}
+
+model ForumMessage {
+  id        String   @id @default(cuid())
+  content   String   @db.Text
+  senderId  String
+  createdAt DateTime @default(now())
+  sender    User     @relation("forumMessages", fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([senderId])
+  @@index([createdAt])
+  @@map("forum_messages")
 }
 
 model ChatConversation {

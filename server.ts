@@ -18,6 +18,31 @@ const onlineUsers = new Map<
 // Store typing status: { conversationId: userId[] }
 const typingUsers = new Map<string, Set<string>>();
 
+// ── Forum (global chat room) state ──────────────────────────────────────────
+// forumParticipants: socketId → { userId, name }
+const forumParticipants = new Map<string, { userId: string; name: string }>();
+// forumTypingUsers: userId → { name, timeout }
+const forumTypingUsers = new Map<
+  string,
+  { name: string; timeout: ReturnType<typeof setTimeout> }
+>();
+
+/** Broadcast the deduplicated forum participant count to the global room */
+function broadcastForumCount(io: SocketIOServer) {
+  const uniqueUsers = new Set(
+    Array.from(forumParticipants.values()).map((p) => p.userId),
+  );
+  io.to("forum:global").emit("forum:participants:update", uniqueUsers.size);
+}
+
+/** Broadcast the current forum typing users list to the global room */
+function broadcastForumTyping(io: SocketIOServer) {
+  const typingList = Array.from(forumTypingUsers.entries()).map(
+    ([userId, data]) => ({ userId, name: data.name }),
+  );
+  io.to("forum:global").emit("forum:typing:update", typingList);
+}
+
 // Global reference to io for internal notification pushes
 let ioInstance: SocketIOServer | null = null;
 
@@ -245,6 +270,70 @@ app.prepare().then(() => {
       });
     });
 
+    // ── Forum (Global Public Chat) ─────────────────────────────────────────
+
+    // User enters the forum page
+    socket.on("forum:join", (data: { userId: string; name: string }) => {
+      socket.join("forum:global");
+      forumParticipants.set(socket.id, {
+        userId: data.userId,
+        name: data.name,
+      });
+      broadcastForumCount(io);
+      console.log(
+        `Forum: ${data.name} joined (${forumParticipants.size} in room)`,
+      );
+    });
+
+    // User leaves the forum page
+    socket.on("forum:leave", (data: { userId: string }) => {
+      socket.leave("forum:global");
+      forumParticipants.delete(socket.id);
+      broadcastForumCount(io);
+
+      // Clean up typing if they were typing
+      if (forumTypingUsers.has(data.userId)) {
+        clearTimeout(forumTypingUsers.get(data.userId)!.timeout);
+        forumTypingUsers.delete(data.userId);
+        broadcastForumTyping(io);
+      }
+    });
+
+    // Broadcast a new forum message to everyone in the room
+    socket.on("forum:message:send", (data: { message: object }) => {
+      // Broadcast to ALL in the room (including sender so they see their own message)
+      io.to("forum:global").emit("forum:message:receive", data.message);
+    });
+
+    // User started typing in the forum
+    socket.on(
+      "forum:typing:start",
+      (data: { userId: string; userName: string }) => {
+        // Clear existing auto-stop timeout
+        if (forumTypingUsers.has(data.userId)) {
+          clearTimeout(forumTypingUsers.get(data.userId)!.timeout);
+        }
+
+        // Auto-stop typing after 3 s of silence
+        const timeout = setTimeout(() => {
+          forumTypingUsers.delete(data.userId);
+          broadcastForumTyping(io);
+        }, 3000);
+
+        forumTypingUsers.set(data.userId, { name: data.userName, timeout });
+        broadcastForumTyping(io);
+      },
+    );
+
+    // User stopped typing in the forum
+    socket.on("forum:typing:stop", (data: { userId: string }) => {
+      if (forumTypingUsers.has(data.userId)) {
+        clearTimeout(forumTypingUsers.get(data.userId)!.timeout);
+        forumTypingUsers.delete(data.userId);
+        broadcastForumTyping(io);
+      }
+    });
+
     // Handle disconnect
     socket.on("disconnect", () => {
       // Find and remove the disconnected user
@@ -261,6 +350,20 @@ app.prepare().then(() => {
 
           console.log(`User ${userData.name} (${userId}) disconnected`);
           break;
+        }
+      }
+
+      // ── Clean up forum state on disconnect ────────────────────────────────
+      const forumParticipant = forumParticipants.get(socket.id);
+      if (forumParticipant) {
+        forumParticipants.delete(socket.id);
+        broadcastForumCount(io);
+
+        // Also remove from typing list if they were typing
+        if (forumTypingUsers.has(forumParticipant.userId)) {
+          clearTimeout(forumTypingUsers.get(forumParticipant.userId)!.timeout);
+          forumTypingUsers.delete(forumParticipant.userId);
+          broadcastForumTyping(io);
         }
       }
     });
