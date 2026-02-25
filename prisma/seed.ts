@@ -1,7 +1,7 @@
 import {
   PrismaClient,
-  Grade,
-  CourseCategory,
+  Material_Grade,
+  Material_Category,
   NotificationType,
   NotificationStatus,
 } from "@prisma/client";
@@ -18,7 +18,6 @@ async function main() {
 
   await prisma.notification.deleteMany();
   await prisma.materialInvite.deleteMany();
-  await prisma.courseEnrollments.deleteMany();
 
   await prisma.material.deleteMany();
   await prisma.news.deleteMany();
@@ -346,10 +345,53 @@ Hadis dibagi menjadi beberapa tingkatan berdasarkan kualitasnya...`,
         category: mapCourseCategory(mt.category),
         thumbnailUrl: mt.thumbnailUrl,
         instructorId: mt.instructorId.toString(),
-        capacity: mt.capacity,
         date: new Date(mt.date),
         startedAt: mt.startedAt,
         participants: mt.participants.toString(),
+      },
+    });
+  };
+  
+  const quizdata = [
+    {
+      id: "q1",
+      title: "Pemahaman Dasar Fiqih",
+      description: "Kajian Fiqih Bab Thaharah",
+      questionsCount: 15,
+      coverColor: "from-teal-400 to-emerald-400",
+    },
+    {
+      id: "q2",
+      title: "Kisah Nabi & Sahabat",
+      description: "Sirah Nabawiyah: Perang Badar",
+      questionsCount: 20,
+      coverColor: "from-blue-400 to-indigo-400",
+    },
+    {
+      id: "q3",
+      title: "Adab Menuntut Ilmu",
+      description: "Kajian Rutin: Kitab Ta'lim Muta'allim",
+      questionsCount: 10,
+      score: 90,
+      coverColor: "from-purple-400 to-fuchsia-400",
+    },
+    {
+      id: "q4",
+      title: "Tajwid Dasar",
+      description: "Tahsin Al-Quran Pertemuan 1",
+      questionsCount: 10,
+      coverColor: "from-orange-400 to-rose-400",
+    }
+  ];
+
+  for (const q of quizdata) {
+    await prisma.quiz.create({
+      data: {
+        id: q.id,
+        title: q.title,
+        description: q.description,
+        questionsCount: q.questionsCount,
+        coverColor: q.coverColor,
       },
     });
   }
@@ -490,28 +532,30 @@ Hadis dibagi menjadi beberapa tingkatan berdasarkan kualitasnya...`,
   console.log('   - "rafa" (untuk mencari pengguna)');
 }
 
-function mapGrade(value: string): Grade {
+function mapGrade(value: string): Material_Grade {
   switch (value) {
     case "X":
-      return Grade.X;
+      return Material_Grade.X;
     case "XI":
-      return Grade.XI;
+      return Material_Grade.XI;
     case "XII":
-      return Grade.XII;
+      return Material_Grade.XII;
+    case "XIII":
+      return Material_Grade.XIII;
     default:
       throw new Error(`Invalid grade: ${value}`);
   }
 }
-function mapCourseCategory(value: string): CourseCategory {
+function mapCourseCategory(value: string): Material_Category {
   switch (value) {
     case "Wajib":
-      return CourseCategory.Wajib;
+      return Material_Category.Wajib;
     case "Ekstra":
-      return CourseCategory.Extra;
+      return Material_Category.Extra;
     case "Next Level":
-      return CourseCategory.NextLevel;
+      return Material_Category.NextLevel;
     case "Susulan":
-      return CourseCategory.Susulan;
+      return Material_Category.Susulan;
     default:
       throw new Error(`Invalid course category: ${value}`);
   }

@@ -118,7 +118,7 @@ npx prisma db seed
 
 
 5. **Jalankan Project**
-Karena menggunakan custom server untuk Socket.io dan redis, gunakan perintah ini di dua terminal berbeda:
+Karena menggunakan custom server untuk Socket.io dan redis, gunakan perintah ini:
 ```bash
 redis-server
 ```

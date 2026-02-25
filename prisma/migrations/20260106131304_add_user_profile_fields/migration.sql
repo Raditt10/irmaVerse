@@ -1,5 +1,0 @@
--- AlterTable
-ALTER TABLE `users` ADD COLUMN `address` VARCHAR(191) NULL,
-    ADD COLUMN `bio` VARCHAR(191) NULL,
-    ADD COLUMN `notelp` VARCHAR(191) NULL,
-    ADD COLUMN `role` VARCHAR(191) NOT NULL DEFAULT 'user';

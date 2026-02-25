@@ -43,8 +43,6 @@ model User {
   sentMessages                                      ChatMessage[]        @relation("sentMessages")
   schedules                                         Schedule[]           @relation("instructorSchedules")
   material                                          Material[]
-  invitesAsInstructor                               MaterialInvite[]     @relation("MaterialInviteInstructor")
-  invitesAsUser                                     MaterialInvite[]     @relation("MaterialInviteUser")
   courseEnrollments                                 CourseEnrollment[]
   competitions                                      Competition[]        @relation("competitionInstructor")
   friends1                                          Friendship[]         @relation("Friends1")
@@ -56,6 +54,7 @@ model User {
   materialinvite_materialinvite_userIdTousers       MaterialInvite[]     @relation("materialinvite_userIdTousers")
   sentNotifications                                 Notification[]       @relation("senderNotifications")
   notifications                                     Notification[]       @relation("userNotifications")
+  quizEnrollments                                   QuizEnrollments[]
 
   @@map("users")
 }
@@ -322,6 +321,45 @@ model Friendship {
   @@index([status])
 }
 
+model Quiz {
+  id              String   @id @default(cuid())
+  title           String
+  description     String?
+  questionsCount  Int?
+  thumbnailUrl    String?
+  coverColor      String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  enrollments     QuizEnrollments[]
+  questions       QuizQuestion[]
+}
+
+model QuizQuestion {
+  id         String   @id @default(cuid())
+  quizId     String
+  question   String
+  options    String
+  answer     String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  quiz       Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+}
+
+model QuizEnrollments {
+  id         String   @id @default(cuid())
+  quizId     String
+  userId     String
+  status     QuizStatus
+  score      Int?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  quiz       Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
 enum Grade {
   X
   XI
@@ -379,6 +417,7 @@ enum Material_Grade {
   X
   XI
   XII
+  XIII
 }
 
 enum MaterialInvite_Status {
@@ -393,4 +432,10 @@ enum Material_Category {
   Extra
   NextLevel
   Susulan
+}
+
+enum QuizStatus {
+  completed
+  inProgress
+  notStarted
 }

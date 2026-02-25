@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import DashboardHeader from "@/components/ui/Header";
@@ -19,55 +19,23 @@ import {
   Target
 } from "lucide-react";
 
-// --- MOCK DATA (Nanti diganti dengan fetch dari API) ---
 interface Quiz {
-  id: string;
+  rowId?: string;
+  quizId: string;
   title: string;
-  materialTitle: string;
+  description: string;
   questionCount: number;
-  status: "not_started" | "in_progress" | "completed";
+  status: "notStarted" | "inProgress" | "completed";
   score?: number;
-  coverColor: string; // Untuk variasi warna card ala Quizizz
+  coverColor?: string; 
 }
-
-const MOCK_QUIZZES: Quiz[] = [
-  {
-    id: "q1",
-    title: "Pemahaman Dasar Fiqih",
-    materialTitle: "Kajian Fiqih Bab Thaharah",
-    questionCount: 15,
-    status: "not_started",
-    coverColor: "from-teal-400 to-emerald-400",
-  },
-  {
-    id: "q2",
-    title: "Kisah Nabi & Sahabat",
-    materialTitle: "Sirah Nabawiyah: Perang Badar",
-    questionCount: 20,
-    status: "in_progress",
-    coverColor: "from-blue-400 to-indigo-400",
-  },
-  {
-    id: "q3",
-    title: "Adab Menuntut Ilmu",
-    materialTitle: "Kajian Rutin: Kitab Ta'lim Muta'allim",
-    questionCount: 10,
-    status: "completed",
-    score: 90,
-    coverColor: "from-purple-400 to-fuchsia-400",
-  },
-  {
-    id: "q4",
-    title: "Tajwid Dasar",
-    materialTitle: "Tahsin Al-Quran Pertemuan 1",
-    questionCount: 10,
-    status: "not_started",
-    coverColor: "from-orange-400 to-rose-400",
-  }
-];
 
 const QuizHome = () => {
   const router = useRouter();
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeFilter, setActiveFilter] = useState<"all" | "notStarted" | "completed" | "inProgress">("all");
+  const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const { status } = useSession({
     required: true,
     onUnauthenticated() {
@@ -75,14 +43,38 @@ const QuizHome = () => {
     },
   });
 
-  const [searchQuery, setSearchQuery] = useState("");
-  const [activeFilter, setActiveFilter] = useState<"all" | "not_started" | "completed">("all");
+  useEffect(() => {
+    fetchQuizzes();
+  }, []);
+
+  const fetchQuizzes = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/quiz");
+      const data = await res.json();
+
+      if(!res.ok){
+        switch(data.code){
+          case "NOT_FOUND":
+            throw new Error("No quiz found");
+          default:
+            throw new Error("Failed to fetch quiz");
+        }
+      }
+
+      setQuizzes(data);
+    } catch (error) {
+      console.error("Error fetching quizzes:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Filter & Search Logic
   const filteredQuizzes = useMemo(() => {
-    return MOCK_QUIZZES.filter((quiz) => {
+    return quizzes.filter((quiz) => {
       const matchesSearch = quiz.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                            quiz.materialTitle.toLowerCase().includes(searchQuery.toLowerCase());
+                            quiz.description.toLowerCase().includes(searchQuery.toLowerCase());
       
       const matchesFilter = activeFilter === "all" ? true :
                             activeFilter === "completed" ? quiz.status === "completed" :
@@ -94,12 +86,8 @@ const QuizHome = () => {
 
   // Menghitung total poin dari kuis yang sudah selesai
   const totalPoints = useMemo(() => {
-    return MOCK_QUIZZES.reduce((acc, quiz) => acc + (quiz.score || 0), 0);
+    return quizzes.reduce((acc, quiz) => acc + (quiz.score || 0), 0);
   }, []);
-
-  if (status === "loading") {
-    return <div className="min-h-screen bg-[#FDFBF7] flex items-center justify-center"><Loading text="Memuat Area Quiz..." /></div>;
-  }
 
   return (
     <div className="min-h-screen bg-[#FDFBF7] flex flex-col">
@@ -163,9 +151,9 @@ const QuizHome = () => {
                 Semua
               </button>
               <button
-                onClick={() => setActiveFilter("not_started")}
+                onClick={() => setActiveFilter("notStarted")}
                 className={`flex-1 md:flex-none px-6 py-2.5 rounded-xl text-sm font-black transition-all ${
-                  activeFilter === "not_started" ? "bg-white text-teal-600 shadow-sm" : "text-slate-500 hover:text-slate-700"
+                  activeFilter === "notStarted" ? "bg-white text-teal-600 shadow-sm" : "text-slate-500 hover:text-slate-700"
                 }`}
               >
                 Belum Selesai
@@ -212,95 +200,101 @@ const QuizHome = () => {
           {/* ------------------------------------------- */}
 
           {/* --- QUIZ GRID --- */}
-          {filteredQuizzes.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 text-center bg-white rounded-[3rem] border-4 border-slate-100 border-dashed">
-              <Target className="h-20 w-20 text-slate-300 mb-4" />
-              <h3 className="text-xl font-black text-slate-700 mb-2">Tidak Ada Kuis Ditemukan</h3>
-              <p className="text-slate-500 font-medium">Coba gunakan kata kunci lain atau selesaikan kajian baru.</p>
-            </div>
+          {loading ? (
+            <Loading text="Memuat Kuis..." />
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 lg:gap-8">
-              {filteredQuizzes.map((quiz) => (
-                <div 
-                  key={quiz.id} 
-                  className="bg-white rounded-[2rem] border-2 border-slate-200 shadow-[0_6px_0_0_#cbd5e1] hover:border-teal-400 hover:shadow-[0_6px_0_0_#2dd4bf] hover:-translate-y-1 transition-all duration-300 flex flex-col overflow-hidden group cursor-pointer"
-                  onClick={() => router.push(`/quiz/${quiz.id}`)}
-                >
-                  {/* Card Header Illustration */}
-                  <div className={`h-32 bg-gradient-to-br ${quiz.coverColor} relative p-5 flex items-end justify-between overflow-hidden`}>
-                    <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-20 mix-blend-overlay" />
-                    
-                    {/* Floating elements background */}
-                    <div className="absolute top-4 right-4 w-12 h-12 bg-white/20 rounded-full blur-md" />
-                    <div className="absolute -bottom-4 -left-4 w-20 h-20 bg-black/10 rounded-full blur-xl" />
+            <>
+            {filteredQuizzes.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-20 text-center bg-white rounded-[3rem] border-4 border-slate-100 border-dashed">
+                <Target className="h-20 w-20 text-slate-300 mb-4" />
+                <h3 className="text-xl font-black text-slate-700 mb-2">Tidak Ada Kuis Ditemukan</h3>
+                <p className="text-slate-500 font-medium">Coba gunakan kata kunci lain atau selesaikan kajian baru.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 lg:gap-8">
+                {filteredQuizzes.map((quiz) => (
+                  <div 
+                    key={quiz.quizId} 
+                    className="bg-white rounded-[2rem] border-2 border-slate-200 shadow-[0_6px_0_0_#cbd5e1] hover:border-teal-400 hover:shadow-[0_6px_0_0_#2dd4bf] hover:-translate-y-1 transition-all duration-300 flex flex-col overflow-hidden group cursor-pointer"
+                    onClick={() => router.push(`/quiz/${quiz.quizId}`)}
+                  >
+                    {/* Card Header Illustration */}
+                    <div className={`h-32 bg-gradient-to-br ${quiz.coverColor} relative p-5 flex items-end justify-between overflow-hidden`}>
+                      <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-20 mix-blend-overlay" />
+                      
+                      {/* Floating elements background */}
+                      <div className="absolute top-4 right-4 w-12 h-12 bg-white/20 rounded-full blur-md" />
+                      <div className="absolute -bottom-4 -left-4 w-20 h-20 bg-black/10 rounded-full blur-xl" />
 
-                    <div className="relative z-10 flex flex-col gap-2">
-                      <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/90 backdrop-blur-sm rounded-lg text-[10px] font-black text-slate-700 shadow-sm w-max">
-                        <BookOpen className="h-3 w-3 text-teal-500" />
-                        {quiz.questionCount} Soal
+                      <div className="relative z-10 flex flex-col gap-2">
+                        <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/90 backdrop-blur-sm rounded-lg text-[10px] font-black text-slate-700 shadow-sm w-max">
+                          <BookOpen className="h-3 w-3 text-teal-500" />
+                          {quiz.questionCount} Soal
+                        </div>
+                      </div>
+
+                      <div className="relative z-10">
+                        {quiz.status === "completed" ? (
+                          <div className="w-12 h-12 bg-yellow-400 rounded-full flex items-center justify-center border-4 border-white shadow-md transform group-hover:rotate-12 transition-transform">
+                            <Medal className="h-6 w-6 text-white" fill="currentColor" />
+                          </div>
+                        ) : (
+                          <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center border-4 border-transparent shadow-md transform group-hover:scale-110 transition-transform">
+                            <Play className="h-5 w-5 text-teal-500 ml-1" fill="currentColor" />
+                          </div>
+                        )}
                       </div>
                     </div>
 
-                    <div className="relative z-10">
-                      {quiz.status === "completed" ? (
-                        <div className="w-12 h-12 bg-yellow-400 rounded-full flex items-center justify-center border-4 border-white shadow-md transform group-hover:rotate-12 transition-transform">
-                          <Medal className="h-6 w-6 text-white" fill="currentColor" />
-                        </div>
-                      ) : (
-                        <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center border-4 border-transparent shadow-md transform group-hover:scale-110 transition-transform">
-                          <Play className="h-5 w-5 text-teal-500 ml-1" fill="currentColor" />
-                        </div>
-                      )}
-                    </div>
-                  </div>
+                    {/* Card Body */}
+                    <div className="p-5 flex flex-col flex-1">
+                      <p className="text-xs font-bold text-slate-400 mb-1 line-clamp-1">{quiz.description}</p>
+                      <h3 className="text-lg font-black text-slate-800 mb-4 line-clamp-2 leading-tight group-hover:text-teal-600 transition-colors">
+                        {quiz.title}
+                      </h3>
 
-                  {/* Card Body */}
-                  <div className="p-5 flex flex-col flex-1">
-                    <p className="text-xs font-bold text-slate-400 mb-1 line-clamp-1">{quiz.materialTitle}</p>
-                    <h3 className="text-lg font-black text-slate-800 mb-4 line-clamp-2 leading-tight group-hover:text-teal-600 transition-colors">
-                      {quiz.title}
-                    </h3>
+                      <div className="mt-auto pt-4 border-t-2 border-slate-100 flex items-center justify-between">
+                        {/* Status Indicator */}
+                        <div className="flex items-center gap-2">
+                          {quiz.status === "notStarted" && (
+                            <>
+                              <span className="w-2.5 h-2.5 rounded-full bg-slate-300" />
+                              <span className="text-xs font-bold text-slate-500">Belum Mulai</span>
+                            </>
+                          )}
+                          {quiz.status === "inProgress" && (
+                            <>
+                              <span className="w-2.5 h-2.5 rounded-full bg-slate-300" />
+                              <span className="text-xs font-bold text-slate-500">Belum Mulai</span>
+                            </>
+                          )}
+                          {quiz.status === "completed" && (
+                            <>
+                              <span className="w-2.5 h-2.5 rounded-full bg-slate-300" />
+                              <span className="text-xs font-bold text-emerald-600">Selesai • Skor: {quiz.score}</span>
+                            </>
+                          )}
+                        </div>
 
-                    <div className="mt-auto pt-4 border-t-2 border-slate-100 flex items-center justify-between">
-                      {/* Status Indicator */}
-                      <div className="flex items-center gap-2">
-                        {quiz.status === "not_started" && (
-                          <>
-                            <span className="w-2.5 h-2.5 rounded-full bg-slate-300" />
-                            <span className="text-xs font-bold text-slate-500">Belum Mulai</span>
-                          </>
-                        )}
-                        {quiz.status === "in_progress" && (
-                          <>
-                            <span className="w-2.5 h-2.5 rounded-full bg-slate-300" />
-                            <span className="text-xs font-bold text-slate-500">Belum Mulai</span>
-                          </>
-                        )}
-                        {quiz.status === "completed" && (
-                          <>
-                            <span className="w-2.5 h-2.5 rounded-full bg-slate-300" />
-                            <span className="text-xs font-bold text-emerald-600">Selesai • Skor: {quiz.score}</span>
-                          </>
-                        )}
+                        {/* Action Button */}
+                        <button className={`
+                          px-4 py-2 rounded-xl text-xs font-black transition-all border-b-4 active:border-b-0 active:translate-y-1
+                          ${quiz.status === "completed" 
+                            ? "bg-slate-100 text-slate-600 border-slate-300 group-hover:bg-slate-200" 
+                            : "bg-teal-400 text-white border-teal-600 group-hover:bg-teal-500 shadow-[0_2px_0_0_#0f766e] group-hover:shadow-none"}
+                        `}>
+                          {quiz.status === "completed" ? "Lihat Hasil" : quiz.status === "inProgress" ? "Lanjut" : "Mulai"}
+                        </button>
                       </div>
-
-                      {/* Action Button */}
-                      <button className={`
-                        px-4 py-2 rounded-xl text-xs font-black transition-all border-b-4 active:border-b-0 active:translate-y-1
-                        ${quiz.status === "completed" 
-                          ? "bg-slate-100 text-slate-600 border-slate-300 group-hover:bg-slate-200" 
-                          : "bg-teal-400 text-white border-teal-600 group-hover:bg-teal-500 shadow-[0_2px_0_0_#0f766e] group-hover:shadow-none"}
-                      `}>
-                        {quiz.status === "completed" ? "Lihat Hasil" : quiz.status === "in_progress" ? "Lanjut" : "Mulai"}
-                      </button>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
+            </>
           )}
-        </main>
-      </div>
+      </main>
+    </div>
     </div>
   );
 };
