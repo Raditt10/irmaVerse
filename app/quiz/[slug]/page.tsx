@@ -114,7 +114,7 @@ export default function QuizSessionPage() {
   // --- RENDER LOADING ---
   if (loading) {
     return (
-      <div className="h-screen w-full bg-[#FDFBF7] flex items-center justify-center font-sans" style={{ fontFamily: "'Inter', 'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', cursive, sans-serif" }}>
+      <div className="h-screen w-full bg-[#FDFBF7] flex items-center justify-center font-sans">
         <Loading text="Menyiapkan Pertanyaan..." size="lg" />
       </div>
     );
@@ -132,7 +132,7 @@ export default function QuizSessionPage() {
     else { message = "Jangan menyerah, coba pelajari materinya lagi ya."; iconColor = "text-red-400"; }
 
     return (
-      <div className="min-h-screen bg-[#FDFBF7] flex flex-col font-sans" style={{ fontFamily: "'Inter', 'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', cursive, sans-serif" }}>
+      <div className="min-h-screen bg-[#FDFBF7] flex flex-col font-sans">
         <DashboardHeader />
         <div className="flex flex-1">
           <Sidebar />
@@ -181,7 +181,7 @@ export default function QuizSessionPage() {
   const progressPercentage = ((currentQIndex) / totalQuestions) * 100;
 
   return (
-    <div className="min-h-screen bg-[#FDFBF7] flex flex-col font-sans" style={{ fontFamily: "'Inter', 'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', cursive, sans-serif" }}>
+    <div className="min-h-screen bg-[#FDFBF7] flex flex-col font-sans">
       <DashboardHeader />
       
       <div className="flex flex-1 overflow-hidden">

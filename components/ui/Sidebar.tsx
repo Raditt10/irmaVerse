@@ -118,6 +118,27 @@ const Sidebar = () => {
     };
   }, []);
 
+  // Lock body scroll when mobile sidebar is open
+  useEffect(() => {
+    if (isMobileOpen) {
+      document.body.style.overflow = 'hidden';
+      document.body.style.touchAction = 'none';
+      document.body.style.position = 'fixed';
+      document.body.style.width = '100%';
+    } else {
+      document.body.style.overflow = '';
+      document.body.style.touchAction = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+      document.body.style.touchAction = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+    };
+  }, [isMobileOpen]);
+
   const getDashboardPath = () => {
     if (role === "instruktur") return "/academy";
     if (role === "admin") return "/admin";
@@ -375,12 +396,12 @@ const Sidebar = () => {
         <div className="lg:hidden">
             {/* Backdrop with enhanced blur */}
           <div
-            className="fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-md animate-in fade-in duration-500"
+            className="fixed inset-0 z-40 bg-transparent animate-in fade-in duration-500"
             onClick={() => setIsMobileOpen(false)}
           />
           
           {/* Drawer Panel - iOS style spring animation */}
-          <div className="fixed z-50 top-0 left-0 h-dvh w-[82%] max-w-75 shadow-2xl animate-in slide-in-from-left duration-500 ease-out rounded-r-[2.5rem] overflow-hidden flex flex-col" style={{ zIndex: 2147483647 }}>
+          <div className="fixed z-50 top-0 bottom-0 left-0 w-[82%] max-w-75 shadow-2xl animate-in slide-in-from-left duration-500 ease-out rounded-r-[2.5rem] overflow-hidden flex flex-col" style={{ zIndex: 2147483647, height: '100%' }}>
             
             {/* Background Decorations */}
             <div className="absolute inset-0 bg-white z-0 pointer-events-none" />
@@ -395,7 +416,7 @@ const Sidebar = () => {
               
               {/* Header Card - More compact */}
               <div className="px-5 pt-7 pb-3">
-                <div className="bg-white/90 backdrop-blur-lg p-3.5 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
+                <div className="bg-white p-3.5 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between">
                    <div className="flex items-center gap-3">
                       <div className="w-9 h-9 flex items-center justify-center">
                           <img src="/logo.webp" alt="IRMA Logo" className="h-9 w-9 object-contain" />
@@ -423,7 +444,7 @@ const Sidebar = () => {
                   const isSubmenuOpen = item.id && expandedSubmenus[item.id];
 
                   return (
-                    <div key={idx} className="bg-white/60 backdrop-blur-sm rounded-3xl border-2 border-white shadow-sm overflow-hidden">
+                    <div key={idx} className="bg-white rounded-3xl border-2 border-white shadow-sm overflow-hidden">
                       <button
                         onClick={() => {
                           if (hasSubmenu) {
@@ -488,7 +509,7 @@ const Sidebar = () => {
               
               {/* Mobile Footer */}
               <div className="p-5">
-                  <div className="bg-white/80 backdrop-blur-md rounded-3xl border-2 border-white p-4 text-center shadow-sm">
+                  <div className="bg-white rounded-3xl border-2 border-white p-4 text-center shadow-sm">
                     <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
                         © 2026 Syntax 13
                     </p>
