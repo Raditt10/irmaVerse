@@ -131,7 +131,7 @@ export default function AdminDashboard() {
             </div>
 
             <div className="hidden md:flex items-center gap-2 bg-white px-5 py-3 rounded-full border-2 border-slate-200 shadow-[0_4px_0_0_#e2e8f0] transform hover:-translate-y-1 transition-transform">
-              <Calendar className="w-5 h-5 text-indigo-600" strokeWidth={3} />
+              <Calendar className="w-5 h-5 text-emerald-600" strokeWidth={3} />
               <span className="text-sm font-black text-slate-700">
                 {new Date().toLocaleDateString("id-ID", {
                   weekday: "long",
