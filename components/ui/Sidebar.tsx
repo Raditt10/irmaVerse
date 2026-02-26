@@ -19,7 +19,8 @@ import {
   MessageSquare,
   Award,
   ChevronDown,
-  Contact, // Icon baru untuk variasi
+  Contact,
+  Shield,
 } from "lucide-react";
 
 // Custom scrollbar styles - Cartoon Style
@@ -85,8 +86,9 @@ const Sidebar = () => {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [expandedSubmenus, setExpandedSubmenus] = useState<{ [key: string]: boolean }>({});
 
-  const role = session?.user?.role;
-  const isInstruktur = role === "instruktur";
+  const role = session?.user?.role?.toLowerCase();
+  const isInstruktur = role === "instruktur" || role === "instructor";
+  const isAdmin = role === "admin";
 
   useEffect(() => {
     const saved = localStorage.getItem('sidebar-expanded');
@@ -137,10 +139,10 @@ const Sidebar = () => {
     },
     { 
       icon: BookOpen, 
-      label: isInstruktur ? "Kelola Kajian" : "Kajian Mingguanku", 
-      path: isInstruktur ? "/materials" : undefined,
+      label: (isInstruktur || isAdmin) ? "Kelola Kajian" : "Kajian Mingguanku", 
+      path: (isInstruktur || isAdmin) ? "/materials" : undefined,
       id: "kajian",
-      submenu: !isInstruktur ? [
+      submenu: (!isInstruktur && !isAdmin) ? [
         {
           icon: Calendar,
           label: "Jadwal Kajian",
@@ -243,9 +245,28 @@ const Sidebar = () => {
     // ----------------------------------------------------
     { 
       icon: Newspaper, 
-      label: isInstruktur ? "Kelola Berita" : "Berita IRMA", 
+      label: (isInstruktur || isAdmin) ? "Kelola Berita" : "Berita IRMA", 
       path: "/news" 
     },
+    ...(isAdmin ? [
+      {
+        icon: Shield,
+        label: "Kelola Akun",
+        id: "menu-admin",
+        submenu: [
+          {
+            icon: Users,
+            label: "Kelola Akun User",
+            path: "/admin/users"
+          },
+          {
+            icon: Users,
+            label: "Kelola Akun Instruktur",
+            path: "/admin/instructors"
+          }
+        ]
+      }
+    ] : [])
   ];
 
   return (
@@ -381,7 +402,7 @@ const Sidebar = () => {
                       </div>
                       <div>
                         <h2 className="text-base font-black text-slate-800 leading-none">IRMA VERSE</h2>
-                        <p className="text-[9px] font-extrabold text-teal-600 uppercase tracking-widest mt-1">MOBILE APP</p>
+                        <p className="text-[9px] font-extrabold text-teal-600 uppercase tracking-widest mt-1">Platform resmi IRMA13</p>
                       </div>
                    </div>
                    <button

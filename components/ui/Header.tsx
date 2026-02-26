@@ -200,7 +200,7 @@ export default function DashboardHeader() {
               IRMA VERSE
             </h2>
             <p className="text-[9px] sm:text-xs text-slate-400 font-bold uppercase tracking-widest leading-none mt-0.5">
-              Irma 13 App
+              Platform resmi Irma13
             </p>
           </div>
         </div>
