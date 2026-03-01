@@ -288,7 +288,7 @@ const News = () => {
                   icon="search"
                   title="Tidak ada berita ditemukan"
                   description="Coba kata kunci lain atau ubah filter kategori."
-                  actionLabel={suggestion ? `Cari "${suggestion}" saja` : undefined}
+                  actionLabel={suggestion ? `Cari &quot;${suggestion}&quot; saja` : undefined}
                   onAction={suggestion ? handleSuggestionClick : undefined}
                 />
               </div>
