@@ -12,11 +12,11 @@ import {
   MessageCircle, 
   SearchX, 
   RefreshCcw, 
-  ChevronDown,
   Heart
 } from "lucide-react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
+import CategoryFilter from "@/components/ui/CategoryFilter";
 
 interface Instructor {
   id: string;
@@ -172,7 +172,7 @@ const Instructors = () => {
               </div>
               <button
                 onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
-                className={`px-4 lg:px-6 py-3 rounded-2xl border-2 border-b-4 font-bold flex items-center gap-2 transition-all ${
+                className={`hidden md:flex px-4 lg:px-6 py-3 rounded-2xl border-2 border-b-4 font-bold items-center gap-2 transition-all ${
                   showFavoritesOnly
                     ? 'bg-rose-400 border-rose-500 text-white shadow-lg hover:bg-rose-500 active:border-b-2 active:translate-y-0.5'
                     : 'bg-white border-slate-200 text-slate-600 shadow-[0_4px_0_0_#e2e8f0] hover:border-rose-300 hover:text-rose-500 active:border-b-2 active:translate-y-0.5'
@@ -188,8 +188,8 @@ const Instructors = () => {
             </div>
 
             {/* Filter & Search Section */}
-            <div className="mb-8 grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="md:col-span-2">
+            <div className="mb-8 flex flex-col gap-4">
+              <div className="w-full">
                 <SearchInput
                   placeholder="Cari nama instruktur atau keahlian..."
                   value={searchTerm}
@@ -198,51 +198,37 @@ const Instructors = () => {
                 />
               </div>
 
-              <div className="relative" ref={dropdownRef}>
-                <button
-                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                  className={`
-                    w-full flex items-center justify-between rounded-2xl border-2 px-5 py-3.5 lg:py-4
-                    font-bold text-slate-700 transition-all cursor-pointer bg-white
-                    ${isDropdownOpen 
-                      ? 'border-teal-400 shadow-[0_4px_0_0_#34d399] -translate-y-0.5' 
-                      : 'border-slate-200 shadow-[0_4px_0_0_#e2e8f0] hover:border-teal-300 hover:text-teal-600'
-                    }
-                  `}
-                >
-                  <span className="capitalize text-sm lg:text-base truncate pr-2">
-                    {specializationFilter === "all" ? "Semua Keahlian" : specializationFilter}
-                  </span>
-                  <ChevronDown 
-                    className={`h-5 w-5 shrink-0 transition-transform duration-300 ${isDropdownOpen ? 'rotate-180 text-teal-500' : 'text-slate-400'}`} 
-                    strokeWidth={3} 
+              {/* Porsi Kategori dan Tombol Favorit */}
+              <div className="flex flex-row gap-4 items-center">
+                <div className="w-full flex-1 min-w-0 pr-1 overflow-hidden">
+                  <CategoryFilter
+                    categories={uniqueSpecializations.map((spec) => spec === "all" ? "Semua Keahlian" : spec)}
+                    subCategories={[]}
+                    selectedCategory={specializationFilter === "all" ? "Semua Keahlian" : specializationFilter}
+                    selectedSubCategory=""
+                    onCategoryChange={(label) => {
+                      const value = label === "Semua Keahlian" ? "all" : label;
+                      setSpecializationFilter(value);
+                    }}
+                    onSubCategoryChange={() => {}}
                   />
-                </button>
+                </div>
 
-                {isDropdownOpen && (
-                  <div className="absolute top-full left-0 right-0 mt-2 z-20 bg-white border-2 border-slate-200 rounded-2xl shadow-[0_8px_0_0_#cbd5e1] overflow-hidden max-h-60 overflow-y-auto animate-in fade-in zoom-in-95 duration-200">
-                    <div className="p-1.5 space-y-1">
-                      {uniqueSpecializations.map((spec) => (
-                        <button
-                          key={spec}
-                          onClick={() => {
-                            setSpecializationFilter(spec);
-                            setIsDropdownOpen(false);
-                          }}
-                          className={`
-                            w-full text-left px-4 py-3 rounded-xl text-sm font-bold transition-all capitalize
-                            ${specializationFilter === spec 
-                              ? 'bg-teal-50 text-teal-600' 
-                              : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-                            }
-                          `}
-                        >
-                          {spec === "all" ? "Semua Keahlian" : spec}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                {/* Mobile Favorite Button (Next to Category) */}
+                <div className="md:hidden flex shrink-0">
+                  <button
+                    onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
+                    className={`group p-3.5 rounded-2xl border-2 border-b-4 flex items-center justify-center transition-all ${
+                      showFavoritesOnly
+                        ? 'bg-rose-400 border-rose-500 shadow-lg hover:bg-rose-500 active:border-b-2 active:translate-y-0.5'
+                        : 'bg-white border-slate-200 shadow-[0_4px_0_0_#e2e8f0] hover:border-rose-300 active:border-b-2 active:translate-y-0.5'
+                    }`}
+                  >
+                    <Heart className={`h-6 w-6 transition-colors ${
+                      showFavoritesOnly ? 'fill-white text-white' : 'text-slate-400 group-hover:fill-rose-500 group-hover:text-rose-500'
+                    }`} strokeWidth={2.5} />
+                  </button>
+                </div>
               </div>
             </div>
 

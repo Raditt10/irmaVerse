@@ -12,6 +12,7 @@ import EmptyState from "@/components/ui/EmptyState";
 import DetailButton from "@/components/ui/DetailButton";
 import CartoonConfirmDialog from "@/components/ui/ConfirmDialog";
 import Toast from "@/components/ui/Toast";
+import CategoryFilter from "@/components/ui/CategoryFilter";
 import AddButton from "@/components/ui/AddButton";
 import {
   CheckCircle2,
@@ -196,8 +197,8 @@ const OurPrograms = () => {
 
             {/* Filters & Search */}
             {!loading && programs.length > 0 && (
-              <div className="mb-8 grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="md:col-span-2">
+              <div className="mb-8 flex flex-col gap-4">
+                <div className="w-full">
                   <SearchInput
                     placeholder="Cari program seru..."
                     value={searchTerm}
@@ -206,56 +207,18 @@ const OurPrograms = () => {
                   />
                 </div>
 
-                <div className="relative" ref={dropdownRef}>
-                  <button
-                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                    className={`
-                      w-full flex items-center justify-between rounded-2xl border-2 bg-white px-5 py-3.5 lg:py-4 
-                      font-bold text-slate-700 transition-all cursor-pointer
-                      ${
-                        isDropdownOpen
-                          ? "border-teal-400 shadow-[0_4px_0_0_#34d399] -translate-y-0.5"
-                          : "border-slate-200 shadow-[0_4px_0_0_#e2e8f0] hover:border-teal-300"
-                      }
-                    `}
-                  >
-                    <span className="truncate mr-2">
-                      {statusOptions.find((opt) => opt.value === statusFilter)
-                        ?.label || "Semua Status"}
-                    </span>
-                    <ChevronDown
-                      className={`h-5 w-5 text-slate-400 shrink-0 transition-transform duration-300 ${
-                        isDropdownOpen ? "rotate-180 text-teal-500" : ""
-                      }`}
-                      strokeWidth={3}
-                    />
-                  </button>
-
-                  {isDropdownOpen && (
-                    <div className="absolute top-full left-0 right-0 mt-2 z-20 bg-white border-2 border-slate-200 rounded-2xl shadow-[0_8px_0_0_#cbd5e1] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                      <div className="p-1.5 space-y-1">
-                        {statusOptions.map((option) => (
-                          <button
-                            key={option.value}
-                            onClick={() => {
-                              setStatusFilter(option.value);
-                              setIsDropdownOpen(false);
-                            }}
-                            className={`
-                              w-full text-left px-4 py-3 rounded-xl text-sm font-bold transition-all
-                              ${
-                                statusFilter === option.value
-                                  ? "bg-teal-50 text-teal-600"
-                                  : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
-                              }
-                            `}
-                          >
-                            {option.label}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                <div className="relative min-w-0 pr-1">
+                  <CategoryFilter
+                    categories={statusOptions.map(opt => opt.label)}
+                    subCategories={[]}
+                    selectedCategory={statusOptions.find(opt => opt.value === statusFilter)?.label || "Semua"}
+                    selectedSubCategory=""
+                    onCategoryChange={(label) => {
+                      const value = statusOptions.find(opt => opt.label === label)?.value || "all";
+                      setStatusFilter(value);
+                    }}
+                    onSubCategoryChange={() => {}}
+                  />
                 </div>
               </div>
             )}
