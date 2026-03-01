@@ -20,11 +20,10 @@ import {
 } from "lucide-react";
 
 interface Quiz {
-  rowId?: string;
-  quizId: string;
+  id: string;
   title: string;
   description: string;
-  questionCount: number;
+  questionsCount: number;
   status: "notStarted" | "inProgress" | "completed";
   score?: number;
   coverColor?: string; 
@@ -36,7 +35,7 @@ const QuizHome = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState<"all" | "notStarted" | "completed" | "inProgress">("all");
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
-  const { status } = useSession({
+  const { data: session } = useSession({
     required: true,
     onUnauthenticated() {
       router.push("/auth");
@@ -82,12 +81,12 @@ const QuizHome = () => {
 
       return matchesSearch && matchesFilter;
     });
-  }, [searchQuery, activeFilter]);
+  }, [quizzes, searchQuery, activeFilter]);
 
   // Menghitung total poin dari kuis yang sudah selesai
   const totalPoints = useMemo(() => {
     return quizzes.reduce((acc, quiz) => acc + (quiz.score || 0), 0);
-  }, []);
+  }, [quizzes]);
 
   return (
     <div className="min-h-screen bg-[#FDFBF7] flex flex-col">
@@ -214,9 +213,9 @@ const QuizHome = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 lg:gap-8">
                 {filteredQuizzes.map((quiz) => (
                   <div 
-                    key={quiz.quizId} 
+                    key={quiz.id} 
                     className="bg-white rounded-[2rem] border-2 border-slate-200 shadow-[0_6px_0_0_#cbd5e1] hover:border-teal-400 hover:shadow-[0_6px_0_0_#2dd4bf] hover:-translate-y-1 transition-all duration-300 flex flex-col overflow-hidden group cursor-pointer"
-                    onClick={() => router.push(`/quiz/${quiz.quizId}`)}
+                    onClick={() => router.push(`/quiz/${quiz.id}`)}
                   >
                     {/* Card Header Illustration */}
                     <div className={`h-32 bg-gradient-to-br ${quiz.coverColor} relative p-5 flex items-end justify-between overflow-hidden`}>
@@ -229,7 +228,7 @@ const QuizHome = () => {
                       <div className="relative z-10 flex flex-col gap-2">
                         <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/90 backdrop-blur-sm rounded-lg text-[10px] font-black text-slate-700 shadow-sm w-max">
                           <BookOpen className="h-3 w-3 text-teal-500" />
-                          {quiz.questionCount} Soal
+                          {quiz.questionsCount} Soal
                         </div>
                       </div>
 

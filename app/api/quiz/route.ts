@@ -1,8 +1,9 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import prisma from "@/lib/prisma";
+import { QuizStatus } from "@prisma/client";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try{
      const session = await auth();
     if (!session) {
@@ -13,7 +14,7 @@ export async function GET() {
     where: { id: session.user.id }
     });
         
-    if (!User) {
+  if (!User) {
     console.log('User not found in database:', session.user.id);
     return NextResponse.json({ error: "User not found", code: "UNAUTHORIZED" }, { status: 404 });
     }
@@ -22,7 +23,6 @@ export async function GET() {
       where: { userId: session.user.id },
       select: {
         id: true,
-        quizId: true,
         status: true,
         score: true,
         quiz: {
@@ -49,27 +49,31 @@ export async function GET() {
 
     if(!quiz && !quizEnroll) return NextResponse.json({ message: "Quiz not found", code: "NOT_FOUND" }, { status: 404 });
 
-    const results = quizEnroll.map((m) => ({
-      rowId: m.id,
-      quizId: m.quizId,
-      title: m.quiz.title,
-      description: m.quiz.description,
-      status: m.status,
-      score: m.score,
-      questionsCount: m.quiz.questionsCount,
-      coverColor: m.quiz.coverColor,
-    }));
+    const enrolledIds = new Set(
+      quizEnroll.map(e => e.quiz.id)
+    );
 
-    const notstarted = quiz.map((m) => ({
-      quizId: m.id,
-      title: m.title,
-      description: m.description,
-      status: "notStarted",
+    const notstarted = quiz.filter(q => !enrolledIds.has(q.id)).map(q => ({
+      id: q.id,
+      title: q.title,
+      description: q.description,
+      status: QuizStatus.notStarted,
       score: 0,
-      questionsCount: m.questionsCount,
-      coverColor: m.coverColor,
+      questionsCount: q.questionsCount,
+      coverColor: q.coverColor,
     }));
-    results.push(...notstarted);
+    const results = [
+      ...quizEnroll.map((m) => ({
+        id: m.quiz.id,
+        title: m.quiz.title,
+        description: m.quiz.description,
+        status: m.status,
+        score: m.score,
+        questionsCount: m.quiz.questionsCount,
+        coverColor: m.quiz.coverColor,
+      })),
+      ...notstarted,
+    ];
 
     return NextResponse.json(results);
   }catch(error){

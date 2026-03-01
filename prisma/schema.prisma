@@ -8,33 +8,32 @@ datasource db {
   shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
 }
 
-
 model User {
-  id         String   @id @default(cuid())
-  email      String   @unique
-  name       String?
-  password   String
-  notelp     String?                  // Nomor telepon (opsional)
-  address    String?                  // Alamat (opsional) 
-  bio        String?                  // Bio (opsional)
-  avatar     String?                  // URL foto profil (opsional)
-  role       Role                @default(user) // Role: user, admin, instruktur
-  lastSeen   DateTime @default(now()) // Last active timestamp
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  password  String
+  notelp    String? // Nomor telepon (opsional)
+  address   String? // Alamat (opsional) 
+  bio       String? // Bio (opsional)
+  avatar    String? // URL foto profil (opsional)
+  role      Role     @default(user) // Role: user, admin, instruktur
+  lastSeen  DateTime @default(now()) // Last active timestamp
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Instruktur profile
   bidangKeahlian String? // Bidang keahlian (hanya untuk instruktur)
   pengalaman     String? // Pengalaman (hanya untuk instruktur)
 
   // Dashboard progress fields
-  class         Grade    @default(X)
-  points        Int      @default(0) // Total points
-  badges        Int      @default(0) // Total badges
-  level         Int      @default(1) // User level
-  quizzes       Int      @default(0) // Total quizzes completed
-  streak        Int      @default(0) // Current streak (days)
-  averageScore  Int      @default(0) // Average quiz score
+  class        Grade @default(X)
+  points       Int   @default(0) // Total points
+  badges       Int   @default(0) // Total badges
+  level        Int   @default(1) // User level
+  quizzes      Int   @default(0) // Total quizzes completed
+  streak       Int   @default(0) // Current streak (days)
+  averageScore Int   @default(0) // Average quiz score
 
   // Relations
   newsArticles                                      News[]               @relation("authorNews")
@@ -305,59 +304,91 @@ model MaterialInvite {
 }
 
 model Friendship {
-  id             String        @id @default(cuid())
-  requesterId    String
-  addresseeId    String
-  status         FriendshipStatus
+  id          String           @id @default(cuid())
+  requesterId String
+  addresseeId String
+  status      FriendshipStatus
 
-  requester      User @relation("Friends1", fields: [requesterId], references: [id], map: "fk_friendship_requester")
-  addressee      User @relation("Friends2", fields: [addresseeId], references: [id], map: "fk_friendship_addressee")
+  requester User @relation("Friends1", fields: [requesterId], references: [id], map: "fk_friendship_requester")
+  addressee User @relation("Friends2", fields: [addresseeId], references: [id], map: "fk_friendship_addressee")
 
-  createdAt      DateTime   @default(now())
-  updatedAt      DateTime   @updatedAt
-  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@index([requesterId])
   @@index([addresseeId])
   @@index([status])
 }
 
 model Quiz {
-  id              String   @id @default(cuid())
-  title           String
-  description     String?
-  questionsCount  Int?
-  thumbnailUrl    String?
-  coverColor      String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id             String   @id @default(cuid())
+  title          String
+  description    String?
+  questionsCount Int?
+  thumbnailUrl   String?
+  coverColor     String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
-  enrollments     QuizEnrollments[]
-  questions       QuizQuestion[]
+  enrollments QuizEnrollments[]
+  questions   QuizQuestion[]
 }
 
 model QuizQuestion {
-  id         String   @id @default(cuid())
-  quizId     String
-  question   String
-  options    String
-  answer     String
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id          String   @id @default(cuid())
+  quizId      String
+  question    String
+  isMultiple  Boolean?  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  quiz       Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  quiz        Quiz         @relation(fields: [quizId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  options     QuizOption[]
+  userAnswers UserAnswer[]
+  @@unique([quizId, question])
+}
+
+model QuizOption {
+  id             String   @id @default(cuid())
+  order          Int
+  option         String
+  isCorrect      Boolean?  @default(false)
+  questionId     String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  quizQuestion QuizQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  userAnswers  UserAnswer[]
+}
+
+model UserAnswer {
+  id           String   @id @default(cuid())
+  enrollmentId String
+  questionId   String
+  optionId     String?
+  createdAt    DateTime @default(now())
+
+  enrollment QuizEnrollments @relation(fields: [enrollmentId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  question   QuizQuestion    @relation(fields: [questionId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  option     QuizOption?     @relation(fields: [optionId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@unique([enrollmentId, questionId])
 }
 
 model QuizEnrollments {
-  id         String   @id @default(cuid())
-  quizId     String
-  userId     String
-  status     QuizStatus
-  score      Int?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id        String     @id @default(cuid())
+  quizId    String
+  userId    String
+  status    QuizStatus
+  score     Int?
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
 
-  quiz       Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  quiz        Quiz         @relation(fields: [quizId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  userAnswers UserAnswer[]
+
+  @@unique([userId, quizId], name: "userId_quizId")
 }
 
 enum Grade {

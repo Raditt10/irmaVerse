@@ -23,6 +23,11 @@ async function main() {
   await prisma.news.deleteMany();
   await prisma.schedule.deleteMany();
 
+  await prisma.quiz.deleteMany();
+  await prisma.quizQuestion.deleteMany();
+  await prisma.quizOption.deleteMany();
+  await prisma.userAnswer.deleteMany();
+
   await prisma.user.deleteMany();
 
   console.log("🧹 Database cleared");
@@ -351,7 +356,8 @@ Hadis dibagi menjadi beberapa tingkatan berdasarkan kualitasnya...`,
       },
     });
   };
-  
+
+  //Create Quizzes (from last Mock up)
   const quizdata = [
     {
       id: "q1",
@@ -384,6 +390,70 @@ Hadis dibagi menjadi beberapa tingkatan berdasarkan kualitasnya...`,
     }
   ];
 
+  const quizquestion =[
+    { id: "q1_1", quizId: "q1", question: "Berapakah jumlah air minimal agar termasuk kategori air dua qullah menurut jumhur ulama?" },
+    { id: "q1_2", quizId: "q1", question: "Debu yang digunakan untuk tayamum haruslah debu yang suci dan tidak musta'mal." },
+    { id: "q1_3", quizId: "q1", question: "Apa hukum dasar menuntut ilmu agama bagi setiap muslim?"},
+    { id: "q1_4", quizId: "q1", question: "Syarat sahnya wudhu antara lain adalah, kecuali..."},
+    { id: "q1_5", quizId: "q1", question: "Air yang suci namun tidak bisa mensucikan (seperti air teh, kopi) disebut air..."},
+    { id: "q1_6", quizId: "q1", question: "Apa yang harus dilakukan jika seseorang lupa jumlah rakaat saat shalat?"},
+    { id: "q2_1", quizId: "q2", question: "Siapakah sahabat yang mengusulkan strategi untuk menguasai sumber air di lembah Badar?" },
+    { id: "q2_2", quizId: "q2", question: "Berapakah perkiraan jumlah pasukan muslimin pada saat Perang Badar terjadi?" },
+    { id: "q3_1", quizId: "q3", question: "Menurut kitab Ta'lim Muta'allim, niat utama dalam menuntut ilmu adalah untuk mencari ridha Allah dan menghilangkan kebodohan." },
+    { id: "q3_2", quizId: "q3", question: "Manakah yang termasuk adab terhadap guru berdasarkan kajian Ta'lim Muta'allim?" },
+    { id: "q4_1", quizId: "q4", question: "Hukum bacaan apabila Nun Sukun atau Tanwin bertemu dengan huruf 'Alif/Hamzah' disebut?" },
+    { id: "q4_2", quizId: "q4", question: "Huruf-huruf Qalqalah terkumpul dalam kalimat 'Quthbu Jadin' (ق ط ب ج د)." }
+  ];
+  const quizoption = [
+    { questionId: "q1_1", order: 1, option: "Sekitar 216 liter",                     isCorrect: true },
+    { questionId: "q1_1", order: 2, option: "Sekitar 100 liter",                     isCorrect: false },
+    { questionId: "q1_1", order: 3, option: "Sekitar 500 liter",                     isCorrect: false },
+    
+    { questionId: "q1_2", order: 1, option: "True",                                  isCorrect: true },
+    { questionId: "q1_2", order: 2, option: "False",                                 isCorrect: false },
+
+    { questionId: "q1_3", order: 1, option: "Fardhu 'Ain",                           isCorrect: true },
+    { questionId: "q1_3", order: 2, option: "Fardhu Kifayah",                        isCorrect: false },
+    { questionId: "q1_3", order: 3, option: "Sunnah Muakkad",                        isCorrect: false },
+    { questionId: "q1_3", order: 4, option: "Sunnah Ghairu Muakkad",                 isCorrect: false },
+
+    { questionId: "q1_4", order: 1, option: "Beragama Islam",                        isCorrect: false },
+    { questionId: "q1_4", order: 2, option: "Tamyiz (Bisa membedakan baik & buruk)", isCorrect: false },
+    { questionId: "q1_4", order: 3, option: "Menggunakan air suci mensucikan",       isCorrect: false },
+    { questionId: "q1_4", order: 4, option: "Harus dilakukan di masjid",             isCorrect: true },
+
+    { questionId: "q1_5", order: 1, option: "Mutlaq",                                isCorrect: false },
+    { questionId: "q1_5", order: 2, option: "Musta'mal",                             isCorrect: false },
+    { questionId: "q1_5", order: 3, option: "Tahir Ghairu Mutahhir",                 isCorrect: true },
+    { questionId: "q1_5", order: 4, option: "Mutanajjis",                            isCorrect: false },
+
+    { questionId: "q1_6", order: 1, option: "Membatalkan shalat",                                 isCorrect: false },
+    { questionId: "q1_6", order: 2, option: "Mengambil jumlah yang paling sedikit & sujud sahwi", isCorrect: true },
+    { questionId: "q1_6", order: 3, option: "Bertanya pada orang di sebelah",                     isCorrect: false },
+    { questionId: "q1_6", order: 4, option: "Melanjutkan tanpa peduli",                           isCorrect: false },
+
+    { questionId: "q2_1", order: 1, option: "Hubab bin Mundzir",                     isCorrect: true },
+    { questionId: "q2_1", order: 2, option: "Salman Al-Farisi",                      isCorrect: false },
+    { questionId: "q2_1", order: 3, option: "Umar bin Khattab",                      isCorrect: false },
+
+    { questionId: "q2_2", order: 1, option: "313 personil",                          isCorrect: true },
+    { questionId: "q2_2", order: 2, option: "1000 personil",                         isCorrect: false },
+
+    { questionId: "q3_1", order: 1, option: "True",                                  isCorrect: true },
+    { questionId: "q3_1", order: 2, option: "False",                                 isCorrect: false },
+
+    { questionId: "q3_2", order: 1, option: "Tidak berjalan di depan guru",          isCorrect: true },
+    { questionId: "q3_2", order: 2, option: "Tidak mendahului berbicara tanpa izin", isCorrect: true },
+    { questionId: "q3_2", order: 3, option: "Membantah pendapat guru di depan umum", isCorrect: false },
+
+    { questionId: "q4_1", order: 1, option: "Idzhar Halqi",                          isCorrect: true },
+    { questionId: "q4_1", order: 2, option: "Ikhfa Haqiqi",                          isCorrect: false },
+    { questionId: "q4_1", order: 3, option: "Idgham Bighunnah",                      isCorrect: false },
+
+    { questionId: "q4_2", order: 1, option: "True",                                  isCorrect: true },
+    { questionId: "q4_2", order: 2, option: "False",                                 isCorrect: false }
+  ];
+
   for (const q of quizdata) {
     await prisma.quiz.create({
       data: {
@@ -392,6 +462,27 @@ Hadis dibagi menjadi beberapa tingkatan berdasarkan kualitasnya...`,
         description: q.description,
         questionsCount: q.questionsCount,
         coverColor: q.coverColor,
+      },
+    });
+  }
+
+  for (const q of quizquestion) {
+    await prisma.quizQuestion.create({
+      data: {
+        id: q.id,
+        quizId: q.quizId,
+        question: q.question,
+      },
+    });
+  }
+
+  for (const o of quizoption) {
+    await prisma.quizOption.create({
+      data: {
+        questionId: o.questionId,
+        order: o.order,
+        option: o.option,
+        isCorrect: o.isCorrect,
       },
     });
   }
@@ -525,6 +616,9 @@ Hadis dibagi menjadi beberapa tingkatan berdasarkan kualitasnya...`,
   console.log(`   - Materials: 6`);
   console.log(`   - Notifications: 5 (3 basic + 2 invitations)`);
   console.log(`   - Material Invites: 2`);
+  console.log(`   - Quizzes: 4`);
+  console.log(`   - Quiz Questions: 8`);
+  console.log(`   - Quiz Options: 20`);
   console.log("\n💡 Test the search with these keywords:");
   console.log('   - "kedudukan" (untuk mencari berita tentang akal dan wahyu)');
   console.log('   - "ahmad" (untuk mencari instruktur)');
