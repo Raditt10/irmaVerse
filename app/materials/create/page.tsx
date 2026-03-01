@@ -31,6 +31,7 @@ import {
   FileEdit,
   Globe,
   Link,
+  FileText,
 } from "lucide-react";
 
 const CreateMaterial = () => {
@@ -64,6 +65,7 @@ const CreateMaterial = () => {
     materialType: "editor" as "editor" | "link",
     materialContent: "",
     materialLink: "",
+    rekapanContent: "",
   });
 
   const [inviteInput, setInviteInput] = useState("");
@@ -249,6 +251,22 @@ const CreateMaterial = () => {
           errorMessage = errorData.error || errorMessage;
         } catch (e) {}
         throw new Error(errorMessage);
+      }
+
+      const result = await res.json();
+
+      // Save rekapan if content is provided
+      if (formData.rekapanContent.trim() && result.id) {
+        try {
+          await fetch(`/api/materials/${result.id}/rekapan`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ content: formData.rekapanContent.trim() }),
+          });
+        } catch (rekapanErr) {
+          console.error("Error saving rekapan:", rekapanErr);
+          // Non-blocking: material is already created
+        }
       }
 
       showToast("Kajian berhasil dibuat. Mengalihkan...", "success");
@@ -630,6 +648,31 @@ const CreateMaterial = () => {
                             </div>
                           </div>
                         )}
+                      </div>
+
+                      {/* --- REKAPAN / RINGKASAN MATERI SECTION --- */}
+                      <div className="pt-6 border-t-2 border-slate-100">
+                        <h3 className="text-sm font-bold text-slate-700 mb-3 ml-1 flex items-center gap-2">
+                          <FileText className="h-4 w-4 text-amber-500" />{" "}
+                          Rekapan Materi
+                          <span className="text-[10px] bg-amber-50 text-amber-600 px-2 py-0.5 rounded-full font-black border border-amber-200">
+                            Disarankan
+                          </span>
+                        </h3>
+                        <div className="animate-in fade-in slide-in-from-top-1 duration-200">
+                          <Textarea
+                            name="rekapanContent"
+                            rows={8}
+                            value={formData.rekapanContent}
+                            onChange={handleInputChange}
+                            placeholder="Tulis ringkasan materi kajian di sini. Rekapan ini akan bisa dibaca oleh peserta kapan saja sebagai bahan belajar mandiri..."
+                            className="text-sm border-2 focus:ring-amber-200"
+                          />
+                          <p className="text-[10px] font-bold text-slate-400 mt-2 ml-1 italic">
+                            * Rekapan berisi ringkasan kajian agar peserta bisa
+                            membaca ulang kapan pun.
+                          </p>
+                        </div>
                       </div>
 
                       {/* Tingkat / Kelas selector */}

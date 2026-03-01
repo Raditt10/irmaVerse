@@ -26,6 +26,11 @@ import {
   CheckCircle,
   XCircle,
   History,
+  FileText,
+  ListChecks,
+  Plus,
+  AlertCircle,
+  Loader2,
 } from "lucide-react";
 
 interface InviteDetail {
@@ -60,6 +65,12 @@ const MaterialDetail = () => {
   const [loading, setLoading] = useState(true);
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
 
+  // Quiz state for smart link
+  const [materialQuizzes, setMaterialQuizzes] = useState<
+    { id: string; title: string }[] | null
+  >(null);
+  const [quizLoading, setQuizLoading] = useState(false);
+
   const [toast, setToast] = useState<{
     show: boolean;
     message: string;
@@ -92,8 +103,31 @@ const MaterialDetail = () => {
   useEffect(() => {
     if (materialId) {
       fetchMaterialDetail();
+      fetchMaterialQuizzes();
     }
   }, [materialId]);
+
+  const fetchMaterialQuizzes = async () => {
+    try {
+      setQuizLoading(true);
+      const res = await fetch(`/api/materials/${materialId}/quiz`);
+      if (res.ok) {
+        const data = await res.json();
+        const quizzes = Array.isArray(data)
+          ? data.map((q: any) => ({ id: q.id, title: q.title }))
+          : data.quizzes
+            ? data.quizzes.map((q: any) => ({ id: q.id, title: q.title }))
+            : [];
+        setMaterialQuizzes(quizzes);
+      } else {
+        setMaterialQuizzes([]);
+      }
+    } catch {
+      setMaterialQuizzes([]);
+    } finally {
+      setQuizLoading(false);
+    }
+  };
 
   const fetchMaterialDetail = async () => {
     try {
@@ -357,6 +391,125 @@ const MaterialDetail = () => {
                         ))}
                       </ul>
                     </div>
+                  )}
+                </div>
+
+                {/* Rekapan & Quiz Section */}
+                <div className="bg-white p-6 lg:p-8 rounded-5xl border-2 border-slate-200 shadow-[0_6px_0_0_#cbd5e1]">
+                  <div className="flex items-center gap-4 mb-6">
+                    <div className="p-2.5 bg-indigo-100 rounded-2xl border-2 border-indigo-200">
+                      <ListChecks
+                        className="h-6 w-6 text-indigo-600"
+                        strokeWidth={3}
+                      />
+                    </div>
+                    <h2 className="text-xl lg:text-2xl font-black text-slate-800">
+                      Belajar Mandiri
+                    </h2>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {/* Rekapan Button */}
+                    <button
+                      onClick={() =>
+                        router.push(`/materials/${material.id}/rekapan`)
+                      }
+                      className="flex items-center gap-4 p-5 rounded-2xl border-2 border-amber-200 bg-amber-50 hover:bg-amber-100 hover:border-amber-300 transition-all text-left group shadow-[0_3px_0_0_#fcd34d] hover:shadow-[0_3px_0_0_#f59e0b] active:translate-y-0.5 active:shadow-none"
+                    >
+                      <div className="w-12 h-12 rounded-2xl bg-amber-200 border-2 border-amber-300 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+                        <FileText className="h-6 w-6 text-amber-700" />
+                      </div>
+                      <div>
+                        <p className="font-black text-amber-800 text-sm">
+                          Rekapan Materi
+                        </p>
+                        <p className="text-xs text-amber-600 font-medium">
+                          Baca ringkasan kajian
+                        </p>
+                      </div>
+                    </button>
+
+                    {/* Quiz Button - Smart Link */}
+                    <button
+                      onClick={() => {
+                        if (quizLoading) return;
+                        if (materialQuizzes && materialQuizzes.length > 0) {
+                          router.push(
+                            `/quiz/${material.id}/${materialQuizzes[0].id}`,
+                          );
+                        }
+                      }}
+                      disabled={
+                        quizLoading ||
+                        !materialQuizzes ||
+                        materialQuizzes.length === 0
+                      }
+                      className={`flex items-center gap-4 p-5 rounded-2xl border-2 transition-all text-left group active:translate-y-0.5 active:shadow-none ${
+                        quizLoading
+                          ? "border-slate-200 bg-slate-50 cursor-wait"
+                          : materialQuizzes && materialQuizzes.length > 0
+                            ? "border-indigo-200 bg-indigo-50 hover:bg-indigo-100 hover:border-indigo-300 shadow-[0_3px_0_0_#a5b4fc] hover:shadow-[0_3px_0_0_#818cf8]"
+                            : "border-slate-200 bg-slate-50 cursor-not-allowed opacity-70"
+                      }`}
+                    >
+                      <div
+                        className={`w-12 h-12 rounded-2xl border-2 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform ${
+                          quizLoading
+                            ? "bg-slate-200 border-slate-300"
+                            : materialQuizzes && materialQuizzes.length > 0
+                              ? "bg-indigo-200 border-indigo-300"
+                              : "bg-slate-200 border-slate-300"
+                        }`}
+                      >
+                        {quizLoading ? (
+                          <Loader2 className="h-6 w-6 text-slate-400 animate-spin" />
+                        ) : materialQuizzes && materialQuizzes.length > 0 ? (
+                          <ListChecks className="h-6 w-6 text-indigo-700" />
+                        ) : (
+                          <AlertCircle className="h-6 w-6 text-slate-400" />
+                        )}
+                      </div>
+                      <div>
+                        <p
+                          className={`font-black text-sm ${
+                            materialQuizzes && materialQuizzes.length > 0
+                              ? "text-indigo-800"
+                              : "text-slate-500"
+                          }`}
+                        >
+                          {quizLoading
+                            ? "Memuat Quiz..."
+                            : materialQuizzes && materialQuizzes.length > 0
+                              ? "Quiz Materi"
+                              : "Quiz Belum Dibuat"}
+                        </p>
+                        <p
+                          className={`text-xs font-medium ${
+                            materialQuizzes && materialQuizzes.length > 0
+                              ? "text-indigo-600"
+                              : "text-slate-400"
+                          }`}
+                        >
+                          {quizLoading
+                            ? "Mohon tunggu..."
+                            : materialQuizzes && materialQuizzes.length > 0
+                              ? `${materialQuizzes.length} quiz tersedia`
+                              : "Instruktur belum membuat quiz"}
+                        </p>
+                      </div>
+                    </button>
+                  </div>
+
+                  {/* Instructor: Create Quiz button */}
+                  {isPrivileged && (
+                    <button
+                      onClick={() =>
+                        router.push(`/materials/${material.id}/quiz/create`)
+                      }
+                      className="mt-4 w-full flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-dashed border-indigo-300 text-indigo-500 font-bold text-sm hover:bg-indigo-50 hover:border-indigo-400 transition-all"
+                    >
+                      <Plus className="h-4 w-4" /> Buat Quiz Baru
+                    </button>
                   )}
                 </div>
               </div>

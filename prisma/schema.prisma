@@ -45,6 +45,8 @@ model User {
   notifications                                     Notification[]       @relation("userNotifications")
   programs                                          program[]            @relation("programInstructor")
   programEnrollments                                program_enrollment[]
+  quizAttempts                                      quiz_attempt[]
+  createdQuizzes                                    material_quiz[]      @relation("createdQuizzes")
   schedules                                         Schedule[]           @relation("instructorSchedules")
 
   @@map("users")
@@ -310,6 +312,8 @@ model material {
   other_material_material_parentIdTomaterial     material[]         @relation("material_parentIdTomaterial")
   program                                        program?           @relation("programMaterials", fields: [programId], references: [id], onDelete: SetNull, map: "Material_programId_fkey")
   materialinvite                                 materialinvite[]
+  rekapan                                        rekapan?
+  quizzes                                        material_quiz[]
 
   @@index([instructorId], map: "Material_instructorId_fkey")
   @@index([nextCourseId], map: "Material_nextCourseId_fkey")
@@ -334,6 +338,84 @@ model materialinvite {
   @@index([instructorId], map: "MaterialInvite_instructorId_fkey")
   @@index([materialId], map: "MaterialInvite_materialId_idx")
   @@index([userId], map: "MaterialInvite_userId_idx")
+}
+
+// ─── Rekapan (Ringkasan Materi) ───────────────────────────────────
+
+model rekapan {
+  id         String   @id @default(cuid())
+  materialId String   @unique
+  content    String   @db.LongText
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  material material @relation(fields: [materialId], references: [id], onDelete: Cascade)
+
+  @@index([materialId])
+  @@map("rekapan")
+}
+
+// ─── Material Quiz System ─────────────────────────────────────────
+
+model material_quiz {
+  id          String   @id @default(cuid())
+  materialId  String?
+  creatorId   String?
+  title       String
+  description String?  @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  material  material?       @relation(fields: [materialId], references: [id], onDelete: Cascade)
+  creator   User?           @relation("createdQuizzes", fields: [creatorId], references: [id], onDelete: SetNull)
+  questions quiz_question[]
+  attempts  quiz_attempt[]
+
+  @@index([materialId])
+  @@index([creatorId])
+  @@map("material_quizzes")
+}
+
+model quiz_question {
+  id       String @id @default(cuid())
+  quizId   String
+  question String @db.Text
+  order    Int    @default(0)
+
+  quiz    material_quiz @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  options quiz_option[]
+
+  @@index([quizId])
+  @@map("quiz_questions")
+}
+
+model quiz_option {
+  id         String  @id @default(cuid())
+  questionId String
+  text       String  @db.Text
+  isCorrect  Boolean @default(false)
+
+  question quiz_question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@index([questionId])
+  @@map("quiz_options")
+}
+
+model quiz_attempt {
+  id          String   @id @default(cuid())
+  quizId      String
+  userId      String
+  score       Int
+  totalScore  Int
+  answers     Json
+  completedAt DateTime @default(now())
+
+  quiz material_quiz @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  user User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([quizId])
+  @@index([userId])
+  @@map("quiz_attempts")
 }
 
 enum Role {
