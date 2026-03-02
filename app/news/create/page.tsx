@@ -8,7 +8,8 @@ import ChatbotButton from "@/components/ui/Chatbot";
 import { ArrowLeft, Eye, Edit3, Image as ImageIcon, Sparkles, Save } from "lucide-react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import { Toaster, toast } from "sonner";
+import CustomDropdown from "@/components/ui/CustomDropdown";
+import Toast from "@/components/ui/Toast";
 
 const MDEditor = dynamic(() => import("@uiw/react-md-editor"), { ssr: false });
 
@@ -20,6 +21,18 @@ export default function CreateNewsPage() {
   const [loading, setLoading] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+  const [toastData, setToastData] = useState({
+    show: false,
+    message: "",
+    type: "info" as "success" | "error" | "warning" | "info"
+  });
+
+  const showToast = (message: string, type: "success" | "error" | "warning" | "info") => {
+    setToastData({ show: true, message, type });
+    setTimeout(() => {
+      setToastData((prev) => ({ ...prev, show: false }));
+    }, 3000);
+  };
 
   const role = session?.user?.role?.toLowerCase();
   const isPrivileged = role === "admin" || role === "instruktur";
@@ -79,10 +92,10 @@ export default function CreateNewsPage() {
         ...prev,
         image: data.url,
       }));
-      toast.success("Gambar berhasil diupload!");
+      showToast("Gambar berhasil diupload!", "success");
     } catch (error) {
       console.error("Error uploading image:", error);
-      toast.error("Gagal mengupload gambar. Silakan coba lagi.");
+      showToast("Gagal mengupload gambar. Silakan coba lagi.", "error");
     } finally {
       setUploadingImage(false);
     }
@@ -103,16 +116,19 @@ export default function CreateNewsPage() {
 
       if (!response.ok) {
         const error = await response.json();
-        toast.error(`Error: ${error.error}`);
+        showToast(`Error: ${error.error}`, "error");
         return;
       }
 
-      const news = await response.json();
-      toast.success("Berita berhasil dibuat!");
-      router.push(`/news/${news.slug}`);
+      showToast("Berita berhasil dibuat!", "success");
+      
+      // Tunggu toast selesai sebelum redirect
+      setTimeout(() => {
+        router.push("/news");
+      }, 1500);
     } catch (error) {
       console.error("Error creating news:", error);
-      toast.error("Gagal membuat berita. Silakan coba lagi.");
+      showToast("Gagal membuat berita. Silakan coba lagi.", "error");
     } finally {
       setLoading(false);
     }
@@ -171,29 +187,12 @@ export default function CreateNewsPage() {
                     </div>
 
                     {/* Category */}
-                    <div className="space-y-2">
-                      <label className="block text-xs lg:text-sm font-bold text-slate-600 ml-1">
-                        Kategori *
-                      </label>
-                      <div className="relative">
-                        <select
-                          name="category"
-                          value={formData.category}
-                          onChange={handleChange}
-                          className="w-full rounded-2xl border-2 border-slate-200 bg-white px-4 sm:px-5 py-3.5 sm:py-4 text-sm sm:text-base font-medium shadow-sm transition-all focus:outline-none focus:border-teal-400 focus:shadow-[0_4px_0_0_#34d399] appearance-none cursor-pointer"
-                          required
-                        >
-                          {categories.map((cat) => (
-                            <option key={cat} value={cat}>
-                              {cat}
-                            </option>
-                          ))}
-                        </select>
-                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-5 text-slate-400">
-                          <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
-                        </div>
-                      </div>
-                    </div>
+                    <CustomDropdown
+                      label="Kategori *"
+                      options={categories.map((cat) => ({ value: cat, label: cat }))}
+                      value={formData.category}
+                      onChange={(val) => setFormData((prev) => ({ ...prev, category: val }))}
+                    />
 
                     {/* Content (Markdown) */}
                     <div className="pt-6 border-t-2 border-slate-100">
@@ -351,7 +350,12 @@ export default function CreateNewsPage() {
         </div>
       </div>
       <ChatbotButton />
-      <Toaster position="top-right" richColors />
+      <Toast 
+        show={toastData.show} 
+        message={toastData.message} 
+        type={toastData.type} 
+        onClose={() => setToastData((prev) => ({ ...prev, show: false }))} 
+      />
     </div>
   );
 }

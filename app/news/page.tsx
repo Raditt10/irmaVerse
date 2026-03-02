@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import DashboardHeader from "@/components/ui/Header";
 import Sidebar from "@/components/ui/Sidebar";
 import ChatbotButton from "@/components/ui/Chatbot";
@@ -11,6 +12,7 @@ import { useSession } from "next-auth/react";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import CartoonNotification from "@/components/ui/Notification";
 import EmptyState from "@/components/ui/EmptyState";
+import AddButton from "@/components/ui/AddButton";
 
 interface NewsItem {
   id: string;
@@ -61,6 +63,7 @@ const getLevenshteinDistance = (a: string, b: string) => {
 };
 
 const News = () => {
+  const router = useRouter();
   const { data: session } = useSession();
   const role = session?.user?.role?.toLowerCase();
   const isPrivileged = role === "admin" || role === "instruktur";
@@ -218,25 +221,25 @@ const News = () => {
         <div className="flex-1 w-full max-w-[100vw] overflow-x-hidden px-4 sm:px-6 lg:px-8 py-6 lg:py-12">
           <div className="max-w-7xl mx-auto">
             {/* Header */}
-            <div className="mb-6 lg:mb-8">
-              <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-                <div>
-                  <h1 className="text-3xl lg:text-4xl font-black text-slate-800 mb-2">
-                    Berita IRMA
-                  </h1>
-                  <p className="text-slate-600 font-medium text-sm lg:text-lg">
-                    Berita terkini seputar kegiatan dan perkembangan IRMA Verse
-                  </p>
-                </div>
-                
+            <div className="mb-8 lg:mb-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+              <div className="flex-1">
+                <h1 className="text-2xl lg:text-4xl font-black text-slate-800 tracking-tight mb-1.5 leading-tight">
+                  Berita IRMA
+                </h1>
+                <p className="text-slate-500 font-medium text-xs lg:text-lg">
+                  Berita terkini seputar kegiatan dan perkembangan IRMA Verse
+                </p>
+              </div>
+
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
                 {isPrivileged && (
-                  <Link
-                    href="/news/create"
-                    className="flex items-center justify-center gap-2 px-6 py-3.5 sm:py-3 rounded-2xl bg-teal-400 text-white font-black border-2 border-teal-600 border-b-4 hover:bg-teal-500 shadow-[0_4px_0_0_#0d9488] active:border-b-2 active:translate-y-0.5 transition-all text-sm sm:text-base w-full md:w-auto"
-                  >
-                    <Plus className="h-5 w-5" strokeWidth={2.5} />
-                    Buat Berita
-                  </Link>
+                  <AddButton
+                    label="Buat Berita"
+                    onClick={() => router.push("/news/create")}
+                    icon={<Plus className="h-5 w-5" />}
+                    color="emerald"
+                    hideIcon={false}
+                  />
                 )}
               </div>
             </div>
