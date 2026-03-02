@@ -47,6 +47,9 @@ const Instructors = () => {
   const dropdownRef = useRef<HTMLDivElement>(null);
   
   const { data: session } = useSession();
+  
+  const role = session?.user?.role?.toLowerCase();
+  const isPrivileged = role === "admin" || role === "instruktur";
 
   // Menutup dropdown saat klik di luar
   useEffect(() => {
@@ -270,14 +273,14 @@ const Instructors = () => {
                     )}
 
                     {/* ---- GRID CONTENT ---- */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+                    <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6 lg:gap-8">
                       {filteredInstructors.map((instructor) => (
                         <div
                           key={instructor.id}
-                          className={`bg-white rounded-[2.5rem] border-2 transition-all duration-300 overflow-hidden group hover:-translate-y-2 flex flex-col relative ${
+                          className={`bg-white rounded-3xl md:rounded-[2.5rem] border-2 transition-all duration-300 overflow-hidden group hover:-translate-y-2 flex flex-col relative ${
                             instructor.featured 
-                            ? 'border-amber-400 shadow-[0_8px_0_0_#fbbf24]' 
-                            : 'border-slate-200 shadow-[0_8px_0_0_#cbd5e1] hover:border-emerald-400 hover:shadow-[0_8px_0_0_#34d399]'
+                            ? 'border-amber-400 shadow-[0_4px_0_0_#fbbf24] md:shadow-[0_8px_0_0_#fbbf24]' 
+                            : 'border-slate-200 shadow-[0_4px_0_0_#cbd5e1] md:shadow-[0_8px_0_0_#cbd5e1] hover:border-emerald-400 hover:shadow-[0_4px_0_0_#34d399] md:hover:shadow-[0_8px_0_0_#34d399]'
                           }`}
                         >
                           {/* Featured Badge & Favorite Button */}
@@ -290,7 +293,7 @@ const Instructors = () => {
                             )}
                             <button
                               onClick={() => toggleFavorite(instructor.id)}
-                              className="bg-white border-2 border-slate-200 rounded-full p-2.5 shadow-md hover:bg-rose-50 hover:border-rose-300 transition-all hover:-translate-y-1"
+                              className="bg-white border-2 border-slate-200 rounded-full p-1.5 md:p-2.5 shadow-sm md:shadow-md hover:bg-rose-50 hover:border-rose-300 transition-all hover:-translate-y-1"
                             >
                                 <Heart 
                                   className={`h-5 w-5 transition-colors ${
@@ -303,11 +306,11 @@ const Instructors = () => {
                             </button>
                           </div>
 
-                          <div className="p-6 md:p-8 flex-1 flex flex-col">
+                          <div className="p-4 md:p-6 lg:p-8 flex-1 flex flex-col">
                             {/* Avatar Section */}
                             <div className="flex justify-center mb-4 mt-2">
                               <div className="relative group-hover:scale-105 transition-transform duration-500">
-                                <div className={`w-28 h-28 rounded-full overflow-hidden border-4 shadow-lg ${
+                                <div className={`w-16 h-16 md:w-24 md:h-24 lg:w-28 lg:h-28 rounded-full overflow-hidden border-[3px] md:border-4 shadow-lg mx-auto ${
                                    instructor.featured ? 'border-amber-200' : 'border-teal-100'
                                 }`}>
                                   <img
@@ -320,40 +323,40 @@ const Instructors = () => {
                             </div>
 
                             {/* Name & Specialization */}
-                            <div className="text-center mb-4">
-                              <h3 className="text-xl font-black text-slate-800 mb-1 leading-tight line-clamp-1">
+                            <div className="text-center mb-3">
+                              <h3 className="text-sm md:text-lg lg:text-xl font-black text-slate-800 mb-1 leading-tight line-clamp-1">
                                 {instructor.name}
                               </h3>
-                              <p className="text-teal-600 text-[10px] md:text-xs font-bold uppercase tracking-wider bg-teal-50 px-3 py-1 rounded-full inline-block border border-teal-100">
+                              <p className="text-teal-600 text-[8px] md:text-[10px] font-bold uppercase tracking-wider bg-teal-50 px-2 py-0.5 md:px-3 md:py-1 rounded-full inline-block border border-teal-100">
                                 {instructor.specialization}
                               </p>
                             </div>
 
                             {/* Description */}
-                            <p className="text-slate-500 text-sm text-center mb-6 line-clamp-2 font-medium px-2 leading-relaxed">
+                            <p className="text-slate-500 text-[10px] md:text-sm text-center mb-4 md:mb-6 line-clamp-2 font-medium px-1 md:px-2 leading-relaxed">
                               {instructor.description}
                             </p> 
 
                             {/* Stats Widget */}
-                            <div className="grid grid-cols-2 gap-0 mb-6 bg-slate-50 rounded-2xl border-2 border-slate-100 overflow-hidden">
-                              <div className="py-3 text-center border-r-2 border-slate-200 hover:bg-slate-100 transition-colors">
+                            <div className="grid grid-cols-2 gap-0 mb-4 md:mb-6 bg-slate-50 rounded-xl md:rounded-2xl border-2 border-slate-100 overflow-hidden">
+                              <div className="py-2 md:py-3 text-center border-r-2 border-slate-200 hover:bg-slate-100 transition-colors">
                                 <div className="flex items-center justify-center gap-1 text-amber-500 mb-0.5">
-                                  <Star className="h-4 w-4 fill-current" />
-                                  <span className="font-black text-lg text-slate-700">{instructor.rating}</span>
+                                  <Star className="h-3 w-3 md:h-4 md:w-4 fill-current" />
+                                  <span className="font-black text-xs md:text-lg text-slate-700">{instructor.rating}</span>
                                 </div>
-                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Rating</p>
+                                <p className="text-[8px] md:text-[10px] text-slate-400 font-bold uppercase tracking-wider">Rating</p>
                               </div>
-                              <div className="py-3 text-center hover:bg-slate-100 transition-colors">
+                              <div className="py-2 md:py-3 text-center hover:bg-slate-100 transition-colors">
                                 <div className="flex items-center justify-center gap-1 mb-0.5">
-                                  <span className="font-black text-lg text-slate-700">{instructor.kajianCount}</span>
+                                  <span className="font-black text-xs md:text-lg text-slate-700">{instructor.kajianCount}</span>
                                 </div>
-                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Kajian</p>
+                                <p className="text-[8px] md:text-[10px] text-slate-400 font-bold uppercase tracking-wider">Kajian</p>
                               </div>
                             </div>
 
                             {/* Bio Section */}
-                            <div className="mb-6 p-4 rounded-2xl bg-slate-50 border-2 border-slate-200 min-h-20 flex items-center">
-                              <p className="text-slate-600 text-sm font-medium text-center leading-relaxed">
+                            <div className="mb-4 md:mb-6 p-2 md:p-4 rounded-xl md:rounded-2xl bg-slate-50 border border-slate-200 min-h-12 md:min-h-20 flex items-center justify-center">
+                              <p className="text-slate-500 text-[8px] md:text-sm font-medium text-center leading-relaxed">
                                 {instructor.bio && instructor.bio.trim() !== ""
                                   ? instructor.bio
                                   : "Instruktur ini belum membuat bio profile di akun nya"}
@@ -361,24 +364,26 @@ const Instructors = () => {
                             </div>
 
                             {/* Buttons */}
-                            <div className="space-y-3 mt-auto">
+                            <div className="space-y-2 md:space-y-3 mt-auto">
                               {session?.user?.id !== instructor.id ? (
                                 <>
-                                  <Link
-                                    href={`/instructors/chat?instructorId=${encodeURIComponent(instructor.id)}`}
-                                    className="w-full py-3.5 rounded-2xl bg-teal-400 text-white font-black border-2 border-teal-600 border-b-4 hover:bg-teal-500 hover:shadow-lg hover:shadow-teal-200 active:border-b-2 active:translate-y-0.5 transition-all flex items-center justify-center gap-2 group/btn shadow-lg"
-                                  >
-                                    <MessageCircle className="w-5 h-5 group-hover/btn:animate-bounce" strokeWidth={2.5} />
-                                    Mulai Chat
-                                  </Link>
+                                  {!isPrivileged && (
+                                    <Link
+                                      href={`/instructors/chat?instructorId=${encodeURIComponent(instructor.id)}`}
+                                      className="w-full py-2 md:py-3.5 rounded-xl md:rounded-2xl bg-teal-400 text-white font-black border-2 border-teal-600 border-b-4 hover:bg-teal-500 hover:shadow-lg hover:shadow-teal-200 active:border-b-2 active:translate-y-0.5 transition-all flex items-center justify-center gap-1.5 md:gap-2 group/btn shadow-sm md:shadow-lg text-[10px] md:text-base"
+                                    >
+                                      <MessageCircle className="w-3.5 h-3.5 md:w-5 md:h-5 group-hover/btn:animate-bounce" strokeWidth={2.5} />
+                                      Mulai Chat
+                                    </Link>
+                                  )}
                                   
-                                  <button className="w-full py-3.5 rounded-2xl bg-white text-slate-600 font-bold border-2 border-slate-200 border-b-4 hover:bg-slate-50 hover:text-slate-800 hover:border-slate-300 active:border-b-2 active:translate-y-0.5 transition-all flex items-center justify-center gap-2">
-                                    <BookOpen className="w-4 h-4" strokeWidth={2.5} />
+                                  <button className="w-full py-2 md:py-3.5 rounded-xl md:rounded-2xl bg-white text-slate-600 font-bold border-2 border-slate-200 border-b-4 hover:bg-slate-50 hover:text-slate-800 hover:border-slate-300 active:border-b-2 active:translate-y-0.5 transition-all flex items-center justify-center gap-1.5 md:gap-2 text-[10px] md:text-base">
+                                    <BookOpen className="w-3.5 h-3.5 md:w-4 md:h-4" strokeWidth={2.5} />
                                     Lihat Kajian
                                   </button>
                                 </>
                               ) : (
-                                <button className="w-full py-3.5 rounded-2xl bg-teal-400 text-white font-black border-2 border-teal-600 border-b-4 hover:bg-teal-500 active:border-b-2 active:translate-y-0.5 transition-all flex items-center justify-center gap-2">
+                                <button className="w-full py-2 md:py-3.5 rounded-xl md:rounded-2xl bg-teal-400 text-white font-black border-2 border-teal-600 border-b-4 hover:bg-teal-500 active:border-b-2 active:translate-y-0.5 transition-all flex items-center justify-center gap-2 text-[10px] md:text-base">
                                   Lihat Profile Saya
                                 </button>
                               )}
