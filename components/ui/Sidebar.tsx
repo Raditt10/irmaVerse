@@ -216,7 +216,7 @@ const Sidebar = () => {
     ...(isInstruktur 
       ? [
           { 
-            icon: Users, 
+            icon: Contact, 
             label: "Instruktur", 
             path: "/instructors" 
           },
@@ -240,7 +240,7 @@ const Sidebar = () => {
         ]
       : [
           { 
-            icon: Users,
+            icon: Contact,
             label: "Instruktur", 
             id: "menu-instruktur",
             submenu: [
@@ -384,8 +384,7 @@ const Sidebar = () => {
                       );
                     })}
                   </div>
-                )}
-              </div>
+                )} </div> 
             );
           })}
         </div>
