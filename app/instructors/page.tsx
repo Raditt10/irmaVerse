@@ -4,6 +4,7 @@ import DashboardHeader from "@/components/ui/Header";
 import Sidebar from "@/components/ui/Sidebar";
 import ChatbotButton from "@/components/ui/Chatbot";
 import Loading from "@/components/ui/Loading";
+import EmptyState from "@/components/ui/EmptyState";
 import SuccessDataFound from "@/components/ui/SuccessDataFound";
 import SearchInput from "@/components/ui/SearchInput";
 import { 
@@ -243,24 +244,13 @@ const Instructors = () => {
               <>
                 {filteredInstructors.length === 0 ? (
                   /* ---- EMPTY STATE ---- */
-                  <div className="flex flex-col items-center justify-center py-16 md:py-20 px-4 text-center bg-white rounded-[2.5rem] border-2 border-slate-200 border-dashed">
-                    <div className="w-20 h-20 md:w-24 md:h-24 bg-slate-50 rounded-full flex items-center justify-center mb-6 shadow-inner">
-                        <SearchX className="h-10 w-10 md:h-12 md:w-12 text-slate-300" />
-                    </div>
-                    <h3 className="text-2xl font-black text-slate-700 mb-2">
-                      Yah, instruktur tidak ditemukan...
-                    </h3>
-                    <p className="text-slate-500 font-medium max-w-md mb-8 text-sm md:text-base">
-                      Coba cari dengan kata kunci lain atau ubah filter keahliannya ya!
-                    </p>
-                    <button 
-                      onClick={() => { setSearchTerm(""); setSpecializationFilter("all"); }}
-                      className="px-6 py-3 bg-white border-2 border-slate-200 text-slate-600 font-bold rounded-xl shadow-[0_4px_0_0_#e2e8f0] hover:border-teal-400 hover:text-teal-600 hover:shadow-[0_4px_0_0_#34d399] active:border-b-2 active:translate-y-0.5 transition-all flex items-center gap-2"
-                    >
-                      <RefreshCcw className="h-4 w-4" />
-                      <span>Reset Pencarian</span>
-                    </button>
-                  </div>
+                  <EmptyState
+                    icon="search"
+                    title="Yah, instruktur tidak ditemukan..."
+                    description="Coba cari dengan kata kunci lain atau ubah filter keahliannya ya!"
+                    actionLabel="Reset Pencarian"
+                    onAction={() => { setSearchTerm(""); setSpecializationFilter("all"); }}
+                  />
                 ) : (
                   <>
                     {/* ---- SUCCESS HEADER ---- */}

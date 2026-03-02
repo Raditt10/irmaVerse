@@ -8,6 +8,7 @@ import Loading from "@/components/ui/Loading";
 import SearchInput from "@/components/ui/SearchInput";
 import CartoonNotification from "@/components/ui/Notification";
 import Toast from "@/components/ui/Toast";
+import EmptyState from "@/components/ui/EmptyState";
 import { 
   UserCircle2, 
   UserPlus, 
@@ -213,23 +214,13 @@ const Members = () => {
                   </div>
                 ) : (
                   /* --- EMPTY STATE --- */
-                  <div className="flex flex-col items-center justify-center py-12 md:py-20 text-center animate-in fade-in zoom-in duration-300 bg-white rounded-[2.5rem] border-2 border-slate-200 border-dashed">
-                    <div className="w-20 h-20 md:w-24 md:h-24 bg-slate-50 rounded-full flex items-center justify-center mb-4 md:mb-6 shadow-inner border border-slate-100">
-                        <Search className="h-8 w-8 md:h-10 md:w-10 text-slate-300" />
-                    </div>
-                    <h3 className="text-xl md:text-2xl font-black text-slate-700 mb-2">
-                        Anggota Tidak Ditemukan
-                    </h3>
-                    <p className="text-slate-500 max-w-xs md:max-w-md text-sm md:text-base px-4">
-                        Kami tidak dapat menemukan anggota dengan nama <span className="font-bold text-teal-600">"{search}"</span>.
-                    </p>
-                    <button 
-                        onClick={() => setSearch("")}
-                        className="mt-6 md:mt-8 px-6 py-2.5 bg-slate-100 border-2 border-slate-200 text-slate-600 rounded-xl hover:bg-white hover:border-teal-400 hover:text-teal-600 font-bold transition-all shadow-sm"
-                    >
-                        Hapus Pencarian
-                    </button>
-                  </div>
+                  <EmptyState
+                    icon="search"
+                    title="Anggota Tidak Ditemukan"
+                    description={`Kami tidak dapat menemukan anggota dengan nama "${search}".`}
+                    actionLabel="Hapus Pencarian"
+                    onAction={() => setSearch("")}
+                  />
                 )}
               </>
             )}
