@@ -112,34 +112,34 @@ const RekapanMateri = () => {
               ) : null}
             </div>
             {/* --- STATISTIK CARDS --- */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-              <div className="bg-white rounded-[2rem] border-2 border-slate-200 shadow-[0_4px_0_0_#cbd5e1] p-6 flex items-center gap-5">
-                <div className="p-4 bg-emerald-100 rounded-2xl border border-emerald-200">
-                  <CheckCircle2 className="h-8 w-8 text-emerald-600" />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-10">
+              <div className="bg-white rounded-xl md:rounded-3xl border-2 border-slate-200 shadow-[0_4px_0_0_#cbd5e1] p-4 md:p-6 flex items-center gap-4 md:gap-5">
+                <div className="p-3 md:p-4 bg-emerald-100 rounded-xl md:rounded-2xl border border-emerald-200">
+                  <CheckCircle2 className="h-6 w-6 md:h-8 md:w-8 text-emerald-600" />
                 </div>
                 <div>
-                  <p className="text-slate-500 font-bold text-sm uppercase tracking-wider">Total Hadir</p>
-                  <p className="text-3xl font-black text-slate-800">{totalHadir} <span className="text-base text-slate-500 font-semibold">Kajian</span></p>
+                  <p className="text-slate-500 font-bold text-xs md:text-sm uppercase tracking-wider">Total Hadir</p>
+                  <p className="text-2xl md:text-3xl font-black text-slate-800">{totalHadir} <span className="text-sm md:text-base text-slate-500 font-semibold">Kajian</span></p>
                 </div>
               </div>
 
-              <div className="bg-white rounded-[2rem] border-2 border-slate-200 shadow-[0_4px_0_0_#cbd5e1] p-6 flex items-center gap-5">
-                <div className="p-4 bg-amber-100 rounded-2xl border border-amber-200">
-                  <TrendingUp className="h-8 w-8 text-amber-600" />
+              <div className="bg-white rounded-xl md:rounded-3xl border-2 border-slate-200 shadow-[0_4px_0_0_#cbd5e1] p-4 md:p-6 flex items-center gap-4 md:gap-5">
+                <div className="p-3 md:p-4 bg-amber-100 rounded-xl md:rounded-2xl border border-amber-200">
+                  <TrendingUp className="h-6 w-6 md:h-8 md:w-8 text-amber-600" />
                 </div>
                 <div>
-                  <p className="text-slate-500 font-bold text-sm uppercase tracking-wider">Persentase</p>
-                  <p className="text-3xl font-black text-slate-800">{persentaseKehadiran}%</p>
+                  <p className="text-slate-500 font-bold text-xs md:text-sm uppercase tracking-wider">Persentase</p>
+                  <p className="text-2xl md:text-3xl font-black text-slate-800">{persentaseKehadiran}%</p>
                 </div>
               </div>
 
-              <div className="bg-white rounded-[2rem] border-2 border-slate-200 shadow-[0_4px_0_0_#cbd5e1] p-6 flex items-center gap-5">
-                <div className="p-4 bg-red-100 rounded-2xl border border-red-200">
-                  <XCircle className="h-8 w-8 text-red-600" />
+              <div className="bg-white rounded-xl md:rounded-3xl border-2 border-slate-200 shadow-[0_4px_0_0_#cbd5e1] p-4 md:p-6 flex items-center gap-4 md:gap-5">
+                <div className="p-3 md:p-4 bg-red-100 rounded-xl md:rounded-2xl border border-red-200">
+                  <XCircle className="h-6 w-6 md:h-8 md:w-8 text-red-600" />
                 </div>
                 <div>
-                  <p className="text-slate-500 font-bold text-sm uppercase tracking-wider">Tidak Hadir</p>
-                  <p className="text-3xl font-black text-slate-800">{totalKajian - totalHadir} <span className="text-base text-slate-500 font-semibold">Kajian</span></p>
+                  <p className="text-slate-500 font-bold text-xs md:text-sm uppercase tracking-wider">Tidak Hadir</p>
+                  <p className="text-2xl md:text-3xl font-black text-slate-800">{totalKajian - totalHadir} <span className="text-sm md:text-base text-slate-500 font-semibold">Kajian</span></p>
                 </div>
               </div>
             </div>

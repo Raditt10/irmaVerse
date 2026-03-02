@@ -194,7 +194,7 @@ const Instructors = () => {
                   placeholder="Cari nama instruktur atau keahlian..."
                   value={searchTerm}
                   onChange={setSearchTerm}
-                  className="w-full shadow-sm hover:shadow-md transition-shadow duration-300"
+                  className="w-full transition-shadow duration-300"
                 />
               </div>
 

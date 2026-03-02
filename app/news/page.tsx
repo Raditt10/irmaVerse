@@ -62,6 +62,8 @@ const getLevenshteinDistance = (a: string, b: string) => {
 
 const News = () => {
   const { data: session } = useSession();
+  const role = session?.user?.role?.toLowerCase();
+  const isPrivileged = role === "admin" || role === "instruktur";
   const [news, setNews] = useState<NewsItem[]>([]);
   const [filteredNews, setFilteredNews] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -227,7 +229,7 @@ const News = () => {
                   </p>
                 </div>
                 
-                {session?.user?.role === "admin" && (
+                {isPrivileged && (
                   <Link
                     href="/news/create"
                     className="flex items-center justify-center gap-2 px-6 py-3.5 sm:py-3 rounded-2xl bg-teal-400 text-white font-black border-2 border-teal-600 border-b-4 hover:bg-teal-500 shadow-[0_4px_0_0_#0d9488] active:border-b-2 active:translate-y-0.5 transition-all text-sm sm:text-base w-full md:w-auto"
@@ -246,7 +248,7 @@ const News = () => {
                   placeholder="Cari judul berita..."
                   value={searchTerm}
                   onChange={setSearchTerm}
-                  className="w-full shadow-sm hover:shadow-md transition-shadow duration-300"
+                  className="w-full transition-shadow duration-300"
                 />
               </div>
 
@@ -309,7 +311,7 @@ const News = () => {
                         />
                         <div className="absolute inset-0 bg-linear-to-t from-slate-900/60 via-transparent to-transparent sm:hidden" />
                         <span
-                          className={`absolute top-4 left-4 px-3 py-1 rounded-full text-[10px] uppercase font-black shadow-lg tracking-wider border-2 border-white/20 backdrop-blur-sm ${categoryStyles[item.category]}`}
+                          className={`absolute top-4 left-4 px-3 py-1 rounded-full text-[10px] uppercase font-black shadow-lg tracking-wider border-2 border-white/20 backdrop-blur-sm ${categoryStyles[item.category] || "bg-emerald-500 text-white"}`}
                         >
                           {item.category}
                         </span>
@@ -344,7 +346,7 @@ const News = () => {
                           </div>
 
                           <div className="flex shrink-0 gap-2 items-center">
-                            {session?.user?.role === "admin" && (
+                            {isPrivileged && (
                               <>
                                 <Link
                                   href={`/news/edit/${item.id}`}

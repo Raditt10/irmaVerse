@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import DashboardHeader from "@/components/ui/Header";
 import Sidebar from "@/components/ui/Sidebar";
 import ChatbotButton from "@/components/ui/Chatbot";
@@ -15,9 +16,18 @@ const categories = ["Prestasi", "Kerjasama", "Update", "Event", "Pengumuman"];
 
 export default function CreateNewsPage() {
   const router = useRouter();
+  const { data: session, status } = useSession();
   const [loading, setLoading] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+
+  const role = session?.user?.role?.toLowerCase();
+  const isPrivileged = role === "admin" || role === "instruktur";
+
+  if (status === "authenticated" && !isPrivileged) {
+    router.push("/news");
+    return null;
+  }
   const [user, setUser] = useState<any>({
     id: "user-123",
     full_name: "Admin IRMA",

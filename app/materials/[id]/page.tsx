@@ -382,7 +382,7 @@ const MaterialDetail = () => {
                     {material.instructor}
                   </h3>
                   
-                  <div className="px-4 py-1.5 rounded-full bg-teal-50 text-teal-600 text-xs font-black uppercase border-2 border-teal-100 mb-8 self-center">
+                  <div className="px-4 py-1.5 rounded-full bg-emerald-500 text-white text-xs font-black uppercase shadow-md mb-8 self-center border-2 border-emerald-600">
                     {material.category.replace("Program ", "")}
                   </div>
 
