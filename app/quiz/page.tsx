@@ -17,7 +17,7 @@ import {
   Zap,
   Settings,
   Trash2,
-  XCircle
+  XCircle,
 } from "lucide-react";
 
 interface Quiz {
@@ -55,7 +55,8 @@ const QuizHome = () => {
 
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [loading, setLoading] = useState(true);
-  const isInstructor = session?.user?.role === "instruktur" || session?.user?.role === "admin";
+  const isInstructor =
+    session?.user?.role === "instruktur" || session?.user?.role === "admin";
 
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState<
@@ -168,7 +169,7 @@ const QuizHome = () => {
                 </div>
               </div>
             </div>
-          )}
+          </div>
 
           {isInstructor && (
             <div className="mb-8 lg:mb-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -275,7 +276,6 @@ const QuizHome = () => {
                 <Sparkles className="h-4 w-4 text-teal-500" />
                 <span>Terus tingkatkan skormu! 🚀</span>
               </div>
-              
             </div>
           </div>
 
