@@ -33,19 +33,18 @@ export async function GET(req: NextRequest) {
 
     const where: any = {};
     const categoryQuery = searchParams.get("category");
-    
-    // Safely handle category check without throwing if Prisma enums are stale
-    if (categoryQuery) {
-      const validCategories = ["Wajib", "Extra", "NextLevel", "Susulan"];
-      if (validCategories.includes(categoryQuery)) {
-        where.category = categoryQuery as any;
-      }
+    const categories = (Prisma as any).material_category || {};
+    if (
+      categoryQuery &&
+      Object.values(categories).includes(categoryQuery as any)
+    ) {
+      where.category = categoryQuery as any;
     }
 
     // If user is not instructor/admin, only show materials where they are enrolled or invited
-    // Normalizing role check to match Prisma Enum Role: user, admin, instruktur
+    // Normalizing role check to include both 'instruktur' and 'instructor'
     const isPrivileged = User.role === "instruktur" || User.role === "admin";
-    
+
     if (!isPrivileged) {
       where.OR = [
         {
@@ -57,7 +56,7 @@ export async function GET(req: NextRequest) {
           materialinvite: {
             some: {
               userId: User.id,
-              status: { in: ["accepted", "pending"] }, 
+              status: "accepted",
             },
           },
         },
@@ -98,6 +97,9 @@ export async function GET(req: NextRequest) {
           where: { userId: User.id },
           select: { status: true },
         },
+        program: {
+          select: { id: true, title: true },
+        },
       },
       orderBy: { date: "desc" },
     });
@@ -106,7 +108,9 @@ export async function GET(req: NextRequest) {
     const result = materials.map((m: any) => {
       const hasEnrollment = (m.courseenrollment || []).length > 0;
       // Only treat as joined if invite is accepted (not pending/rejected)
-      const hasAcceptedInvite = (m.materialinvite || []).some((inv: any) => inv.status === "accepted");
+      const hasAcceptedInvite = (m.materialinvite || []).some(
+        (inv: any) => inv.status === "accepted",
+      );
       const isJoined = hasEnrollment || hasAcceptedInvite;
 
       return {
@@ -121,6 +125,9 @@ export async function GET(req: NextRequest) {
         thumbnailUrl: m.thumbnailUrl,
         createdAt: m.createdAt,
         isJoined: isJoined,
+        program: m.program
+          ? { id: m.program.id, title: m.program.title }
+          : null,
       };
     });
 
@@ -227,7 +234,8 @@ export async function POST(req: NextRequest) {
     }
 
     // Map category from label to enum
-    const CATEGORY_MAP: Record<string, any> = { // Changed CourseCategory to any
+    const CATEGORY_MAP: Record<string, any> = {
+      // Changed CourseCategory to any
       "Program Wajib": "Wajib",
       "Program Ekstra": "Extra",
       "Program Next Level": "NextLevel",
@@ -249,7 +257,7 @@ export async function POST(req: NextRequest) {
     // Temporary workaround: manually provide ID since prisma generate is blocked by file lock
     const material = await prisma.material.create({
       data: {
-        id: `cl${Math.random().toString(36).substring(2, 11)}`, // Simple cuid-like fallback
+        id: `cl${Math.random().toString(36).substring(2, 11)}`,
         title,
         description,
         date: new Date(date),
@@ -258,7 +266,7 @@ export async function POST(req: NextRequest) {
         grade: mappedGrade as any,
         thumbnailUrl: thumbnailUrl || null,
         instructorId: session.user.id,
-        parentId: programId || null,
+        programId: programId || null,
         materialType: materialType || null,
         content: materialContent || null,
         link: materialLink || null,
