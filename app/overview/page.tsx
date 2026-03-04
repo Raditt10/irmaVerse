@@ -25,6 +25,8 @@ import {
   BookMarked,
   HelpCircle,
   Heart,
+  Eye,
+  User,
 } from "lucide-react";
 import Sidebar from "@/components/ui/Sidebar";
 import DashboardHeader from "@/components/ui/Header";
@@ -105,12 +107,13 @@ const Dashboard = () => {
     const fetchDashboardData = async () => {
       try {
         // Load instructors, favorites, materials, and attendance
-        const [instructorsRes, favoritesRes, materialsRes, attendanceRes, newsRes] = await Promise.all([
+        const [instructorsRes, favoritesRes, materialsRes, attendanceRes, newsRes, quizRes] = await Promise.all([
           fetch("/api/instructors"),
           fetch("/api/instructors/favorites"),
           fetch("/api/materials"),
           fetch("/api/materials/attendance"),
           fetch("/api/news"),
+          fetch("/api/quiz"),
         ]);
 
         if (instructorsRes.ok) {
@@ -128,23 +131,71 @@ const Dashboard = () => {
           setFavoriteInstructors(favorites);
         }
 
+        let allMaterialsData: any[] = [];
         if (materialsRes.ok) {
-          const mData = await materialsRes.json();
-          setMaterials(mData.slice(0, 5));
+          allMaterialsData = await materialsRes.json();
+          setMaterials(allMaterialsData.slice(0, 5));
         }
 
         if (attendanceRes.ok) {
           const aData = await attendanceRes.json();
           // Filter: only materials that have passed their date (status complete)
           // and have an attendance record (can see recap)
-          const now = new Date();
           const finished = Array.isArray(aData) 
             ? aData
                 .sort((a: any, b: any) => 
                   new Date(b.attendedAt).getTime() - new Date(a.attendedAt).getTime()
                 )
             : [];
-          setFinishedMaterials(finished.slice(0, 5));
+            
+          // Get rekapan for the attended materials. We only need max 2 real rekapans.
+          const enrichedFinished = [];
+          for (const att of finished) {
+            if (enrichedFinished.length >= 2) break;
+            try {
+               const recRes = await fetch(`/api/materials/${att.materialId}/rekapan`);
+               if (recRes.ok) {
+                  const recData = await recRes.json();
+                  const mDataRef = materialsRes.ok ? allMaterialsData.find((m: any) => m.id === att.materialId) : null;
+                  
+                  let plainText = "";
+                  if (recData.content) {
+                     plainText = recData.content.replace(/<[^>]*>?/gm, "").substring(0, 120);
+                     if (recData.content.length > 120) plainText += "...";
+                  }
+                  
+                  enrichedFinished.push({
+                     ...att,
+                     grade: mDataRef?.grade || "KELAS 10",
+                     category: mDataRef?.category || "PROGRAM WAJIB",
+                     materialTitle: mDataRef?.title || att.materialTitle || "Kajian",
+                     instructorName: mDataRef?.instructor || att.instructorName || "TBA",
+                     contentPreview: plainText,
+                     link: recData.attachmentUrl || ""
+                  });
+               }
+            } catch (e) {
+               console.error("Error fetching rekapan for material", att.materialId, e);
+            }
+          }
+
+          setFinishedMaterials(enrichedFinished);
+          
+          if (quizRes.ok) {
+            const quizData = await quizRes.json();
+            // Cek kuis yang (1) user sudah attend material nya, (2) belum kerjakan kuisnya (tidak ada lastAttempt)
+            const attendedMaterialIds = finished.map((att: any) => att.materialId);
+            
+            const pendingQuizzes = Array.isArray(quizData) 
+              ? quizData.filter((q: any) => 
+                  !q.lastAttempt && // Belum punya percobaan/skor
+                  !q.isStandalone && // Bukan kuis mandiri
+                  attendedMaterialIds.includes(q.materialId) // Sudah hadir kajiannya
+                )
+              : [];
+              
+            setUpcomingQuizzes(pendingQuizzes.slice(0, 3));
+          }
         }
 
         if (newsRes.ok) {
@@ -162,6 +213,7 @@ const Dashboard = () => {
         setLoadingMaterials(false);
         setLoadingFinished(false);
         setLoadingNews(false);
+        setLoadingQuizzes(false);
       }
     };
 
@@ -207,11 +259,8 @@ const Dashboard = () => {
   const [materials, setMaterials] = useState<any[]>([]);
   const [loadingMaterials, setLoadingMaterials] = useState(true);
 
-  const upcomingQuizzes = [
-    { id: 1, title: "Kuis Tauhid Bab 1", dueDate: "5 Feb 2026", difficulty: "Mudah", questions: 10 },
-    { id: 2, title: "Kuis Fiqih Ibadah", dueDate: "7 Feb 2026", difficulty: "Sedang", questions: 15 },
-    { id: 3, title: "Kuis Tajweed Praktik", dueDate: "10 Feb 2026", difficulty: "Sulit", questions: 20 },
-  ];
+  const [upcomingQuizzes, setUpcomingQuizzes] = useState<any[]>([]);
+  const [loadingQuizzes, setLoadingQuizzes] = useState(true);
 
   const programs = [
     { id: 1, title: "Program Basic Islam", progress: 60, members: 156, icon: BookOpen },
@@ -357,38 +406,63 @@ const Dashboard = () => {
                 </div>
                 
                 <div className="space-y-3">
-                  {loadingMaterials ? (
+                  {loadingFinished ? (
                     <p className="text-center text-xs text-slate-400 font-bold py-10">Memuat kajian...</p>
-                  ) : materials.length === 0 ? (
-                    <p className="text-center text-xs text-slate-400 font-bold py-10">Belum ada kajian terbaru</p>
+                  ) : finishedMaterials.length === 0 ? (
+                    <p className="text-center text-xs text-slate-400 font-bold py-10">Belum ada kajian yang diselesaikan</p>
                   ) : (
-                    materials.map((material) => (
-                      <div key={material.id} onClick={() => router.push(`/materials`)} className="bg-white p-4 rounded-2xl border-2 border-slate-100 hover:border-emerald-400 hover:shadow-[0_4px_0_0_#10b981] transition-all group cursor-pointer">
-                        <div className="flex items-start justify-between mb-3">
-                          <div>
-                            <h3 className="font-black text-slate-800 group-hover:text-emerald-600 transition-colors">{material.title}</h3>
-                            <p className="text-xs text-slate-500 font-bold mt-1">{material.instructor}</p>
+                    finishedMaterials.map((material) => (
+                      <div
+                        key={material.id}
+                        onClick={() =>
+                          router.push(`/materials/${material.materialId}/rekapan`)
+                        }
+                        className="bg-white rounded-3xl border-2 border-emerald-400 p-5 lg:p-6 hover:shadow-[0_4px_0_0_#34d399] transition-all duration-300 cursor-pointer group flex flex-col md:flex-row md:items-start justify-between gap-4"
+                      >
+                        <div className="flex-1 min-w-0">
+                          {/* Category & Grade badges */}
+                          <div className="flex flex-wrap items-center gap-2 mb-3">
+                            <span className="px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-wide border bg-rose-100 text-rose-700 border-rose-200">
+                              {material.category || "PROGRAM WAJIB"}
+                            </span>
+                            <span className="px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-wide border bg-slate-50 text-slate-600 border-slate-200">
+                              {material.grade || "KELAS 10"}
+                            </span>
                           </div>
-                          {!material.isJoined && (
-                            <span className="px-2 py-1 bg-amber-100 text-amber-600 text-[10px] font-black rounded-lg border border-amber-200">Undangan</span>
-                          )}
-                          <button className="p-2 bg-emerald-50 border border-emerald-200 rounded-xl group-hover:bg-emerald-100 transition-colors">
-                            <Play className="h-4 w-4 text-emerald-600 fill-emerald-600" />
+
+                          <h3 className="text-lg md:text-xl font-black text-teal-600 leading-tight mb-2 group-hover:text-teal-700 transition-colors">
+                            {material.materialTitle || "Kajian Tanpa Judul"}
+                          </h3>
+
+                          <p className="text-sm text-slate-500 font-medium leading-relaxed mb-3 line-clamp-1 truncate">
+                            {material.link || material.contentPreview || "Terdapat rekapan materi untuk kajian ini."}
+                          </p>
+
+                          <div className="flex flex-wrap items-center gap-4 text-xs font-semibold text-slate-400">
+                            <div className="flex items-center gap-1.5">
+                              <User className="h-3.5 w-3.5" />
+                              {material.instructorName || "Instruktur"}
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <Calendar className="h-3.5 w-3.5" />
+                              {new Date(material.attendedAt).toLocaleDateString(
+                                "id-ID",
+                                {
+                                  day: "numeric",
+                                  month: "long",
+                                  year: "numeric",
+                                }
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-col items-end gap-3 shrink-0">
+                          <button className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-white text-teal-600 font-bold border-2 border-teal-200 border-b-4 hover:bg-teal-50 hover:border-teal-400 active:border-b-2 active:translate-y-0.5 transition-all text-sm shrink-0">
+                            <Eye className="h-4 w-4" strokeWidth={2.5} />
+                            Baca
                           </button>
                         </div>
-                        
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="w-full bg-slate-100 rounded-full h-2 mr-3">
-                            <div 
-                              className="bg-linear-to-r from-emerald-400 to-teal-400 h-2 rounded-full transition-all" 
-                              style={{ width: material.isJoined ? '100%' : '0%' }}
-                            />
-                          </div>
-                          <span className="text-xs font-black text-slate-600 whitespace-nowrap">{material.isJoined ? '100%' : '0%'}</span>
-                        </div>
-                        <p className="text-xs text-slate-400 font-bold flex items-center gap-1">
-                          <Clock className="w-3 h-3" /> {new Date(material.date).toLocaleDateString()}
-                        </p>
                       </div>
                     ))
                   )}
@@ -410,29 +484,38 @@ const Dashboard = () => {
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {upcomingQuizzes.map((quiz, index) => {
-                    const buttonColor = getRandomButtonColor(index);
-                    return (
-                    <div key={quiz.id} className="bg-white p-5 rounded-4xl border-2 border-slate-100 hover:border-slate-300 shadow-[0_4px_0_0_#f1f5f9] hover:shadow-[0_6px_0_0_#cbd5e1] hover:-translate-y-1 transition-all group">
-                      <div className="flex items-start justify-between mb-3">
-                        <h3 className="font-bold text-slate-800 text-sm">{quiz.title}</h3>
+                  {loadingQuizzes ? (
+                     <p className="text-center text-xs text-slate-400 font-bold py-10 col-span-1 md:col-span-2 lg:col-span-3">Memuat kuis...</p>
+                  ) : upcomingQuizzes.length === 0 ? (
+                     <p className="text-center text-xs text-slate-400 font-bold py-10 col-span-1 md:col-span-2 lg:col-span-3">Yey! Tidak ada kuis kajian yang tertunda.</p>
+                  ) : (
+                    upcomingQuizzes.map((quiz, index) => {
+                      const buttonColor = getRandomButtonColor(index);
+                      return (
+                      <div key={quiz.id} className="bg-white p-5 rounded-4xl border-2 border-slate-100 hover:border-slate-300 shadow-[0_4px_0_0_#f1f5f9] hover:shadow-[0_6px_0_0_#cbd5e1] hover:-translate-y-1 transition-all group flex flex-col">
+                        <div className="flex items-start justify-between mb-3">
+                          <h3 className="font-bold text-slate-800 text-sm line-clamp-2">{quiz.title}</h3>
+                        </div>
+                        
+                        <div className="space-y-2 flex-grow">
+                          <p className="text-xs text-slate-500 font-bold flex items-center gap-1.5">
+                            <BookOpen className="w-3.5 h-3.5" /> Kajian {quiz.materialTitle || "Terkait"}
+                          </p>
+                          <p className="text-xs text-slate-500 font-bold flex items-center gap-1.5">
+                            <Zap className="w-3.5 h-3.5" /> {quiz.questionCount || 0} soal
+                          </p>
+                        </div>
+                        
+                        <button 
+                             onClick={() => router.push(`/quiz/${quiz.materialId}/${quiz.id}`)}
+                             className={`w-full mt-4 py-3 text-white text-xs font-black rounded-2xl h-12 flex items-center justify-center transition-all border-b-4 active:border-b-0 active:translate-y-1 ${buttonColor.bg} ${buttonColor.border} ${buttonColor.shadow} ${buttonColor.hover} hover:shadow-lg`}
+                        >
+                          Mulai Kuis
+                        </button>
                       </div>
-                      
-                      <div className="space-y-2">
-                        <p className="text-xs text-slate-500 font-bold flex items-center gap-1.5">
-                          <Calendar className="w-3.5 h-3.5" /> Deadline: {quiz.dueDate}
-                        </p>
-                        <p className="text-xs text-slate-500 font-bold flex items-center gap-1.5">
-                          <Zap className="w-3.5 h-3.5" /> {quiz.questions} soal
-                        </p>
-                      </div>
-                      
-                      <button className={`w-full mt-4 py-3 text-white text-xs font-black rounded-2xl h-12 flex items-center justify-center transition-all border-b-4 active:border-b-0 active:translate-y-1 ${buttonColor.bg} ${buttonColor.border} ${buttonColor.shadow} ${buttonColor.hover} hover:shadow-lg`}>
-                        Mulai Kuis
-                      </button>
-                    </div>
-                    );
-                  })}
+                      );
+                    })
+                  )}
                 </div>
               </section>
             </div>

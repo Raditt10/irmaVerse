@@ -177,14 +177,14 @@ const Members = () => {
 
                         {/* Points Section */}
                         <div className="mt-3 md:mt-4 px-3 md:px-6">
-                            <div className="bg-amber-50 rounded-xl md:rounded-2xl p-2 md:p-3 border-2 border-amber-100 flex items-center justify-between">
+                            <div className="bg-emerald-50 rounded-xl md:rounded-2xl p-2 md:p-3 border-2 border-emerald-100 flex items-center justify-between">
                                 <div className="flex items-center gap-1 md:gap-2">
-                                    <div className="p-1 md:p-1.5 bg-amber-100 rounded-[0.4rem] md:rounded-lg text-amber-600">
+                                    <div className="p-1 md:p-1.5 bg-emerald-100 rounded-[0.4rem] md:rounded-lg text-emerald-600">
                                         <Trophy className="h-3 w-3 md:h-4 md:w-4" />
                                     </div>
-                                    <span className="text-[10px] md:text-xs font-bold text-amber-800">Poin Keaktifan</span>
+                                    <span className="text-[10px] md:text-xs font-bold text-emerald-800">Poin Keaktifan</span>
                                 </div>
-                                <span className="text-sm md:text-lg font-black text-amber-600">{member.points}</span>
+                                <span className="text-sm md:text-lg font-black text-emerald-600">{member.points}</span>
                             </div>
                         </div>
 

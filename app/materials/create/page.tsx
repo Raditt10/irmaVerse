@@ -32,6 +32,8 @@ import {
   Globe,
   Link,
   FileText,
+  CheckSquare,
+  Square,
 } from "lucide-react";
 
 const CreateMaterial = () => {
@@ -78,6 +80,8 @@ const CreateMaterial = () => {
     { value: string; label: string; avatar?: string; email: string }[]
   >([]);
   const [showSearchResults, setShowSearchResults] = useState(false);
+  const [showAllUsersModal, setShowAllUsersModal] = useState(false);
+  const [searchModalInput, setSearchModalInput] = useState("");
 
   // Helper Toast
   const showToast = (message: string, type: "success" | "error") => {
@@ -196,6 +200,25 @@ const CreateMaterial = () => {
 
   const handleRemoveInvite = (index: number) => {
     setInvitedUsers(invitedUsers.filter((_, i) => i !== index));
+  };
+
+  const handleToggleUserSelect = (userEmail: string) => {
+    setInvitedUsers(prev => 
+      prev.includes(userEmail)
+        ? prev.filter(e => e !== userEmail)
+        : [...prev, userEmail]
+    );
+  };
+
+  const isAllUsersSelected = userOptions.length > 0 && 
+    userOptions.every(u => invitedUsers.includes(u.email));
+
+  const handleSelectAllUsers = () => {
+    if (isAllUsersSelected) {
+      setInvitedUsers([]);
+    } else {
+      setInvitedUsers(userOptions.map(u => u.email));
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -788,10 +811,19 @@ const CreateMaterial = () => {
 
                 {/* --- INVITING SECTION --- */}
                 <div className="bg-white p-5 lg:p-6 rounded-3xl lg:rounded-[2.5rem] border-2 border-slate-200 shadow-[0_4px_0_0_#cbd5e1] lg:shadow-[0_8px_0_0_#cbd5e1]">
-                  <h2 className="text-lg font-black text-slate-700 mb-4 flex items-center gap-2">
-                    <Users className="h-5 w-5 text-amber-500" /> Undang Peserta{" "}
-                    <span className="text-red-400 text-sm">(wajib min. 1)</span>
-                  </h2>
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-lg font-black text-slate-700 flex items-center gap-2">
+                      <Users className="h-5 w-5 text-amber-500" /> Undang Peserta{" "}
+                      <span className="text-red-400 text-sm hidden sm:inline">(wajib min. 1)</span>
+                    </h2>
+                    <button 
+                      type="button" 
+                      onClick={() => setShowAllUsersModal(true)}
+                      className="text-amber-600 hover:text-amber-700 text-sm font-bold flex items-center gap-1"
+                    >
+                      Lihat Semua <ChevronDown className="w-4 h-4 -rotate-90" />
+                    </button>
+                  </div>
 
                   <div className="space-y-3 lg:space-y-4">
                     <div className="relative">
@@ -933,6 +965,108 @@ const CreateMaterial = () => {
         </div>
       </div>
       <ChatbotButton />
+
+      <ChatbotButton />
+
+      {/* Modal Lihat Semua User */}
+      {showAllUsersModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white w-full max-w-lg rounded-[2rem] shadow-2xl flex flex-col max-h-[90vh] md:max-h-[80vh] border-2 border-slate-200 overflow-hidden animate-in slide-in-from-bottom-10 md:slide-in-from-bottom-0 md:zoom-in-95 duration-300">
+            {/* Modal Header */}
+            <div className="p-5 md:p-6 border-b border-slate-100 flex items-center justify-between shrink-0 bg-white">
+              <h2 className="text-lg md:text-xl font-black text-slate-800 flex items-center gap-2">
+                <Users className="w-5 h-5 text-amber-500" /> Pilih Peserta
+              </h2>
+              <button
+                type="button"
+                onClick={() => setShowAllUsersModal(false)}
+                className="p-2 hover:bg-slate-100 text-slate-400 hover:text-slate-600 rounded-full transition-colors"
+              >
+                <X className="w-5 h-5 md:w-6 md:h-6" />
+              </button>
+            </div>
+            
+            {/* Modal Body */}
+            <div className="flex-1 overflow-y-auto bg-slate-50 p-4 md:p-6 space-y-4 relative">
+              <div className="sticky top-0 z-10 bg-slate-50 pb-2">
+                <SearchInput
+                  placeholder="Cari user (nama / email)..."
+                  value={searchModalInput}
+                  onChange={setSearchModalInput}
+                  className="w-full bg-white"
+                />
+              </div>
+
+              <div className="flex items-center justify-between pt-2 pb-1">
+                <p className="text-xs font-bold text-slate-500">
+                  Terpilih: <span className="text-amber-600">{invitedUsers.length}</span> dari {userOptions.length}
+                </p>
+                <button
+                  type="button"
+                  onClick={handleSelectAllUsers}
+                  className="flex items-center gap-1.5 text-xs font-black text-amber-600 hover:text-amber-700 transition-colors"
+                >
+                  {isAllUsersSelected ? (
+                    <><CheckSquare className="w-4 h-4" /> Batal Pilih Semua</>
+                  ) : (
+                    <><Square className="w-4 h-4" /> Pilih Semua</>
+                  )}
+                </button>
+              </div>
+
+              <div className="space-y-2">
+                {userOptions
+                  .filter(u => 
+                     u.label.toLowerCase().includes(searchModalInput.toLowerCase()) || 
+                     u.email.toLowerCase().includes(searchModalInput.toLowerCase())
+                  )
+                  .map((user) => {
+                    const isSelected = invitedUsers.includes(user.email);
+                    return (
+                      <div 
+                        key={user.email}
+                        onClick={() => handleToggleUserSelect(user.email)}
+                        className={`flex items-center gap-3 p-3 rounded-2xl border-2 transition-all cursor-pointer ${
+                          isSelected 
+                            ? "bg-amber-50 border-amber-300 shadow-[0_2px_0_0_#fcd34d]" 
+                            : "bg-white border-slate-100 hover:border-slate-300 hover:shadow-sm"
+                        }`}
+                      >
+                         <div className={`w-5 h-5 rounded flex items-center justify-center shrink-0 border ${isSelected ? "bg-amber-500 border-amber-600" : "bg-white border-slate-300"}`}>
+                           {isSelected && <CheckSquare className="w-4 h-4 text-white" />}
+                         </div>
+                         
+                         {user.avatar ? (
+                            <img src={user.avatar} alt={user.label} className="w-8 h-8 rounded-full object-cover border border-slate-200" />
+                         ) : (
+                            <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center text-amber-600 font-bold text-xs uppercase">
+                              {user.label.charAt(0)}
+                            </div>
+                         )}
+                         
+                         <div className="flex-1 min-w-0">
+                           <p className={`font-bold text-sm truncate ${isSelected ? "text-amber-900" : "text-slate-700"}`}>{user.label}</p>
+                           <p className="text-xs text-slate-400 truncate">{user.email}</p>
+                         </div>
+                      </div>
+                    );
+                })}
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 md:p-6 border-t border-slate-100 bg-white shrink-0">
+               <button 
+                 type="button" 
+                 onClick={() => setShowAllUsersModal(false)}
+                 className="w-full py-3 md:py-4 bg-amber-500 text-white font-black rounded-2xl border-b-4 border-amber-600 hover:bg-amber-400 active:border-b-0 active:translate-y-1 transition-all"
+               >
+                 Selesai ({invitedUsers.length} Peserta)
+               </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Toast Notification */}
       <Toast

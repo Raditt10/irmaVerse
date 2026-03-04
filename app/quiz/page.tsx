@@ -6,6 +6,7 @@ import DashboardHeader from "@/components/ui/Header";
 import Sidebar from "@/components/ui/Sidebar";
 import Loading from "@/components/ui/Loading";
 import EmptyState from "@/components/ui/EmptyState";
+import CategoryFilter from "@/components/ui/CategoryFilter";
 import {
   Trophy,
   Play,
@@ -217,28 +218,31 @@ const QuizHome = () => {
               </div>
             </div>
 
-            <div className="flex bg-slate-200/60 p-1.5 rounded-2xl w-full md:w-auto overflow-x-auto">
-              {(
-                [
-                  { key: "all", label: "Semua" },
-                  { key: "not_started", label: "Belum" },
-                  { key: "completed", label: "Selesai" },
-                  { key: "standalone", label: "Mandiri" },
-                  { key: "material", label: "Materi" },
-                ] as const
-              ).map((f) => (
-                <button
-                  key={f.key}
-                  onClick={() => setActiveFilter(f.key)}
-                  className={`flex-shrink-0 px-4 lg:px-6 py-2.5 rounded-xl text-xs font-black transition-all ${
-                    activeFilter === f.key
-                      ? "bg-white text-teal-600 shadow-sm"
-                      : "text-slate-500 hover:text-slate-700"
-                  }`}
-                >
-                  {f.label}
-                </button>
-              ))}
+            <div className="w-full md:w-auto">
+              <CategoryFilter
+                categories={["Semua", "Belum", "Selesai", "Mandiri", "Materi"]}
+                subCategories={[]}
+                selectedCategory={
+                  activeFilter === "all"
+                    ? "Semua"
+                    : activeFilter === "not_started"
+                    ? "Belum"
+                    : activeFilter === "completed"
+                    ? "Selesai"
+                    : activeFilter === "standalone"
+                    ? "Mandiri"
+                    : "Materi"
+                }
+                selectedSubCategory=""
+                onCategoryChange={(label) => {
+                  if (label === "Semua") setActiveFilter("all");
+                  if (label === "Belum") setActiveFilter("not_started");
+                  if (label === "Selesai") setActiveFilter("completed");
+                  if (label === "Mandiri") setActiveFilter("standalone");
+                  if (label === "Materi") setActiveFilter("material");
+                }}
+                onSubCategoryChange={() => {}}
+              />
             </div>
           </div>
 
