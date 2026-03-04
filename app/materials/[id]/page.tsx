@@ -152,7 +152,7 @@ const MaterialDetail = () => {
         description: data.description,
         date: data.date,
         startedAt: data.startedAt || "",
-        location: data.location || "",
+        location: data.location || "Belum ditentukan",
         instructor: data.instructor || (data.instructorName ?? "TBA"),
         instructorAvatar: data.instructorAvatar || null,
         category: data.category || "",
@@ -248,7 +248,7 @@ const MaterialDetail = () => {
             <button
               onClick={() => router.push("/materials")}
               className="mt-4 px-6 py-3 rounded-xl bg-teal-400 text-white font-black border-2 border-teal-600 border-b-4 hover:bg-teal-500 active:border-b-2 active:translate-y-0.5 transition-all"
-            >
+            > 
               Kembali ke Daftar
             </button>
           </div>
@@ -296,7 +296,7 @@ const MaterialDetail = () => {
                 
                 <h1 className="text-4xl md:text-6xl lg:text-7xl font-black text-white mb-4 drop-shadow-xl leading-tight tracking-tight">
                   {material.title}
-                </h1>
+                </h1>     
                 
                 <p className="text-slate-300 font-bold text-lg md:text-xl max-w-2xl leading-relaxed drop-shadow-md">
                   {material.description ? material.description.split('\n')[0] : "Deskripsi materi tidak tersedia..."}
@@ -361,7 +361,7 @@ const MaterialDetail = () => {
                       <Sparkles className="h-7 w-7 text-indigo-500" strokeWidth={3} />
                     </div>
                     <h2 className="text-3xl font-black text-slate-800 tracking-tight">
-                      Detail Lengkap
+                      Deskripsi Kajian  
                     </h2>
                   </div>
 
@@ -391,7 +391,7 @@ const MaterialDetail = () => {
                 </div>
 
                 {/* Rekapan & Quiz Section */}
-                <div className="bg-white p-6 lg:p-8 rounded-5xl border-2 border-slate-200 shadow-[0_6px_0_0_#cbd5e1]">
+                <div className="bg-white p-6 lg:p-8 rounded-4xl border-2 border-slate-200 shadow-[0_6px_0_0_#cbd5e1]">
                   <div className="flex items-center gap-4 mb-6">
                     <div className="p-2.5 bg-indigo-100 rounded-2xl border-2 border-indigo-200">
                       <ListChecks
@@ -562,7 +562,7 @@ const MaterialDetail = () => {
                 {isPrivileged &&
                   material.inviteDetails &&
                   material.inviteDetails.length > 0 && (
-                    <div className="bg-white rounded-5xl border-2 border-slate-200 shadow-[0_6px_0_0_#cbd5e1] overflow-hidden p-6 lg:p-8">
+                    <div className="bg-white rounded-4xl border-2 border-slate-200 shadow-[0_6px_0_0_#cbd5e1] overflow-hidden p-6 lg:p-8">
                       <h3 className="text-lg font-black text-slate-800 mb-1 flex items-center gap-2">
                         <Users className="w-5 h-5 text-amber-500" /> Status
                         Undangan
@@ -661,7 +661,7 @@ const MaterialDetail = () => {
 
                 {/* CTA / Action Box */}
                 {isPrivileged ? (
-                  <div className="bg-slate-50 rounded-5xl p-6 text-center border-2 border-slate-200 border-dashed">
+                  <div className="bg-slate-50 rounded-4xl p-6 text-center border-2 border-slate-200 border-dashed">
                     <p className="text-slate-500 text-sm font-bold mb-4">
                       Kelola Kajian Ini
                     </p>
@@ -694,7 +694,7 @@ const MaterialDetail = () => {
                     </div>
                   </div>
                 ) : (
-                  <div className="bg-linear-to-br from-teal-400 to-cyan-400 rounded-5xl p-6 lg:p-8 text-white border-2 border-teal-600 shadow-[0_6px_0_0_#0f766e] text-center relative overflow-hidden">
+                  <div className="bg-linear-to-br from-teal-400 to-cyan-400 rounded-4xl p-6 lg:p-8 text-white border-2 border-teal-600 shadow-[0_6px_0_0_#0f766e] text-center relative overflow-hidden">
                     <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-10 -mt-10 blur-2xl"></div>
 
                     {material.attendedAt ? (

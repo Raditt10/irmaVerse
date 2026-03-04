@@ -66,6 +66,7 @@ const CreateMaterial = () => {
     materialContent: "",
     materialLink: "",
     rekapanContent: "",
+    location: "",
   });
 
   const [inviteInput, setInviteInput] = useState("");
@@ -109,7 +110,16 @@ const CreateMaterial = () => {
     try {
       setFetchingPrograms(true);
       const res = await fetch("/api/programs");
-      if (!res.ok) throw new Error("Gagal mengambil data program");
+      if (!res.ok) {
+        let errMessage = `HTTP ${res.status}`;
+        try {
+          const errData = await res.json();
+          errMessage = errData.error || errMessage;
+        } catch {
+          errMessage = await res.text();
+        }
+        throw new Error(`Gagal mengambil data program: ${errMessage}`);
+      }
       const data = await res.json();
       setAvailablePrograms(
         data.map((p: any) => ({ id: p.id, title: p.title })),
@@ -228,7 +238,7 @@ const CreateMaterial = () => {
 
     if (
       formData.materialType === "editor" &&
-      !formData.materialContent.trim()
+      !formData.rekapanContent.trim()
     ) {
       showToast("Materi kajian tidak boleh kosong", "error");
       return;
@@ -255,13 +265,17 @@ const CreateMaterial = () => {
 
       const result = await res.json();
 
-      // Save rekapan if content is provided
-      if (formData.rekapanContent.trim() && result.id) {
+      // Save rekapan if content is provided OR it's a link material
+      const finalRekapanContent = formData.materialType === "link"
+        ? formData.materialLink.trim()
+        : formData.rekapanContent.trim();
+        
+      if (finalRekapanContent && result.id) {
         try {
           await fetch(`/api/materials/${result.id}/rekapan`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ content: formData.rekapanContent.trim() }),
+            body: JSON.stringify({ content: finalRekapanContent }),
           });
         } catch (rekapanErr) {
           console.error("Error saving rekapan:", rekapanErr);
@@ -552,12 +566,15 @@ const CreateMaterial = () => {
                         </div>
                       </div>
 
-                      {/* --- MATERI KAJIAN SECTION --- */}
+                      {/* --- REKAPAN / RINGKASAN MATERI SECTION --- */}
                       <div className="pt-6 border-t-2 border-slate-100">
                         <div className="flex items-center justify-between mb-4">
                           <h3 className="text-sm font-bold text-slate-700 ml-1 flex items-center gap-2">
-                            <FileEdit className="h-4 w-4 text-emerald-500" />{" "}
-                            Materi Kajian
+                            <FileText className="h-4 w-4 text-amber-500" />{" "}
+                            Rekapan Materi
+                            <span className="text-[10px] bg-amber-50 text-amber-600 px-2 py-0.5 rounded-full font-black border border-amber-200">
+                              Disarankan
+                            </span>
                           </h3>
 
                           {/* Toggle Switch */}
@@ -577,7 +594,7 @@ const CreateMaterial = () => {
                               }`}
                             >
                               <FileEdit className="h-3.5 w-3.5" />
-                              Editor
+                              Teks
                             </button>
                             <button
                               type="button"
@@ -602,44 +619,41 @@ const CreateMaterial = () => {
                         {formData.materialType === "editor" ? (
                           <div className="animate-in fade-in slide-in-from-top-1 duration-200">
                             <Textarea
-                              name="materialContent"
-                              required={formData.materialType === "editor"}
-                              rows={10}
-                              value={formData.materialContent}
+                              name="rekapanContent"
+                              rows={8}
+                              value={formData.rekapanContent}
                               onChange={handleInputChange}
-                              placeholder="Ketik atau tempel materi kajian Anda di sini. Anda bisa merapikan formatnya dengan spasi dan baris baru..."
+                              placeholder="Tulis ringkasan materi kajian di sini. Rekapan ini akan bisa dibaca oleh peserta kapan saja sebagai bahan belajar mandiri..."
                               className="text-sm border-2 focus:ring-emerald-200"
                             />
                             <p className="text-[10px] font-bold text-slate-400 mt-2 ml-1 italic">
-                              * Materi ini akan ditampilkan langsung kepada
-                              peserta kajian.
+                              * Rekapan berisi ringkasan kajian agar peserta bisa membaca ulang kapan pun.
                             </p>
                           </div>
                         ) : (
                           <div className="animate-in fade-in slide-in-from-top-1 duration-200 space-y-3">
                             <div className="relative group">
                               <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                <Globe className="h-5 w-5 text-indigo-400" />
+                                <Globe className="h-5 w-5 text-teal-500" />
                               </div>
                               <Input
                                 type="url"
                                 name="materialLink"
-                                required={formData.materialType === "link"}
                                 value={formData.materialLink}
                                 onChange={handleInputChange}
                                 placeholder="https://drive.google.com/file/d/..."
-                                className="pl-11 border-2 border-indigo-100 focus:border-indigo-400 focus:ring-indigo-100"
+                                className="pl-12 lg:pl-12 border-2 border-teal-100 focus:border-teal-400 focus:ring-teal-100"
                               />
                             </div>
-                            <div className="p-4 rounded-2xl bg-indigo-50 border border-indigo-100 flex gap-3">
-                              <div className="h-10 w-10 rounded-xl bg-white flex items-center justify-center shrink-0 border border-indigo-200">
-                                <Link className="h-5 w-5 text-indigo-500" />
+                            <div className="p-4 rounded-2xl bg-teal-50 border border-teal-100 flex gap-3">
+                              <div className="h-10 w-10 rounded-xl bg-white flex items-center justify-center shrink-0 border border-teal-200">
+                                <Link className="h-5 w-5 text-teal-500" />
                               </div>
                               <div>
-                                <p className="text-xs font-black text-indigo-900 mb-0.5">
+                                <p className="text-xs font-black text-teal-900 mb-0.5">
                                   Sertakan Link Materi
                                 </p>
-                                <p className="text-[10px] font-bold text-indigo-600/70 leading-relaxed">
+                                <p className="text-[10px] font-bold text-teal-700/80 leading-relaxed">
                                   Pastikan akses file Google Drive Anda sudah
                                   diatur ke "Siapa saja yang memiliki link" agar
                                   peserta dapat membacanya.
@@ -648,31 +662,6 @@ const CreateMaterial = () => {
                             </div>
                           </div>
                         )}
-                      </div>
-
-                      {/* --- REKAPAN / RINGKASAN MATERI SECTION --- */}
-                      <div className="pt-6 border-t-2 border-slate-100">
-                        <h3 className="text-sm font-bold text-slate-700 mb-3 ml-1 flex items-center gap-2">
-                          <FileText className="h-4 w-4 text-amber-500" />{" "}
-                          Rekapan Materi
-                          <span className="text-[10px] bg-amber-50 text-amber-600 px-2 py-0.5 rounded-full font-black border border-amber-200">
-                            Disarankan
-                          </span>
-                        </h3>
-                        <div className="animate-in fade-in slide-in-from-top-1 duration-200">
-                          <Textarea
-                            name="rekapanContent"
-                            rows={8}
-                            value={formData.rekapanContent}
-                            onChange={handleInputChange}
-                            placeholder="Tulis ringkasan materi kajian di sini. Rekapan ini akan bisa dibaca oleh peserta kapan saja sebagai bahan belajar mandiri..."
-                            className="text-sm border-2 focus:ring-amber-200"
-                          />
-                          <p className="text-[10px] font-bold text-slate-400 mt-2 ml-1 italic">
-                            * Rekapan berisi ringkasan kajian agar peserta bisa
-                            membaca ulang kapan pun.
-                          </p>
-                        </div>
                       </div>
 
                       {/* Tingkat / Kelas selector */}
@@ -710,9 +699,9 @@ const CreateMaterial = () => {
                 <div className="bg-white p-5 lg:p-8 rounded-3xl lg:rounded-[2.5rem] border-2 border-slate-200 shadow-[0_4px_0_0_#cbd5e1] lg:shadow-[0_8px_0_0_#cbd5e1]">
                   <h2 className="text-lg lg:text-xl font-black text-slate-700 mb-4 lg:mb-6 flex items-center gap-2">
                     <Calendar className="h-5 w-5 lg:h-6 lg:w-6 text-indigo-500" />{" "}
-                    Waktu Pelaksanaan
+                    Teknis Pelaksanaan
                   </h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6 mb-4 lg:mb-6">
                     <DatePicker
                       label="Tanggal Pelaksanaan"
                       value={formData.date}
@@ -723,6 +712,19 @@ const CreateMaterial = () => {
                       label="Jam Mulai"
                       value={formData.time}
                       onChange={(time) => setFormData({ ...formData, time })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="block text-xs lg:text-sm font-bold text-slate-600 ml-1">
+                      Lokasi / Platform
+                    </label>
+                    <Input
+                      type="text"
+                      name="location"
+                      value={formData.location}
+                      onChange={handleInputChange}
+                      placeholder="Contoh: Masjid Irma atau Link Zoom..."
+                      required
                     />
                   </div>
                 </div>

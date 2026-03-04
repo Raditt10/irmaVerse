@@ -35,6 +35,9 @@ export async function GET(
     const material = await (prisma as any).material.findUnique({
       where: { id: id },
       include: {
+        rekapan: {
+          select: { content: true }
+        },
         users: {
           select: {
             name: true,
@@ -121,8 +124,9 @@ export async function GET(
       grade: GRADE_LABEL[m.grade as keyof typeof GRADE_LABEL] || m.grade,
       startedAt: m.startedAt,
       thumbnailUrl: m.thumbnailUrl,
-      content: m.content,
+      content: m.content || m.rekapan?.content || null,
       link: m.link,
+      location: m.location,
       materialType: m.materialType,
       isJoined:
         m.courseenrollment?.length > 0 ||
@@ -256,6 +260,7 @@ export async function PUT(
       materialType,
       materialContent,
       materialLink,
+      location,
     } = body;
 
     const material = await (prisma as any).material.findUnique({
@@ -308,6 +313,7 @@ export async function PUT(
         materialType: materialType || null,
         content: materialContent || null,
         link: materialLink || null,
+        location: location || null,
         updatedAt: new Date(),
       } as any,
       include: {

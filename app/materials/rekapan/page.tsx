@@ -209,13 +209,6 @@ const RekapanListPage = () => {
                   ikuti.
                 </p>
               </div>
-              {session?.user?.role === "admin" ||
-              session?.user?.role === "instruktur" ? (
-                <button className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-teal-400 text-white font-bold border-2 border-teal-600 border-b-4 hover:bg-teal-500 hover:border-b-4 active:border-b-2 active:translate-y-0.5 transition-all">
-                  <Download className="h-5 w-5" />
-                  Cetak Laporan
-                </button>
-              ) : null}
             </div>
 
             {isInstructor ? (

@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import DashboardHeader from "@/components/ui/Header";
 import Sidebar from "@/components/ui/Sidebar";
 import Loading from "@/components/ui/Loading";
+import EmptyState from "@/components/ui/EmptyState";
 import {
   Trophy,
   Play,
@@ -162,53 +163,44 @@ const QuizHome = () => {
             <div className="absolute bottom-0 left-20 w-32 h-32 bg-teal-300 opacity-20 rounded-full blur-2xl" />
 
             <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
-              <div className="text-center md:text-left">
+              <div className="text-center md:text-left flex-1 w-full relative z-10">
                 <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 text-xs font-black uppercase tracking-wider mb-4">
                   <Sparkles className="h-4 w-4 text-yellow-300" />
                   Quiz Arena
                 </div>
-              </div>
-            </div>
-          </div>
-
-          {isInstructor && (
-            <div className="mb-8 lg:mb-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <div>
-                <h1 className="text-3xl lg:text-4xl font-black text-slate-800 tracking-tight mb-2 flex items-center gap-3">
-                  Kelola Kuis Kajian
+                {/* Moved specific quiz header into Hero Banner for better alignment and display */}
+                <h1 className="text-3xl lg:text-4xl font-black text-white tracking-tight mb-2 flex items-center gap-3 justify-center md:justify-start">
+                  {isInstructor && isPrivileged ? "Kelola Kuis Kajian" : "Kuis Kajian"}
                 </h1>
-                <p className="text-teal-50 font-medium text-sm lg:text-base max-w-xl">
+                <p className="text-teal-50 font-medium text-sm lg:text-base max-w-xl mx-auto md:mx-0">
                   Kerjakan kuis dari kajian atau quiz mandiri buatan instruktur.
                   <br className="hidden md:block" />
                   Dapatkan skor terbaikmu!
                 </p>
               </div>
 
-              <div className="flex flex-col items-center gap-3 shrink-0">
-                <div className="hidden md:flex w-32 h-32 lg:w-40 lg:h-40 bg-white/10 rounded-full border-4 border-white/20 backdrop-blur-md items-center justify-center shadow-inner transform rotate-12 group-hover:rotate-0 transition-all duration-500">
-                  <Trophy className="h-16 w-16 lg:h-20 lg:w-20 text-yellow-300 drop-shadow-md" />
-                </div>
-                {isPrivileged && (
-                  <div className="flex flex-col gap-2">
+              {isInstructor && isPrivileged && (
+                  <div className="flex flex-col gap-2 shrink-0 z-10">
                     <button
                       onClick={() => router.push("/quiz/create")}
-                      className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-white text-teal-600 font-black text-sm border-2 border-white/80 shadow-[0_4px_0_0_#0f766e] hover:shadow-[0_2px_0_0_#0f766e] hover:translate-y-0.5 active:translate-y-1 active:shadow-none transition-all"
+                      className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-2xl bg-white text-teal-600 font-black text-sm border-2 border-white/80 shadow-[0_4px_0_0_#0f766e] hover:shadow-[0_2px_0_0_#0f766e] hover:translate-y-0.5 active:translate-y-1 active:shadow-none transition-all"
                     >
-                      <Plus className="h-4 w-4" strokeWidth={3} /> Buat Quiz
-                      Baru
+                      <Plus className="h-4 w-4" strokeWidth={3} /> Buat Quiz Baru
                     </button>
                     <button
                       onClick={() => router.push("/quiz/manage")}
-                      className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-white/20 text-white font-black text-sm border-2 border-white/30 hover:bg-white/30 transition-all backdrop-blur-sm"
+                      className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-2xl bg-white/20 text-white font-black text-sm border-2 border-white/30 hover:bg-white/30 transition-all backdrop-blur-sm"
                     >
-                      <Settings className="h-4 w-4" strokeWidth={2.5} /> Kelola
-                      Quiz
+                      <Settings className="h-4 w-4" strokeWidth={2.5} /> Kelola Quiz
                     </button>
                   </div>
-                )}
-              </div>
+              )}
             </div>
-          )}
+            
+            <div className="absolute right-0 top-1/2 -translate-y-1/2 hidden md:flex w-32 h-32 lg:w-40 lg:h-40 bg-white/10 rounded-full border-4 border-white/20 backdrop-blur-md items-center justify-center shadow-inner transform rotate-12 group-hover:rotate-0 transition-all duration-500 opacity-60">
+              <Trophy className="h-16 w-16 lg:h-20 lg:w-20 text-yellow-300 drop-shadow-md" />
+            </div>
+          </div>
 
           {/* --- SEARCH & FILTERS --- */}
           <div className="flex flex-col md:flex-row gap-4 justify-between items-center mb-6">
@@ -251,44 +243,44 @@ const QuizHome = () => {
           </div>
 
           {/* --- BANNER TOTAL POIN --- */}
-          <div className="mb-8 flex flex-col sm:flex-row items-center justify-between bg-white border-2 border-slate-200 rounded-[1.5rem] p-4 lg:p-5 shadow-[0_4px_0_0_#cbd5e1] hover:border-yellow-400 hover:shadow-[0_4px_0_0_#facc15] transition-all duration-300 group cursor-default">
-            <div className="flex items-center gap-4 w-full sm:w-auto">
-              <div className="w-14 h-14 bg-yellow-50 rounded-full border-2 border-yellow-200 flex items-center justify-center transform group-hover:rotate-12 transition-transform duration-300 shrink-0 shadow-sm">
-                <Trophy
-                  className="h-7 w-7 text-yellow-500 drop-shadow-sm"
-                  fill="currentColor"
-                />
-              </div>
-              <div className="flex flex-col">
-                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-0.5">
-                  Total Poin Kuis-mu
-                </span>
-                <div className="flex items-baseline gap-1.5">
-                  <span className="text-2xl lg:text-3xl font-black text-slate-800 group-hover:text-yellow-500 transition-colors duration-300">
-                    {totalPoints}
+          {!isInstructor && (
+            <div className="mb-8 flex flex-col sm:flex-row items-center justify-between bg-white border-2 border-slate-200 rounded-[1.5rem] p-4 lg:p-5 shadow-[0_4px_0_0_#cbd5e1] hover:border-yellow-400 hover:shadow-[0_4px_0_0_#facc15] transition-all duration-300 group cursor-default">
+              <div className="flex items-center gap-4 w-full sm:w-auto">
+                <div className="w-14 h-14 bg-yellow-50 rounded-full border-2 border-yellow-200 flex items-center justify-center transform group-hover:rotate-12 transition-transform duration-300 shrink-0 shadow-sm">
+                  <Trophy
+                    className="h-7 w-7 text-yellow-500 drop-shadow-sm"
+                    fill="currentColor"
+                  />
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-0.5">
+                    Total Poin Kuis-mu
                   </span>
-                  <span className="text-sm font-bold text-yellow-500">XP</span>
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="text-2xl lg:text-3xl font-black text-slate-800 group-hover:text-yellow-500 transition-colors duration-300">
+                      {totalPoints}
+                    </span>
+                    <span className="text-sm font-bold text-yellow-500">XP</span>
+                  </div>
+                </div>
+              </div>
+              <div className="w-full sm:w-auto mt-4 sm:mt-0 pt-4 sm:pt-0 border-t-2 border-slate-100 sm:border-none flex items-center sm:justify-end">
+                <div className="px-4 py-2.5 bg-slate-50 rounded-xl border border-slate-200 text-xs font-bold text-slate-500 inline-flex items-center gap-2 w-full sm:w-auto justify-center group-hover:bg-teal-50 group-hover:text-teal-600 group-hover:border-teal-200 transition-colors duration-300">
+                  <Sparkles className="h-4 w-4 text-teal-500" />
+                  <span>Terus tingkatkan skormu! 🚀</span>
                 </div>
               </div>
             </div>
-            <div className="w-full sm:w-auto mt-4 sm:mt-0 pt-4 sm:pt-0 border-t-2 border-slate-100 sm:border-none flex items-center sm:justify-end">
-              <div className="px-4 py-2.5 bg-slate-50 rounded-xl border border-slate-200 text-xs font-bold text-slate-500 inline-flex items-center gap-2 w-full sm:w-auto justify-center group-hover:bg-teal-50 group-hover:text-teal-600 group-hover:border-teal-200 transition-colors duration-300">
-                <Sparkles className="h-4 w-4 text-teal-500" />
-                <span>Terus tingkatkan skormu! 🚀</span>
-              </div>
-            </div>
-          </div>
+          )}
 
           {/* --- QUIZ GRID --- */}
           {filteredQuizzes.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 text-center bg-white rounded-[3rem] border-4 border-slate-100 border-dashed">
-              <Target className="h-20 w-20 text-slate-300 mb-4" />
-              <h3 className="text-xl font-black text-slate-700 mb-2">
-                Tidak Ada Kuis Ditemukan
-              </h3>
-              <p className="text-slate-500 font-medium">
-                Coba gunakan kata kunci lain atau selesaikan kajian baru.
-              </p>
+            <div className="bg-white rounded-[3rem] border-4 border-slate-100 shadow-sm overflow-hidden">
+              <EmptyState
+                icon="search"
+                title="Tidak Ada Kuis Ditemukan"
+                description="Coba gunakan kata kunci lain atau selesaikan kajian baru."
+              />
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 lg:gap-8">

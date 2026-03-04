@@ -17,6 +17,7 @@ import {
   Sparkles,
   Target
 } from "lucide-react";
+import Loading from "@/components/ui/Loading";
 
 interface Competition {
   id: string;
@@ -108,7 +109,7 @@ const CompetitionDetail = () => {
   if (!user) {
     return (
       <div className="min-h-screen bg-[#FDFBF7] flex items-center justify-center">
-        <p className="text-slate-500">Memuat...</p>
+        <Loading text="Memuat..." />
       </div>
     );
   }
@@ -122,8 +123,7 @@ const CompetitionDetail = () => {
           <div className="flex-1 px-4 sm:px-6 lg:px-8 py-6">
             <div className="max-w-5xl mx-auto">
               <div className="flex flex-col items-center justify-center py-12">
-                <Sparkles className="h-10 w-10 text-teal-400 animate-spin" />
-                <p className="text-slate-500 font-bold mt-2">Memuat detail kompetisi...</p>
+                <Loading text="Memuat detail kompetisi..." />
               </div>
             </div>
           </div>

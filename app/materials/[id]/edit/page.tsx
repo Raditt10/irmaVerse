@@ -34,6 +34,7 @@ import {
   FileEdit,
   Globe,
   Link,
+  FileText,
 } from "lucide-react";
 import { Input } from "@/components/ui/InputText";
 import { Textarea } from "@/components/ui/textarea";
@@ -65,6 +66,7 @@ const EditMaterial = () => {
     materialType: "editor" as "editor" | "link",
     materialContent: "",
     materialLink: "",
+    location: "",
   });
 
   const [availablePrograms, setAvailablePrograms] = useState<
@@ -167,8 +169,9 @@ const EditMaterial = () => {
             thumbnailUrl: material.thumbnailUrl || "",
             programId: material.programId || material.parentId || "",
             materialType: material.materialType || "editor",
-            materialContent: material.content || "",
+            materialContent: (material.content || "").replace(/<[^>]*>/g, ""),
             materialLink: material.link || "",
+            location: material.location || "",
           });
 
           // Load existing invite details with status
@@ -287,6 +290,10 @@ const EditMaterial = () => {
       showToast("Jam kajian harus dipilih", "error");
       return;
     }
+    if (!formData.location.trim()) {
+      showToast("Lokasi / Platform kajian tidak boleh kosong", "error");
+      return;
+    }
 
     if (formData.materialType === "link" && !formData.materialLink.trim()) {
       showToast("Link Google Drive tidak boleh kosong", "error");
@@ -385,8 +392,36 @@ const EditMaterial = () => {
                   </h2>
 
                   <div className="space-y-4 lg:space-y-6">
+                    <div className="space-y-2">
+                      <label className="block text-xs lg:text-sm font-bold text-slate-600 ml-1">
+                        Judul Kajian
+                      </label>
+                      <Input
+                        type="text"
+                        name="title"
+                        required
+                        value={formData.title}
+                        onChange={handleInputChange}
+                        placeholder="Contoh: Tadabbur Alam & Quran"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="block text-xs lg:text-sm font-bold text-slate-600 ml-1">
+                        Deskripsi Singkat
+                      </label>
+                      <Textarea
+                        name="description"
+                        required
+                        rows={3}
+                        value={formData.description}
+                        onChange={handleInputChange}
+                        placeholder="Jelaskan apa yang akan dipelajari..."
+                      />
+                    </div>
+
                     {/* --- CATEGORY SELECTOR (PREMIUM CARDS) --- */}
-                    <div className="space-y-3">
+                    <div className="space-y-3 pt-4 border-t-2 border-slate-100">
                       <label className="block text-xs lg:text-sm font-bold text-slate-600 mb-2 ml-1">
                         Kategori Program
                       </label>
@@ -581,122 +616,114 @@ const EditMaterial = () => {
                       </div>
                     </div>
 
-                    <div className="space-y-2">
-                      <label className="block text-xs lg:text-sm font-bold text-slate-600 ml-1">
-                        Judul Kajian
-                      </label>
-                      <Input
-                        type="text"
-                        name="title"
-                        required
-                        value={formData.title}
-                        onChange={handleInputChange}
-                        placeholder="Contoh: Tadabbur Alam & Quran"
-                      />
-                    </div>
+                      <div className="pt-6 border-t-2 border-slate-100 mt-6">
+                        <div className="flex items-center justify-between mb-4">
+                          <h3 className="text-sm font-bold text-slate-700 ml-1 flex items-center gap-2">
+                            <FileText className="h-4 w-4 text-amber-500" />{" "}
+                            Rekapan Materi
+                            <span className="text-[10px] bg-amber-50 text-amber-600 px-2 py-0.5 rounded-full font-black border border-amber-200">
+                              Disarankan
+                            </span>
+                          </h3>
 
-                    <div className="space-y-2">
-                      <label className="block text-xs lg:text-sm font-bold text-slate-600 ml-1">
-                        Deskripsi & Materi
-                      </label>
-                      <Textarea
-                        name="description"
-                        required
-                        rows={5}
-                        value={formData.description}
-                        onChange={handleInputChange}
-                        placeholder="Jelaskan apa yang akan dipelajari..."
-                      />
-                    </div>
-
-                    {/* --- MATERI KAJIAN SECTION --- */}
-                    <div className="pt-6 border-t-2 border-slate-100">
-                      <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-sm font-bold text-slate-700 ml-1 flex items-center gap-2">
-                          <FileEdit className="h-4 w-4 text-emerald-500" />{" "}
-                          Materi Kajian
-                        </h3>
-
-                        {/* Toggle Switch */}
-                        <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200">
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setFormData((prev) => ({
-                                ...prev,
-                                materialType: "editor",
-                              }))
-                            }
-                            className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all flex items-center gap-1.5 ${
-                              formData.materialType === "editor"
-                                ? "bg-white text-emerald-600 shadow-sm border border-slate-100"
-                                : "text-slate-400 hover:text-slate-600"
-                            }`}
-                          >
-                            <FileEdit className="h-3.5 w-3.5" />
-                            Editor
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setFormData((prev) => ({
-                                ...prev,
-                                materialType: "link",
-                              }))
-                            }
-                            className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all flex items-center gap-1.5 ${
-                              formData.materialType === "link"
-                                ? "bg-white text-indigo-600 shadow-sm border border-slate-100"
-                                : "text-slate-400 hover:text-slate-600"
-                            }`}
-                          >
-                            <Link className="h-3.5 w-3.5" />
-                            Drive Link
-                          </button>
+                          {/* Toggle Switch */}
+                          <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setFormData((prev) => ({
+                                  ...prev,
+                                  materialType: "editor",
+                                }))
+                              }
+                              className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all flex items-center gap-1.5 ${
+                                formData.materialType === "editor"
+                                  ? "bg-white text-emerald-600 shadow-sm border border-slate-100"
+                                  : "text-slate-400 hover:text-slate-600"
+                              }`}
+                            >
+                              <FileEdit className="h-3.5 w-3.5" />
+                              Teks
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setFormData((prev) => ({
+                                  ...prev,
+                                  materialType: "link",
+                                }))
+                              }
+                              className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all flex items-center gap-1.5 ${
+                                formData.materialType === "link"
+                                  ? "bg-white text-indigo-600 shadow-sm border border-slate-100"
+                                  : "text-slate-400 hover:text-slate-600"
+                              }`}
+                            >
+                              <Link className="h-3.5 w-3.5" />
+                              Drive Link
+                            </button>
+                          </div>
                         </div>
-                      </div>
 
-                      {formData.materialType === "editor" ? (
-                        <div className="animate-in fade-in slide-in-from-top-1 duration-200">
-                          <Textarea
-                            name="materialContent"
-                            required={formData.materialType === "editor"}
-                            rows={10}
-                            value={formData.materialContent}
-                            onChange={(e) =>
-                              setFormData({
-                                ...formData,
-                                materialContent: e.target.value,
-                              })
-                            }
-                            placeholder="Ketik atau tempel materi kajian Anda di sini..."
-                            className="text-sm border-2 focus:ring-emerald-200"
-                          />
-                        </div>
-                      ) : (
-                        <div className="animate-in fade-in slide-in-from-top-1 duration-200 space-y-3">
-                          <div className="relative group">
-                            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                              <Globe className="h-5 w-5 text-indigo-400" />
-                            </div>
-                            <Input
-                              type="url"
-                              name="materialLink"
-                              required={formData.materialType === "link"}
-                              value={formData.materialLink}
+                        {formData.materialType === "editor" ? (
+                          <div className="animate-in fade-in slide-in-from-top-1 duration-200">
+                            <Textarea
+                              name="materialContent"
+                              required={formData.materialType === "editor"}
+                              rows={8}
+                              value={formData.materialContent}
                               onChange={(e) =>
                                 setFormData({
                                   ...formData,
-                                  materialLink: e.target.value,
+                                  materialContent: e.target.value,
                                 })
                               }
-                              placeholder="https://drive.google.com/file/d/..."
-                              className="pl-11 border-2 border-indigo-100 focus:border-indigo-400 focus:ring-indigo-100"
+                              placeholder="Tulis ringkasan materi kajian di sini. Rekapan ini akan bisa dibaca oleh peserta kapan saja sebagai bahan belajar mandiri..."
+                              className="text-sm border-2 focus:ring-emerald-200"
                             />
+                            <p className="text-[10px] font-bold text-slate-400 mt-2 ml-1 italic">
+                              * Rekapan berisi ringkasan kajian agar peserta bisa membaca ulang kapan pun.
+                            </p>
                           </div>
-                        </div>
-                      )}
-                    </div>
+                        ) : (
+                          <div className="animate-in fade-in slide-in-from-top-1 duration-200 space-y-3">
+                            <div className="relative group">
+                              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                <Globe className="h-5 w-5 text-teal-500" />
+                              </div>
+                              <Input
+                                type="url"
+                                name="materialLink"
+                                required={formData.materialType === "link"}
+                                value={formData.materialLink}
+                                onChange={(e) =>
+                                  setFormData({
+                                    ...formData,
+                                    materialLink: e.target.value,
+                                  })
+                                }
+                                placeholder="https://drive.google.com/file/d/..."
+                                className="pl-12 lg:pl-12 border-2 border-teal-100 focus:border-teal-400 focus:ring-teal-100"
+                              />
+                            </div>
+                            <div className="p-4 rounded-2xl bg-teal-50 border border-teal-100 flex gap-3">
+                              <div className="h-10 w-10 rounded-xl bg-white flex items-center justify-center shrink-0 border border-teal-200">
+                                <Link className="h-5 w-5 text-teal-500" />
+                              </div>
+                              <div>
+                                <p className="text-xs font-black text-teal-900 mb-0.5">
+                                  Sertakan Link Materi
+                                </p>
+                                <p className="text-[10px] font-bold text-teal-700/80 leading-relaxed">
+                                  Pastikan akses file Google Drive Anda sudah
+                                  diatur ke "Siapa saja yang memiliki link" agar
+                                  peserta dapat membacanya.
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
 
                     {/* Tingkat / Kelas selector */}
                     <div className="mt-6 border-t-2 border-slate-100 pt-6">
@@ -728,13 +755,13 @@ const EditMaterial = () => {
                   </div>
                 </div>
 
-                {/* Card 2: Waktu Pelaksanaan */}
+                {/* Card Waktu & Tempat */}
                 <div className="bg-white p-5 lg:p-8 rounded-3xl lg:rounded-[2.5rem] border-2 border-slate-200 shadow-[0_4px_0_0_#cbd5e1] lg:shadow-[0_8px_0_0_#cbd5e1]">
                   <h2 className="text-lg lg:text-xl font-black text-slate-700 mb-4 lg:mb-6 flex items-center gap-2">
                     <Calendar className="h-5 w-5 lg:h-6 lg:w-6 text-indigo-500" />{" "}
-                    Waktu Pelaksanaan
+                    Teknis Pelaksanaan
                   </h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6 mb-4 lg:mb-6">
                     <DatePicker
                       label="Tanggal Pelaksanaan"
                       value={formData.date}
@@ -745,6 +772,19 @@ const EditMaterial = () => {
                       label="Jam Mulai"
                       value={formData.time}
                       onChange={(time) => setFormData({ ...formData, time })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="block text-xs lg:text-sm font-bold text-slate-600 ml-1">
+                      Lokasi / Platform
+                    </label>
+                    <Input
+                      type="text"
+                      name="location"
+                      value={formData.location}
+                      onChange={handleInputChange}
+                      placeholder="Contoh: Masjid Irma atau Link Zoom..."
+                      required
                     />
                   </div>
                 </div>

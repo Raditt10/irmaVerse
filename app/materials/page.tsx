@@ -124,7 +124,16 @@ const Materials = () => {
   const fetchMaterials = async () => {
     try {
       const res = await fetch("/api/materials");
-      if (!res.ok) throw new Error("Failed fetch materials");
+      if (!res.ok) {
+        let errMessage = `HTTP ${res.status}`;
+        try {
+          const errData = await res.json();
+          errMessage = errData.error || errMessage;
+        } catch {
+          errMessage = await res.text();
+        }
+        throw new Error(`Failed to fetch materials: ${errMessage}`);
+      }
 
       const data = await res.json();
 

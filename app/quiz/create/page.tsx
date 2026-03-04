@@ -248,7 +248,7 @@ export default function CreateStandaloneQuizPage() {
               </button>
               <div>
                 <h1 className="text-2xl lg:text-4xl font-black text-slate-800 tracking-tight mb-2 flex items-center gap-3">
-                  <Zap className="h-8 w-8 text-indigo-500" /> Buat Quiz Mandiri
+                  Buat Quiz Mandiri
                 </h1>
                 <p className="text-slate-500 font-medium text-sm lg:text-lg">
                   Quiz ini tidak terhubung ke materi tertentu. Semua pengguna

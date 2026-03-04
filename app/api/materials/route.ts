@@ -185,6 +185,7 @@ export async function POST(req: NextRequest) {
       materialType,
       materialContent,
       materialLink,
+      location,
     } = body;
 
     // Detailed validation
@@ -221,6 +222,12 @@ export async function POST(req: NextRequest) {
     if (!time) {
       return NextResponse.json(
         { error: "Jam kajian harus dipilih" },
+        { status: 400 },
+      );
+    }
+    if (!location || !location.toString().trim()) {
+      return NextResponse.json(
+        { error: "Lokasi kajian harus diisi" },
         { status: 400 },
       );
     }
@@ -270,6 +277,7 @@ export async function POST(req: NextRequest) {
         materialType: materialType || null,
         content: materialContent || null,
         link: materialLink || null,
+        location: location || null,
         updatedAt: new Date(),
       } as any,
     });

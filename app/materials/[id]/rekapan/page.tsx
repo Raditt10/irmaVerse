@@ -213,10 +213,42 @@ const RekapanDetailPage = () => {
                   )}
                 </div>
 
-                <div
-                  className="prose prose-slate max-w-none prose-headings:font-black prose-p:font-medium prose-p:leading-relaxed prose-li:font-medium"
-                  dangerouslySetInnerHTML={{ __html: rekapan.content }}
-                />
+                {(() => {
+                  const contentStr = rekapan.content.trim();
+                  // Regex cek URL simpel
+                  const isUrl = /^(https?:\/\/[^\s]+)$/.test(contentStr);
+
+                  if (isUrl) {
+                    return (
+                      <div className="p-6 bg-emerald-50 border-2 border-emerald-100 rounded-2xl flex flex-col md:flex-row items-center gap-6 group hover:border-emerald-300 transition-all">
+                         <div className="w-16 h-16 shrink-0 bg-white rounded-2xl flex items-center justify-center border-2 border-emerald-200 shadow-sm group-hover:scale-105 transition-transform">
+                           <FileText className="h-8 w-8 text-emerald-500" />
+                         </div>
+                         <div className="flex-1 text-center md:text-left">
+                           <h3 className="text-lg font-black text-emerald-900 mb-1">Materi Eksternal (Link)</h3>
+                           <p className="text-sm font-medium text-emerald-700/80 mb-4 line-clamp-1">
+                             {contentStr}
+                           </p>
+                           <a
+                             href={contentStr}
+                             target="_blank"
+                             rel="noopener noreferrer"
+                             className="inline-flex items-center gap-2 px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-[0_4px_0_0_#047857] hover:shadow-[0_2px_0_0_#047857] active:translate-y-0.5 active:shadow-none transition-all"
+                           >
+                              Buka Tautan <BookOpen className="h-4 w-4" />
+                           </a>
+                         </div>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div
+                      className="prose prose-slate max-w-none prose-headings:font-black prose-p:font-medium prose-p:leading-relaxed prose-li:font-medium"
+                      dangerouslySetInnerHTML={{ __html: rekapan.content }}
+                    />
+                  );
+                })()}
 
                 <div className="mt-8 pt-6 border-t-2 border-slate-100 text-xs text-slate-400 font-bold">
                   Terakhir diperbarui:{" "}
