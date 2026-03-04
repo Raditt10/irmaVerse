@@ -6,6 +6,7 @@ import DashboardHeader from "@/components/ui/Header";
 import Sidebar from "@/components/ui/Sidebar";
 import ChatbotButton from "@/components/ui/Chatbot";
 import Toast from "@/components/ui/Toast";
+import CartoonConfirmDialog from "@/components/ui/ConfirmDialog"; // Import Confirm Dialog
 import {
   Calendar,
   User,
@@ -23,6 +24,9 @@ import {
   Circle,
   Users,
   GraduationCap,
+  Edit,
+  Trash2,
+  Share2,
 } from "lucide-react";
 
 interface MaterialItem {
@@ -70,6 +74,7 @@ const ProgramDetail = () => {
   const [program, setProgram] = useState<Program | null>(null);
   const [loading, setLoading] = useState(true);
   const [enrolling, setEnrolling] = useState(false);
+  const [showConfirmDelete, setShowConfirmDelete] = useState(false);
   const router = useRouter();
   const params = useParams();
   const programId = params.id as string;
@@ -121,6 +126,42 @@ const ProgramDetail = () => {
       showToast(error.message || "Gagal mendaftar", "error");
     } finally {
       setEnrolling(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    try {
+      const res = await fetch(`/api/programs/${programId}`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || "Gagal menghapus kursus");
+      }
+
+      showToast("Kursus berhasil dihapus", "success");
+      setTimeout(() => router.push("/programs"), 1500);
+    } catch (error: any) {
+      console.error("Delete Error:", error);
+      showToast(error.message || "Terjadi kesalahan saat menghapus", "error");
+    } finally {
+      setShowConfirmDelete(false);
+    }
+  };
+
+  const handleShare = async () => {
+    try {
+      await navigator.share({
+        title: program?.title || "Program Kursus IRMA",
+        text: `Ikuti program kursus "${program?.title}" di IRMA!`,
+        url: window.location.href,
+      });
+    } catch (err) {
+      console.log("Error sharing:", err);
+      // Fallback copy to clipboard
+      navigator.clipboard.writeText(window.location.href);
+      showToast("Tautan disalin ke clipboard!", "success");
     }
   };
 
@@ -183,14 +224,46 @@ const ProgramDetail = () => {
 
         <div className="flex-1 px-4 sm:px-6 lg:px-8 py-8 lg:py-12 w-full max-w-[100vw] overflow-x-hidden">
           <div className="max-w-6xl mx-auto space-y-6 lg:space-y-8">
-            {/* Back */}
-            <button
-              onClick={() => router.push("/programs")}
-              className="inline-flex items-center gap-2 text-slate-500 hover:text-teal-600 font-bold transition-all group px-4 py-2 rounded-xl border-2 border-transparent hover:border-slate-200 hover:bg-white hover:shadow-sm"
-            >
-              <ArrowLeft className="h-5 w-5 group-hover:-translate-x-1 transition-transform stroke-3" />
-              Kembali
-            </button>
+            {/* Header Actions */}
+            <div className="flex items-center justify-between">
+              {/* Back */}
+              <button
+                onClick={() => router.push("/programs")}
+                className="inline-flex items-center gap-2 text-slate-500 hover:text-teal-600 font-bold transition-all group px-4 py-2 rounded-xl border-2 border-transparent hover:border-slate-200 hover:bg-white hover:shadow-sm"
+              >
+                <ArrowLeft className="h-5 w-5 group-hover:-translate-x-1 transition-transform stroke-3" />
+                Kembali
+              </button>
+
+              {/* Action Buttons */}
+              <div className="flex items-center gap-3">
+                {isPrivileged && (
+                  <>
+                    <button
+                      onClick={() => router.push(`/programs/${program.id}/edit`)}
+                      className="w-[46px] h-[46px] rounded-[14px] bg-[#00c689] text-white border-2 border-[#00a874] border-b-4 hover:bg-[#00d08f] hover:border-b-2 hover:translate-y-0.5 active:translate-y-1 active:border-b-0 transition-all flex items-center justify-center p-0"
+                      title="Edit Program"
+                    >
+                      <Edit className="w-5 h-5" strokeWidth={2.5} />
+                    </button>
+                    <button
+                      onClick={() => setShowConfirmDelete(true)}
+                      className="w-[46px] h-[46px] rounded-[14px] bg-[#ff3366] text-white border-2 border-[#e62050] border-b-4 hover:bg-[#ff4775] hover:border-b-2 hover:translate-y-0.5 active:translate-y-1 active:border-b-0 transition-all flex items-center justify-center p-0"
+                      title="Hapus Program"
+                    >
+                      <Trash2 className="w-5 h-5" strokeWidth={2.5} />
+                    </button>
+                  </>
+                )}
+                <button
+                  onClick={handleShare}
+                  className="w-[46px] h-[46px] rounded-[14px] bg-white text-slate-500 border-2 border-slate-200 border-b-4 hover:text-teal-500 hover:border-teal-300 hover:bg-teal-50 hover:border-b-2 hover:translate-y-0.5 active:translate-y-1 active:border-b-0 transition-all flex items-center justify-center p-0"
+                  title="Bagikan"
+                >
+                  <Share2 className="w-5 h-5" strokeWidth={2.5} />
+                </button>
+              </div>
+            </div>
 
             {/* HERO */}
             <div className="relative bg-white rounded-4xl lg:rounded-[2.5rem] border-2 border-slate-200 shadow-[0_8px_0_0_#cbd5e1] overflow-hidden group">
@@ -490,58 +563,6 @@ const ProgramDetail = () => {
 
               {/* RIGHT COLUMN */}
               <div className="space-y-6 lg:space-y-8">
-                {/* Instructor */}
-                <div className="bg-white rounded-[2.5rem] border-2 border-slate-200 shadow-[0_6px_0_0_#cbd5e1] overflow-hidden p-6 lg:p-8 text-center">
-                  <div className="w-28 h-28 mx-auto bg-slate-100 rounded-full mb-4 border-4 border-teal-100 overflow-hidden relative shadow-sm">
-                    {program.instructor.avatar ? (
-                      <img
-                        src={program.instructor.avatar}
-                        alt={program.instructor.name}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="absolute inset-0 flex items-center justify-center bg-teal-500 text-white">
-                        <User className="h-12 w-12" />
-                      </div>
-                    )}
-                  </div>
-                  <h3 className="text-xl font-black text-slate-800 leading-tight mb-1">
-                    {program.instructor.name}
-                  </h3>
-                  <p className="text-teal-600 text-xs font-bold uppercase tracking-wider mb-6 bg-teal-50 inline-block px-3 py-1 rounded-full border border-teal-100">
-                    Instruktur Kursus
-                  </p>
-
-                  <div className="space-y-3">
-                    <button
-                      onClick={() =>
-                        router.push(
-                          `/instructors/chat?name=${encodeURIComponent(program.instructor.name)}`,
-                        )
-                      }
-                      className="w-full flex items-center justify-center gap-2 p-3.5 rounded-2xl border-2 border-indigo-600 bg-indigo-500 text-white shadow-[0_4px_0_0_#4338ca] hover:bg-indigo-600 hover:shadow-[0_4px_0_0_#3730a3] active:translate-y-0.5 active:shadow-none transition-all group"
-                    >
-                      <MessageCircle
-                        className="w-5 h-5 group-hover:animate-bounce"
-                        strokeWidth={3}
-                      />
-                      <span className="font-black">Mulai Chat</span>
-                    </button>
-
-                    {program.instructor.email && (
-                      <a
-                        href={`mailto:${program.instructor.email}`}
-                        className="flex items-center gap-3 p-3.5 rounded-2xl border-2 border-slate-200 text-slate-600 hover:border-sky-400 hover:text-sky-600 hover:bg-sky-50 hover:shadow-sm transition-all bg-white"
-                      >
-                        <Mail className="w-5 h-5 ml-1" strokeWidth={2.5} />
-                        <span className="font-bold text-sm flex-1 text-left">
-                          Email Instruktur
-                        </span>
-                      </a>
-                    )}
-                  </div>
-                </div>
-
                 {/* Stats */}
                 <div className="bg-white rounded-[2.5rem] border-2 border-slate-200 shadow-[0_6px_0_0_#cbd5e1] p-6 lg:p-8">
                   <h3 className="text-lg font-black text-slate-800 mb-5">
@@ -558,19 +579,6 @@ const ProgramDetail = () => {
                         </p>
                         <p className="text-lg font-black text-slate-800">
                           {program.materials.length}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-indigo-50 rounded-xl border border-indigo-100">
-                        <Users className="h-5 w-5 text-indigo-600" />
-                      </div>
-                      <div>
-                        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                          Total Peserta
-                        </p>
-                        <p className="text-lg font-black text-slate-800">
-                          {program.enrollmentCount}
                         </p>
                       </div>
                     </div>
@@ -623,16 +631,6 @@ const ProgramDetail = () => {
                     </p>
                   </div>
                 )}
-
-                {/* Edit button for instructor */}
-                {isPrivileged && (
-                  <button
-                    onClick={() => router.push(`/programs/${program.id}/edit`)}
-                    className="w-full py-4 rounded-2xl bg-white text-slate-700 font-black border-2 border-slate-200 shadow-[0_4px_0_0_#cbd5e1] hover:border-teal-400 hover:text-teal-600 active:translate-y-1 active:shadow-none transition-all"
-                  >
-                    Edit Kursus
-                  </button>
-                )}
               </div>
             </div>
           </div>
@@ -644,6 +642,17 @@ const ProgramDetail = () => {
         message={toast.message}
         type={toast.type}
         onClose={() => setToast((prev) => ({ ...prev, show: false }))}
+      />
+      {/* Confirm Dialog */}
+      <CartoonConfirmDialog
+        isOpen={showConfirmDelete}
+        onClose={() => setShowConfirmDelete(false)}
+        onConfirm={handleDelete}
+        title="Hapus Program?"
+        message="Apakah Anda yakin ingin menghapus program ini? Tindakan ini tidak dapat dibatalkan dan semua materi di dalamnya mungkin terpengaruh."
+        type="warning"
+        confirmText="Ya, Hapus"
+        cancelText="Batal"
       />
     </div>
   );

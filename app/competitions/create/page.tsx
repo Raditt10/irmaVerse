@@ -149,14 +149,31 @@ const CreateCompetition = () => {
 
     setLoading(true);
     try {
+      // Create a combined date object from date and time
+      let finalDate = formData.date;
+      if (formData.time) {
+        finalDate = `${formData.date}T${formData.time}:00`;
+      }
+
       const payload = {
         title: formData.title,
         description: formData.description,
-        date: formData.date,
+        date: finalDate,
+        location: formData.location,
         prize: finalPrize, // Gunakan hadiah yang sudah divalidasi
         category: formData.category,
         thumbnailUrl: formData.thumbnailUrl || null,
-        winners: winners.filter(w => w.prize || w.benefits),
+        contactPerson: formData.contactPerson,
+        contactNumber: formData.contactNumber,
+        contactEmail: formData.contactEmail,
+        maxParticipants: formData.maxParticipants ? parseInt(formData.maxParticipants) : null,
+        prizes: winners
+          .filter(w => w.prize || w.benefits)
+          .map(w => ({
+            rank: `Juara ${w.rank}`,
+            amount: w.prize,
+            benefits: w.benefits
+          })),
       };
 
       const response = await fetch("/api/competitions", {

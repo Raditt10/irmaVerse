@@ -72,7 +72,10 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     console.log("Request body:", body);
     
-    const { title, description, date, prize, category, thumbnailUrl } = body;
+    const { 
+      title, description, date, location, prize, category, thumbnailUrl,
+      contactPerson, contactNumber, contactEmail, maxParticipants, prizes
+    } = body;
 
     if (!title || !date || !prize || !category) {
       console.log("Missing required fields:", { title: !!title, date: !!date, prize: !!prize, category: !!category });
@@ -99,9 +102,15 @@ export async function POST(request: NextRequest) {
         title,
         description: description || null,
         date: new Date(date),
+        location: location || null,
         prize,
         category,
         thumbnailUrl: thumbnailUrl || null,
+        contactPerson: contactPerson || null,
+        contactNumber: contactNumber || null,
+        contactEmail: contactEmail || null,
+        maxParticipants: maxParticipants || null,
+        prizes: prizes || null,
         instructorId,
       },
       include: {

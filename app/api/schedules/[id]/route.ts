@@ -67,8 +67,14 @@ export async function PATCH(
       );
     }
 
-    // Check if user is the instructor who created this schedule
-    if (existingSchedule.instructorId !== session.user.id) {
+    const userRole = session.user.role?.toLowerCase();
+
+    // Check if user is the instructor who created this schedule or if they are an admin/instruktur
+    if (
+      existingSchedule.instructorId !== session.user.id &&
+      userRole !== "admin" &&
+      userRole !== "instruktur"
+    ) {
       return NextResponse.json(
         { error: "You can only update your own schedules" },
         { status: 403 }
@@ -148,8 +154,14 @@ export async function DELETE(
       );
     }
 
-    // Check if user is the instructor who created this schedule
-    if (existingSchedule.instructorId !== session.user.id) {
+    const userRole = session.user.role?.toLowerCase();
+
+    // Check if user is the instructor who created this schedule or if they are an admin/instruktur
+    if (
+      existingSchedule.instructorId !== session.user.id &&
+      userRole !== "admin" &&
+      userRole !== "instruktur"
+    ) {
       return NextResponse.json(
         { error: "You can only delete your own schedules" },
         { status: 403 }

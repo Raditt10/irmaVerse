@@ -301,6 +301,7 @@ model material {
   startedAt                                      String?
   content                                        String?            @db.LongText
   link                                           String?
+  location                                       String?
   materialType                                   String?
   parentId                                       String?
   programId                                      String?

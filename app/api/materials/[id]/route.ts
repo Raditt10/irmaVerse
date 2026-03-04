@@ -121,6 +121,7 @@ export async function GET(
       grade: GRADE_LABEL[m.grade as keyof typeof GRADE_LABEL] || m.grade,
       startedAt: m.startedAt,
       thumbnailUrl: m.thumbnailUrl,
+      location: m.location,
       content: m.content,
       link: m.link,
       materialType: m.materialType,
@@ -256,6 +257,7 @@ export async function PUT(
       materialType,
       materialContent,
       materialLink,
+      location,
     } = body;
 
     const material = await (prisma as any).material.findUnique({
@@ -308,6 +310,7 @@ export async function PUT(
         materialType: materialType || null,
         content: materialContent || null,
         link: materialLink || null,
+        location: location || null,
         updatedAt: new Date(),
       } as any,
       include: {

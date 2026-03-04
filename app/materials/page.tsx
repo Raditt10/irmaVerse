@@ -400,7 +400,7 @@ const Materials = () => {
                         <div className="absolute inset-0 bg-linear-to-t from-black/50 to-transparent" />
 
                         {material.createdAt && (new Date().getTime() - new Date(material.createdAt).getTime() < 10 * 60 * 1000) && (
-                          <span className="absolute top-4 right-4 bg-red-500 text-white text-[10px] font-black px-3 py-1 rounded-full border-2 border-white shadow-md animate-bounce">
+                          <span className="absolute top-4 right-4 bg-red-500 text-white text-[10px] font-black px-3 py-1 rounded-full border-2 border-white shadow-md">
                             BARU!
                           </span>
                         )}

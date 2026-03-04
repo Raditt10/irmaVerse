@@ -4,6 +4,9 @@ import { useRouter, useParams } from "next/navigation";
 import DashboardHeader from "@/components/ui/Header";
 import Sidebar from "@/components/ui/Sidebar";
 import ChatbotButton from "@/components/ui/Chatbot";
+import { useSession } from "next-auth/react";
+import CartoonConfirmDialog from "@/components/ui/ConfirmDialog";
+import Toast from "@/components/ui/Toast";
 import { 
   ArrowLeft, 
   Calendar, 
@@ -15,7 +18,11 @@ import {
   Mail,
   CheckCircle2,
   Sparkles,
-  Target
+  Target,
+  Users,
+  Edit,
+  Trash2,
+  Contact
 } from "lucide-react";
 
 interface Competition {
@@ -26,32 +33,64 @@ interface Competition {
   location: string;
   prize: string;
   category: "Tahfidz" | "Seni" | "Bahasa" | "Lainnya";
-  image: string;
+  thumbnailUrl: string;
   requirements: string[];
-  timeline: Array<{
+  schedules: Array<{
     phase: string;
     date: string;
+    description?: string;
   }>;
-  judging_criteria: string[];
+  judgingCriteria: string[];
   prizes: Array<{
     rank: string;
     amount: string;
+    benefits?: string;
   }>;
-  contact_person: string;
-  contact_number: string;
-  contact_email: string;
+  contactPerson: string;
+  contactNumber: string;
+  contactEmail: string;
   status: "upcoming" | "ongoing" | "finished";
   participants?: number;
-  max_participants?: number;
+  maxParticipants?: number;
 }
 
 const CompetitionDetail = () => {
   const [competition, setCompetition] = useState<Competition | null>(null);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
+  const [showConfirmDelete, setShowConfirmDelete] = useState(false);
+  const [toast, setToast] = useState<{ show: boolean; message: string; type: "success" | "error" }>({ show: false, message: "", type: "success" });
+
+  const { data: session } = useSession();
   const router = useRouter();
   const params = useParams();
   const competitionId = params.id as string;
+
+  // Assume user with role admin or instruktur is privileged.
+  const isPrivileged = session?.user?.role === "admin" || session?.user?.role === "instructor";
+
+  const showToast = (message: string, type: "success" | "error") => {
+    setToast({ show: true, message, type });
+    setTimeout(() => setToast(prev => ({ ...prev, show: false })), 3000);
+  };
+
+  const handleDelete = async () => {
+    try {
+      const response = await fetch(`/api/competitions/${competitionId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) throw new Error('Failed to delete competition');
+
+      showToast("Kompetisi berhasil dihapus", "success");
+      setTimeout(() => router.push('/competitions'), 1500);
+    } catch (error) {
+      console.error('Error deleting competition:', error);
+      showToast("Gagal menghapus kompetisi", "error");
+    } finally {
+      setShowConfirmDelete(false);
+    }
+  };
 
   useEffect(() => {
     loadUser();
@@ -163,21 +202,44 @@ const CompetitionDetail = () => {
         <div className="flex-1 px-4 sm:px-6 lg:px-8 py-8 lg:ml-0">
           <div className="max-w-5xl mx-auto space-y-8">
             
-            {/* Back Button */}
-            <button
-              onClick={() => router.push('/competitions')}
-              className="inline-flex items-center gap-2 text-slate-500 hover:text-teal-600 font-bold transition-colors group px-4 py-2 rounded-xl border-2 border-transparent hover:border-slate-200 hover:bg-white"
-            >
-              <ArrowLeft className="h-5 w-5 group-hover:-translate-x-1 transition-transform" strokeWidth={3} />
-              Kembali
-            </button>
+            {/* --- HEADER NAVIGATION & ACTIONS --- */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <button
+                onClick={() => router.push('/competitions')}
+                className="self-start inline-flex items-center gap-2 text-slate-500 hover:text-teal-600 font-bold transition-colors group px-4 py-2 rounded-xl border-2 border-transparent hover:border-slate-200 hover:bg-white"
+              >
+                <ArrowLeft className="h-5 w-5 group-hover:-translate-x-1 transition-transform" strokeWidth={3} />
+                Kembali
+              </button>
+
+              <div className="flex items-center gap-3 self-end sm:self-auto">
+                {isPrivileged && (
+                  <>
+                    <button
+                      onClick={() => router.push(`/competitions/${competitionId}/edit`)}
+                      className="w-[46px] h-[46px] rounded-[14px] bg-[#00c689] text-white border-2 border-[#00a874] border-b-4 hover:bg-[#00d08f] hover:border-b-2 hover:translate-y-0.5 active:translate-y-1 active:border-b-0 transition-all flex items-center justify-center p-0"
+                      title="Edit Kompetisi"
+                    >
+                      <Edit className="w-5 h-5" strokeWidth={2.5} />
+                    </button>
+                    <button
+                      onClick={() => setShowConfirmDelete(true)}
+                      className="w-[46px] h-[46px] rounded-[14px] bg-[#ff3366] text-white border-2 border-[#e62050] border-b-4 hover:bg-[#ff4775] hover:border-b-2 hover:translate-y-0.5 active:translate-y-1 active:border-b-0 transition-all flex items-center justify-center p-0"
+                      title="Hapus Kompetisi"
+                    >
+                      <Trash2 className="w-5 h-5" strokeWidth={2.5} />
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
 
             {/* --- HERO SECTION --- */}
             <div className="relative bg-white rounded-[2.5rem] border-2 border-slate-200 shadow-[0_8px_0_0_#cbd5e1] overflow-hidden group">
               {/* Image Banner */}
               <div className="relative h-64 md:h-80 w-full overflow-hidden border-b-2 border-slate-200">
                 <img
-                   src={competition.image || "https://picsum.photos/seed/competition/1200/600"}
+                   src={competition.thumbnailUrl || "https://picsum.photos/seed/competition/1200/600"}
                    alt={competition.title}
                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                 />
@@ -208,28 +270,47 @@ const CompetitionDetail = () => {
               <div className="lg:col-span-2 space-y-8">
                 
                 {/* Quick Stats Tiles */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div className="bg-white p-4 rounded-3xl border-2 border-slate-200 shadow-sm flex flex-col items-center text-center hover:-translate-y-1 transition-transform">
-                        <div className="w-10 h-10 rounded-full bg-teal-50 flex items-center justify-center mb-2 border-2 border-teal-100">
-                            <Calendar className="h-5 w-5 text-teal-500" strokeWidth={2.5} />
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="bg-white p-4 md:p-5 rounded-3xl md:rounded-4xl border-2 border-slate-200 shadow-sm md:shadow-[4px_4px_0_0_#cbd5e1] flex flex-row sm:flex-col items-center gap-4 sm:gap-2 text-left sm:text-center hover:-translate-y-1 transition-transform">
+                        <div className="w-10 h-10 md:w-12 md:h-12 shrink-0 rounded-full bg-rose-50 flex items-center justify-center border-2 border-rose-100">
+                            <Calendar className="h-5 w-5 md:h-6 md:w-6 text-rose-500" strokeWidth={2.5} />
                         </div>
-                        <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">Tanggal</span>
-                        <span className="text-slate-800 font-black text-sm">{competition.date}</span>
-                    </div>
-                    <div className="bg-white p-4 rounded-3xl border-2 border-slate-200 shadow-sm flex flex-col items-center text-center hover:-translate-y-1 transition-transform">
-                        <div className="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center mb-2 border-2 border-indigo-100">
-                            <Trophy className="h-5 w-5 text-indigo-500" strokeWidth={2.5} />
+                        <div className="flex flex-col flex-1 overflow-hidden sm:items-center">
+                            <span className="block text-[10px] md:text-xs text-slate-400 font-bold uppercase tracking-wider mb-0.5">Tanggal</span>
+                            <span className="text-sm md:text-sm font-black text-slate-700 truncate">
+                              {new Date(competition.date).toLocaleDateString("id-ID", { day: 'numeric', month: 'short', year: 'numeric' })}
+                            </span>
                         </div>
-                        <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">Hadiah 1</span>
-                        <span className="text-slate-800 font-black text-sm truncate">{competition.prize}</span>
                     </div>
-                    <div className="bg-white p-4 rounded-3xl border-2 border-slate-200 shadow-sm flex flex-col items-center text-center hover:-translate-y-1 transition-transform">
-                        <div className="w-10 h-10 rounded-full bg-rose-50 flex items-center justify-center mb-2 border-2 border-rose-100">
-                            <MapPin className="h-5 w-5 text-rose-500" strokeWidth={2.5} />
+                    <div className="bg-white p-4 md:p-5 rounded-3xl md:rounded-4xl border-2 border-slate-200 shadow-sm md:shadow-[4px_4px_0_0_#cbd5e1] flex flex-row sm:flex-col items-center gap-4 sm:gap-2 text-left sm:text-center hover:-translate-y-1 transition-transform">
+                        <div className="w-10 h-10 md:w-12 md:h-12 shrink-0 rounded-full bg-indigo-50 flex items-center justify-center border-2 border-indigo-100">
+                            <Trophy className="h-5 w-5 md:h-6 md:w-6 text-indigo-500" strokeWidth={2.5} />
                         </div>
-                        <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">Lokasi</span>
-                        <span className="text-slate-800 font-black text-sm">{competition.location}</span>
+                        <div className="flex flex-col flex-1 overflow-hidden sm:items-center">
+                            <span className="block text-[10px] md:text-xs text-slate-400 font-bold uppercase tracking-wider mb-0.5">Hadiah 1</span>
+                            <span className="text-sm md:text-sm font-black text-slate-700 truncate">{competition.prize}</span>
+                        </div>
                     </div>
+                    <div className="bg-white p-4 md:p-5 rounded-3xl md:rounded-4xl border-2 border-slate-200 shadow-sm md:shadow-[4px_4px_0_0_#cbd5e1] flex flex-row sm:flex-col items-center gap-4 sm:gap-2 text-left sm:text-center hover:-translate-y-1 transition-transform">
+                        <div className="w-10 h-10 md:w-12 md:h-12 shrink-0 rounded-full bg-teal-50 flex items-center justify-center border-2 border-teal-100">
+                            <MapPin className="h-5 w-5 md:h-6 md:w-6 text-teal-500" strokeWidth={2.5} />
+                        </div>
+                        <div className="flex flex-col flex-1 overflow-hidden sm:items-center">
+                            <span className="block text-[10px] md:text-xs text-slate-400 font-bold uppercase tracking-wider mb-0.5">Lokasi</span>
+                            <span className="text-sm md:text-sm font-black text-slate-700 truncate">{competition.location}</span>
+                        </div>
+                    </div>
+                    {competition.maxParticipants && (
+                    <div className="bg-white p-4 md:p-5 rounded-3xl md:rounded-4xl border-2 border-slate-200 shadow-sm md:shadow-[4px_4px_0_0_#cbd5e1] flex flex-row sm:flex-col items-center gap-4 sm:gap-2 text-left sm:text-center hover:-translate-y-1 transition-transform">
+                        <div className="w-10 h-10 md:w-12 md:h-12 shrink-0 rounded-full bg-amber-50 flex items-center justify-center border-2 border-amber-100">
+                            <Users className="h-5 w-5 md:h-6 md:w-6 text-amber-500" strokeWidth={2.5} />
+                        </div>
+                        <div className="flex flex-col flex-1 overflow-hidden sm:items-center">
+                            <span className="block text-[10px] md:text-xs text-slate-400 font-bold uppercase tracking-wider mb-0.5">Kuota</span>
+                            <span className="text-sm md:text-sm font-black text-slate-700 truncate">{competition.maxParticipants} Peserta</span>
+                        </div>
+                    </div>
+                    )}
                 </div>
 
                 {/* Requirements */}
@@ -254,8 +335,30 @@ const CompetitionDetail = () => {
                   </div>
                 )}
 
-                {/* Timeline */}
-                {competition.timeline && competition.timeline.length > 0 && (
+                {/* Judging Criteria */}
+                {competition.judgingCriteria && competition.judgingCriteria.length > 0 && (
+                  <div className="bg-white p-6 rounded-4xl border-2 border-slate-200 shadow-[0_4px_0_0_#e2e8f0]">
+                    <div className="flex items-center gap-3 mb-6">
+                        <div className="p-2 bg-rose-100 rounded-xl border-2 border-rose-200">
+                            <CheckCircle2 className="h-6 w-6 text-rose-600" strokeWidth={2.5} />
+                        </div>
+                        <h2 className="text-xl font-black text-slate-800">Kriteria Penilaian</h2>
+                    </div>
+                    <ul className="space-y-3">
+                      {competition.judgingCriteria.map((item, idx) => (
+                        <li key={idx} className="flex items-center gap-4 p-4 rounded-2xl bg-slate-50 border-2 border-slate-100 hover:border-rose-200 hover:bg-rose-50 transition-colors">
+                          <span className="flex items-center justify-center w-8 h-8 rounded-full bg-white border-2 border-slate-200 text-slate-600 font-black text-sm shrink-0">
+                            {idx + 1}
+                          </span>
+                          <span className="text-slate-700 font-bold text-sm md:text-base">{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Timeline / Schedules */}
+                {competition.schedules && competition.schedules.length > 0 && (
                   <div className="bg-white p-6 rounded-4xl border-2 border-slate-200 shadow-[0_4px_0_0_#e2e8f0]">
                     <div className="flex items-center gap-3 mb-6">
                         <div className="p-2 bg-purple-100 rounded-xl border-2 border-purple-200">
@@ -264,7 +367,7 @@ const CompetitionDetail = () => {
                         <h2 className="text-xl font-black text-slate-800">Jadwal Pelaksanaan</h2>
                     </div>
                     <ul className="space-y-3">
-                      {competition.timeline.map((item, idx) => (
+                      {competition.schedules.map((item, idx) => (
                         <li key={idx} className="flex items-start gap-4 p-4 rounded-2xl bg-slate-50 border-2 border-slate-100 hover:border-purple-200 hover:bg-purple-50 transition-colors">
                           <span className="flex items-center justify-center w-8 h-8 rounded-full bg-white border-2 border-slate-200 text-slate-600 font-black text-sm shrink-0 mt-0.5">
                             ✓
@@ -272,6 +375,7 @@ const CompetitionDetail = () => {
                           <div className="flex-1">
                             <p className="text-slate-700 font-bold text-sm md:text-base">{item.phase}</p>
                             <p className="text-slate-500 text-xs mt-1">{item.date}</p>
+                            {item.description && <p className="text-slate-400 text-xs mt-1 italic">{item.description}</p>}
                           </div>
                         </li>
                       ))}
@@ -296,8 +400,9 @@ const CompetitionDetail = () => {
                           </span>
                           <div className="flex-1">
                             <p className="text-slate-700 font-bold text-sm">{item.rank}</p>
+                            {item.benefits && <p className="text-slate-500 text-xs mt-1 leading-tight">{item.benefits}</p>}
                           </div>
-                          <span className="text-emerald-600 font-black text-base">{item.amount}</span>
+                          {item.amount && <span className="text-emerald-600 font-black text-base">{item.amount}</span>}
                         </li>
                       ))}
                     </ul>
@@ -309,30 +414,32 @@ const CompetitionDetail = () => {
               <div className="space-y-6">
                 
                 {/* Contact Card */}
-                <div className="bg-white rounded-4xl border-2 border-slate-200 shadow-[0_6px_0_0_#cbd5e1] overflow-hidden p-6 text-center">
-                    <div className="w-24 h-24 mx-auto bg-slate-100 rounded-full mb-4 border-4 border-teal-100 overflow-hidden relative">
-                         <div className="absolute inset-0 flex items-center justify-center bg-teal-500 text-white">
-                             <Trophy className="h-10 w-10" />
-                         </div>
+                <div className="bg-white rounded-[45px] border-4 border-slate-200 shadow-[0_10px_0_0_#cbd5e1] overflow-hidden p-8 flex flex-col items-center relative">
+                  <div className="relative mb-6">
+                    <div className="w-32 h-32 bg-teal-500 rounded-full border-4 border-white shadow-xl overflow-hidden flex items-center justify-center">
+                      <Contact className="h-16 w-16 text-white" strokeWidth={2.5} />
                     </div>
-                    <h3 className="text-xl font-black text-slate-800 leading-tight mb-1">{competition.contact_person}</h3>
-                    <p className="text-teal-600 text-xs font-bold uppercase tracking-wider mb-6 bg-teal-50 inline-block px-3 py-1 rounded-full border border-teal-100">
-                        Narahubung Kompetisi
+                  </div>
+
+                  <h3 className="text-2xl font-black text-slate-800 leading-tight mb-8 text-center">
+                    {competition.contactPerson || "Panitia IRMA"}
+                  </h3>
+
+                  <div className="w-full pt-6 border-t-2 border-slate-100">
+                    <p className="text-[11px] font-black text-slate-300 uppercase tracking-[0.2em] mb-4 text-center">
+                      — HUBUNGI NARAHUBUNG —
                     </p>
-
-                    <div className="space-y-3">
-                        <a href={`mailto:${competition.contact_email}`} className="flex items-center gap-3 p-3 rounded-xl border-2 border-sky-400 bg-sky-500 text-white shadow-[0_4px_0_0_#0284c7] hover:-translate-y-1 hover:shadow-[0_6px_0_0_#0284c7] active:translate-y-0 active:shadow-none transition-all">
-                           <Mail className="w-5 h-5" strokeWidth={2} />
-                           <span className="font-black flex-1 text-left text-sm">Email</span>
-                        </a>
-
-                        <a href={`tel:${competition.contact_number}`} className="flex items-center gap-3 p-3 rounded-xl border-2 border-green-500 bg-green-500 text-white shadow-[0_4px_0_0_#15803d] hover:-translate-y-1 hover:shadow-[0_6px_0_0_#15803d] active:translate-y-0 active:shadow-none transition-all">
-                           <div className="bg-white/20 p-1 rounded-lg">
-                                <Clock className="w-5 h-5" />
-                           </div>
-                           <span className="font-bold flex-1 text-left text-sm">Hubungi</span>
-                        </a>
-                    </div>
+                    
+                    <a
+                      href={`https://wa.me/${(competition.contactNumber || "").replace(/[^0-9]/g, "")}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full p-4 rounded-2xl bg-white border-2 border-slate-200 flex items-center justify-center gap-2 hover:border-teal-400 hover:bg-teal-50 transition-all group mt-2"
+                    >
+                      <MessageCircle className="w-5 h-5 text-teal-500 group-hover:scale-110 transition-transform" strokeWidth={3} />
+                      <span className="font-bold text-slate-600">Kirim Pesan</span>
+                    </a>
+                  </div>
                 </div>
 
                 {/* Registration CTA */}
@@ -340,7 +447,8 @@ const CompetitionDetail = () => {
                     <div className="bg-linear-to-br from-teal-400 to-cyan-400 rounded-4xl p-6 text-white border-2 border-teal-600 shadow-[0_6px_0_0_#0f766e] text-center">
                         <h3 className="text-xl font-black mb-2">Tertarik Berkompetisi?</h3>
                         <p className="text-teal-50 text-sm font-medium mb-6 leading-relaxed">
-                            Daftarkan diri kamu sekarang dan tunjukkan kemampuanmu! Kuota terbatas!
+                            Daftarkan diri kamu sekarang dan tunjukkan kemampuanmu!
+                            {competition.maxParticipants ? ` Kuota terbatas untuk ${competition.maxParticipants} peserta!` : ""}
                         </p>
                         <button className="w-full py-4 rounded-xl bg-white text-teal-600 font-black border-2 border-teal-100 shadow-lg hover:bg-teal-50 hover:scale-105 transition-all flex items-center justify-center gap-2">
                             Daftar Sekarang
@@ -349,8 +457,8 @@ const CompetitionDetail = () => {
                 )}
 
                 {/* Disclaimer */}
-                <div className="bg-amber-50 border-2 border-amber-200 border-dashed rounded-2xl p-4">
-                    <p className="text-xs text-amber-800 font-bold leading-relaxed text-center">
+                <div className="bg-amber-50/80 border-[3px] border-amber-300 border-dashed rounded-[45px] p-6 lg:p-8">
+                    <p className="text-sm text-amber-800 font-semibold leading-relaxed text-center w-full mx-auto max-w-[85%]">
                         💡 Hubungi panitia untuk detail materi dan persiapan sebelum kompetisi dimulai.
                     </p>
                 </div>
@@ -362,6 +470,24 @@ const CompetitionDetail = () => {
         </div>
         <ChatbotButton />
       </div>
+
+      <CartoonConfirmDialog
+        type="warning"
+        title="Hapus Kompetisi?"
+        message="Apakah Anda yakin ingin menghapus kompetisi ini? Tindakan ini tidak dapat dibatalkan."
+        confirmText="Ya, Hapus"
+        cancelText="Batal"
+        isOpen={showConfirmDelete}
+        onConfirm={handleDelete}
+        onCancel={() => setShowConfirmDelete(false)}
+      />
+
+      <Toast 
+        show={toast.show}
+        message={toast.message}
+        type={toast.type}
+        onClose={() => setToast(prev => ({ ...prev, show: false }))}
+      />
     </div>
   );
 };

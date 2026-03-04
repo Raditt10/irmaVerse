@@ -10,7 +10,8 @@ import EmptyState from "@/components/ui/EmptyState";
 import Loading from "@/components/ui/Loading";
 import DetailButton from "@/components/ui/DetailButton";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
-import CartoonNotification from "@/components/ui/Notification";
+import SuccessDataFound from "@/components/ui/SuccessDataFound";
+import Toast from "@/components/ui/Toast";
 import CategoryFilter from "@/components/ui/CategoryFilter";
 import { 
   Calendar, 
@@ -48,11 +49,16 @@ const Schedule = () => {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
   const [scheduleToDelete, setScheduleToDelete] = useState<string | null>(null);
-  const [notification, setNotification] = useState<{
-    type: "success" | "error" | "warning" | "info";
-    title: string;
+  const [toast, setToast] = useState<{
+    show: boolean;
     message: string;
-  } | null>(null);
+    type: "success" | "error";
+  }>({ show: false, message: "", type: "success" });
+
+  const showToast = (message: string, type: "success" | "error") => {
+    setToast({ show: true, message, type });
+    setTimeout(() => setToast((prev) => ({ ...prev, show: false })), 3000);
+  };
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("Semua");
 
@@ -125,24 +131,21 @@ const Schedule = () => {
       });
 
       if (!response.ok) {
-        throw new Error("Gagal menghapus jadwal");
+        let errorMessage = "Gagal menghapus jadwal";
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorMessage;
+        } catch {}
+        throw new Error(errorMessage);
       }
 
-      setNotification({
-        type: "success",
-        title: "Berhasil!",
-        message: "Jadwal berhasil dihapus",
-      });
+      showToast("Jadwal berhasil dihapus", "success");
       setSchedules(schedules.filter(s => s.id !== scheduleToDelete));
       setShowConfirmDelete(false);
       setScheduleToDelete(null);
     } catch (error: any) {
       console.error("Error deleting schedule:", error);
-      setNotification({
-        type: "error",
-        title: "Gagal!",
-        message: error.message || "Terjadi kesalahan saat menghapus jadwal",
-      });
+      showToast(error.message || "Terjadi kesalahan saat menghapus jadwal", "error");
     } finally {
       setDeletingId(null);
     }
@@ -234,7 +237,16 @@ const Schedule = () => {
                 }}
               />
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <>
+                {searchQuery && (
+                  <div className="mb-8">
+                    <SuccessDataFound
+                      message={`Ditemukan ${filteredSchedules.length} event sesuai pencarian`}
+                      icon="sparkles"
+                    />
+                  </div>
+                )}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {filteredSchedules.map((schedule) => (
                   <div
                     key={schedule.id}
@@ -324,6 +336,7 @@ const Schedule = () => {
                   </div>
                 ))}
               </div>
+              </>
             )}
           </div>
         </div>
@@ -346,13 +359,12 @@ const Schedule = () => {
       />
 
       {/* Notification */}
-      {notification && (
-        <CartoonNotification
-          type={notification.type}
-          title={notification.title}
-          message={notification.message}
-          duration={3000}
-          onClose={() => setNotification(null)}
+      {toast.show && (
+        <Toast
+          show={toast.show}
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast((prev) => ({ ...prev, show: false }))}
         />
       )}
     </div>

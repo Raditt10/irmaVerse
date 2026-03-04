@@ -12,6 +12,7 @@ import {
   Calendar,
   MapPin,
   User,
+  Contact,
   Clock,
   ArrowLeft,
   Mail,
@@ -291,8 +292,8 @@ const MaterialDetail = () => {
 
               <div className="relative z-10 w-full">
                 <div className="mb-6 flex items-center gap-3">
-                  <span className="px-5 py-2.5 rounded-full text-xs font-black bg-[#10b981] text-white border-2 border-[#059669] shadow-[0_4px_0_0_#065f46] uppercase tracking-wider animate-pulse">
-                    SEGERA HADIR
+                  <span className="px-5 py-2.5 rounded-full text-xs font-black bg-[#10b981] text-white border-2 border-[#059669] shadow-[0_4px_0_0_#065f46] uppercase tracking-wider">
+                    {material.category}
                   </span>
                 </div>
                 
@@ -311,48 +312,54 @@ const MaterialDetail = () => {
               {/* LEFT COLUMN (Details) */}
               <div className="lg:col-span-2 space-y-8">
                 {/* Quick Stats Tiles */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {/* Tanggal */}
-                  <div className="bg-white p-7 rounded-[35px] border-4 border-slate-200 shadow-[0_8px_0_0_#cbd5e1] flex flex-col items-center text-center hover:-translate-y-1 transition-all group">
-                    <div className="w-14 h-14 rounded-2xl bg-rose-50 flex items-center justify-center mb-4 border-2 border-rose-100 group-hover:scale-110 transition-transform">
-                      <Calendar className="h-7 w-7 text-rose-400" strokeWidth={2.5} />
+                  <div className="bg-white p-4 rounded-3xl border-2 border-slate-200 shadow-sm flex items-center gap-4 hover:-translate-y-1 transition-transform">
+                    <div className="w-12 h-12 shrink-0 rounded-full bg-rose-50 flex items-center justify-center border-2 border-rose-100">
+                      <Calendar className="h-6 w-6 text-rose-500" strokeWidth={2.5} />
                     </div>
-                    <span className="text-[11px] text-rose-300 font-black uppercase tracking-[0.2em] mb-2">
-                      Tanggal
-                    </span>
-                    <span className="text-slate-700 font-black text-lg">
-                      {new Date(material.date).toLocaleDateString("id-ID", {
-                        day: "numeric",
-                        month: "short",
-                        year: "numeric",
-                      })}
-                    </span>
+                    <div className="flex flex-col flex-1 overflow-hidden">
+                      <span className="text-[10px] sm:text-xs text-slate-400 font-bold uppercase tracking-wider mb-0.5">
+                        Tanggal
+                      </span>
+                      <span className="text-slate-800 font-black text-sm md:text-base truncate">
+                        {new Date(material.date).toLocaleDateString("id-ID", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                        })}
+                      </span>
+                    </div>
                   </div>
 
                   {/* Waktu */}
-                  <div className="bg-white p-7 rounded-[35px] border-4 border-slate-200 shadow-[0_8px_0_0_#cbd5e1] flex flex-col items-center text-center hover:-translate-y-1 transition-all group">
-                    <div className="w-14 h-14 rounded-2xl bg-amber-50 flex items-center justify-center mb-4 border-2 border-amber-100 group-hover:scale-110 transition-transform">
-                      <Clock className="h-7 w-7 text-amber-400" strokeWidth={2.5} />
+                  <div className="bg-white p-4 rounded-3xl border-2 border-slate-200 shadow-sm flex items-center gap-4 hover:-translate-y-1 transition-transform">
+                    <div className="w-12 h-12 shrink-0 rounded-full bg-amber-50 flex items-center justify-center border-2 border-amber-100">
+                      <Clock className="h-6 w-6 text-amber-500" strokeWidth={2.5} />
                     </div>
-                    <span className="text-[11px] text-amber-300 font-black uppercase tracking-[0.2em] mb-2">
-                      Waktu
-                    </span>
-                    <span className="text-slate-700 font-black text-lg">
-                      {material.startedAt} WIB
-                    </span>
+                    <div className="flex flex-col flex-1 overflow-hidden">
+                      <span className="text-[10px] sm:text-xs text-slate-400 font-bold uppercase tracking-wider mb-0.5">
+                        Waktu
+                      </span>
+                      <span className="text-slate-800 font-black text-sm md:text-base truncate">
+                        {material.startedAt} WIB
+                      </span>
+                    </div>
                   </div>
 
                   {/* Lokasi */}
-                  <div className="bg-white p-7 rounded-[35px] border-4 border-slate-200 shadow-[0_8px_0_0_#cbd5e1] flex flex-col items-center text-center hover:-translate-y-1 transition-all group">
-                    <div className="w-14 h-14 rounded-2xl bg-teal-50 flex items-center justify-center mb-4 border-2 border-teal-100 group-hover:scale-110 transition-transform">
-                      <MapPin className="h-7 w-7 text-teal-400" strokeWidth={2.5} />
+                  <div className="bg-white p-4 rounded-3xl border-2 border-slate-200 shadow-sm flex items-center gap-4 hover:-translate-y-1 transition-transform">
+                    <div className="w-12 h-12 shrink-0 rounded-full bg-teal-50 flex items-center justify-center border-2 border-teal-100">
+                      <MapPin className="h-6 w-6 text-teal-500" strokeWidth={2.5} />
                     </div>
-                    <span className="text-[11px] text-teal-300 font-black uppercase tracking-[0.2em] mb-2">
-                      Lokasi
-                    </span>
-                    <span className="text-slate-700 font-black text-lg">
-                      {material.location}
-                    </span>
+                    <div className="flex flex-col flex-1 overflow-hidden">
+                      <span className="text-[10px] sm:text-xs text-slate-400 font-bold uppercase tracking-wider mb-0.5">
+                        Lokasi
+                      </span>
+                      <span className="text-slate-800 font-black text-sm md:text-base truncate">
+                        {material.location}
+                      </span>
+                    </div>
                   </div>
                 </div>
 
@@ -530,21 +537,15 @@ const MaterialDetail = () => {
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-white">
-                          <User className="h-16 w-16" strokeWidth={2.5} />
+                          <Contact className="h-16 w-16" strokeWidth={2.5} />
                         </div>
                       )}
                     </div>
-                    {/* Status Online indicator or similar if needed */}
-                    <div className="absolute bottom-1 right-1 w-6 h-6 bg-green-400 border-4 border-white rounded-full shadow-sm" />
                   </div>
 
-                  <h3 className="text-2xl font-black text-slate-800 leading-tight mb-2">
+                  <h3 className="text-2xl font-black text-slate-800 leading-tight mb-8">
                     {material.instructor}
                   </h3>
-                  
-                  <div className="px-4 py-1.5 rounded-full bg-emerald-500 text-white text-xs font-black uppercase shadow-md mb-8 self-center border-2 border-emerald-600">
-                    {material.category.replace("Program ", "")}
-                  </div>
 
                   <div className="w-full pt-6 border-t-2 border-slate-100">
                     <p className="text-[11px] font-black text-slate-300 uppercase tracking-[0.2em] mb-4 text-center">

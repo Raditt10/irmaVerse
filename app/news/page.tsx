@@ -13,6 +13,7 @@ import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import Toast from "@/components/ui/Toast";
 import EmptyState from "@/components/ui/EmptyState";
 import AddButton from "@/components/ui/AddButton";
+import SuccessDataFound from "@/components/ui/SuccessDataFound";
 
 interface NewsItem {
   id: string;
@@ -277,6 +278,15 @@ const News = () => {
                         ?
                       </p>
                    </div>
+                )}
+                {/* --- SUCCESS DATA FOUND --- */}
+                {searchTerm && filteredNews.length > 0 && !suggestion && (
+                  <div className="mb-2">
+                    <SuccessDataFound
+                      message={`Ditemukan ${filteredNews.length} berita sesuai pencarian`}
+                      icon="sparkles"
+                    />
+                  </div>
                 )}
               <div className="relative min-w-0 pr-1 overflow-hidden">
                 <CategoryFilter

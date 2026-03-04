@@ -376,7 +376,7 @@ const CreateMaterial = () => {
 
                     <div className="space-y-2">
                       <label className="block text-xs lg:text-sm font-bold text-slate-600 ml-1">
-                        Deskripsi & Materi
+                        Deskripsi Kajian
                       </label>
                       <Textarea
                         name="description"

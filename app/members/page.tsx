@@ -9,6 +9,7 @@ import SearchInput from "@/components/ui/SearchInput";
 import CartoonNotification from "@/components/ui/Notification";
 import Toast from "@/components/ui/Toast";
 import EmptyState from "@/components/ui/EmptyState";
+import SuccessDataFound from "@/components/ui/SuccessDataFound";
 import { 
   UserCircle2, 
   UserPlus, 
@@ -124,13 +125,10 @@ const Members = () => {
 
               {/* Suggestion Box */}
               {search && filteredMembers.length > 0 && (
-                <div className="inline-flex items-center gap-2 px-4 py-2 bg-teal-50 border-2 border-teal-100 rounded-xl text-teal-700 animate-in fade-in slide-in-from-left-2">
-                    <Sparkles className="h-4 w-4 text-teal-500 fill-teal-500" />
-                    <p className="text-xs md:text-sm font-bold">
-                        Menemukan: <span className="underline decoration-2 underline-offset-2">{filteredMembers[0].name}</span>
-                        {filteredMembers.length > 1 && <span className="font-normal opacity-80"> +{filteredMembers.length - 1} lainnya</span>}
-                    </p>
-                </div>
+                <SuccessDataFound
+                  message={`Ditemukan ${filteredMembers.length} anggota sesuai pencarian`}
+                  icon="sparkles"
+                />
               )}
             </div>
 

@@ -21,7 +21,9 @@ import {
   Share2,
   User,
   Clock,
-  CheckCircle2
+  CheckCircle2,
+  Contact,
+  MessageCircle
 } from "lucide-react";
 import Image from "next/image";
 
@@ -309,56 +311,44 @@ const ScheduleDetail = () => {
               {/* RIGHT COLUMN: INSTRUCTOR & CONTACT */}
               <div className="space-y-6 md:space-y-8">
                 
-                {/* Instructor Card */}
-                <div className="bg-white rounded-3xl md:rounded-[2.5rem] border-2 border-slate-200 shadow-[4px_4px_0_0_#cbd5e1] md:shadow-[8px_8px_0_0_#cbd5e1] overflow-hidden text-center p-6 md:p-8 relative">
-                  <div className="absolute top-0 left-0 w-full h-20 md:h-24 bg-gradient-to-br from-teal-400 to-emerald-500"></div>
-                  
-                  <div className="relative mb-4">
-                    <div className="w-20 h-20 md:w-28 md:h-28 mx-auto rounded-full p-1 bg-white border-4 border-white shadow-md">
+                {/* Uploader / Contact Person Card */}
+                <div className="bg-white rounded-[45px] border-4 border-slate-200 shadow-[0_10px_0_0_#cbd5e1] overflow-hidden p-8 flex flex-col items-center relative">
+                  <div className="relative mb-6">
+                    <div className="w-32 h-32 bg-teal-500 rounded-full border-4 border-white shadow-xl overflow-hidden">
+                      {schedule.pemateriAvatar && schedule.pemateriAvatar.includes("avatar") && !schedule.pemateriAvatar.includes("dicebear") ? (
                         <img
-                            src={schedule.pemateriAvatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${schedule.pemateri}`}
-                            alt={schedule.pemateri || "Pemateri"}
-                            className="w-full h-full rounded-full object-cover bg-slate-100"
+                          src={schedule.pemateriAvatar}
+                          alt={schedule.pemateri || "Narahubung"}
+                          className="w-full h-full object-cover"
                         />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-white">
+                          <Contact className="h-16 w-16" strokeWidth={2.5} />
+                        </div>
+                      )}
                     </div>
                   </div>
 
-                  <h3 className="text-lg md:text-xl font-black text-slate-800 mb-1">{schedule.pemateri || "Pemateri"}</h3>
-                  <p className="text-teal-600 font-bold text-xs md:text-sm bg-teal-50 inline-block px-3 py-1 rounded-lg border border-teal-100 mb-6">
-                    {schedule.pemateriSpecialization || "Instruktur Ahli"}
-                  </p>
+                  <h3 className="text-2xl font-black text-slate-800 leading-tight mb-8">
+                    {schedule.pemateri || "Narahubung Event"}
+                  </h3>
 
-                  <div className="space-y-3">
-                    <p className="text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 md:mb-4">— Hubungi Pemateri —</p>
+                  <div className="w-full pt-6 border-t-2 border-slate-100">
+                    <p className="text-[11px] font-black text-slate-300 uppercase tracking-[0.2em] mb-4 text-center">
+                      — HUBUNGI NARAHUBUNG —
+                    </p>
                     
-                    <a
-                      href="https://wa.me/6281234567890"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center p-1.5 pr-4 rounded-xl md:rounded-2xl bg-white border-2 border-emerald-200 hover:border-emerald-500 hover:bg-emerald-50 active:translate-y-0.5 transition-all group cursor-pointer w-full"
+                    <button
+                      onClick={() =>
+                        router.push(
+                          `/instructors/chat?name=${encodeURIComponent(schedule.pemateri || "Narahubung")}`,
+                        )
+                      }
+                      className="w-full p-4 rounded-2xl bg-white border-2 border-slate-200 flex items-center justify-center gap-2 hover:border-teal-400 hover:bg-teal-50 transition-all group mt-2"
                     >
-                      <div className="w-9 h-9 md:w-10 md:h-10 bg-emerald-500 rounded-lg md:rounded-xl flex items-center justify-center border-2 border-emerald-600 text-white shrink-0 group-hover:scale-105 transition-transform">
-                          <Image src="/WhatsApp.svg.webp" alt="WA" width={20} height={20} className="w-5 h-5 md:w-6 md:h-6" onError={(e) => e.currentTarget.style.display='none'} />
-                          <Phone className="w-4 h-4 md:w-5 md:h-5 hidden group-hover:block" /> 
-                      </div>
-                      <div className="ml-3 text-left">
-                        <p className="text-[10px] font-bold text-emerald-600 uppercase">WhatsApp</p>
-                        <p className="text-xs md:text-sm font-black text-slate-700">Chat Sekarang</p>
-                      </div>
-                    </a>
-
-                    <a
-                      href="mailto:instruktur@irmaverse.local"
-                      className="flex items-center p-1.5 pr-4 rounded-xl md:rounded-2xl bg-white border-2 border-blue-200 hover:border-blue-500 hover:bg-blue-50 active:translate-y-0.5 transition-all group cursor-pointer w-full"
-                    >
-                      <div className="w-9 h-9 md:w-10 md:h-10 bg-blue-500 rounded-lg md:rounded-xl flex items-center justify-center border-2 border-blue-600 text-white shrink-0 group-hover:scale-105 transition-transform">
-                          <Mail className="w-4 h-4 md:w-5 md:h-5" strokeWidth={2.5} />
-                      </div>
-                      <div className="ml-3 text-left">
-                        <p className="text-[10px] font-bold text-blue-600 uppercase">Email</p>
-                        <p className="text-xs md:text-sm font-black text-slate-700">Kirim Email</p>
-                      </div>
-                    </a>
+                      <MessageCircle className="w-5 h-5 text-teal-500 group-hover:scale-110 transition-transform" strokeWidth={3} />
+                      <span className="font-bold text-slate-600">Kirim Pesan</span>
+                    </button>
                   </div>
                 </div>
 

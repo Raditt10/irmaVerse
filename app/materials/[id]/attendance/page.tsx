@@ -18,6 +18,7 @@ import {
   History,
 } from "lucide-react";
 import SearchInput from "@/components/ui/SearchInput";
+import SuccessDataFound from "@/components/ui/SuccessDataFound";
 
 interface AttendanceRecord {
   id: string;
@@ -206,6 +207,13 @@ const AttendanceList = () => {
                   </span>
                 </div>
               </div>
+
+              {searchQuery && filteredAttendances.length > 0 && (
+                <SuccessDataFound
+                  message={`Ditemukan ${filteredAttendances.length} siswa sesuai pencarian`}
+                  icon="sparkles"
+                />
+              )}
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                 {filteredAttendances.length > 0 ? (

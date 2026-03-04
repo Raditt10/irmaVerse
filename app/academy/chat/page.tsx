@@ -4,6 +4,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import DashboardHeader from "@/components/ui/Header";
 import Sidebar from "@/components/ui/Sidebar";
 import SearchInput from "@/components/ui/SearchInput";
+import SuccessDataFound from "@/components/ui/SuccessDataFound";
 import { Textarea } from "@/components/ui/textarea";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -658,6 +659,14 @@ const InstructorChatDashboard = () => {
                     onChange={setSearchTerm}
                     className="w-full rounded-xl lg:rounded-2xl border-2"
                   />
+                  {searchTerm && filteredConversations.length > 0 && (
+                    <div className="mt-3">
+                      <SuccessDataFound
+                        message={`Ditemukan ${filteredConversations.length} chat peserta`}
+                        icon="sparkles"
+                      />
+                    </div>
+                  )}
                 </div>
 
                 {/* Conversations List */}

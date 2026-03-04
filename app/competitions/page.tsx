@@ -8,7 +8,7 @@ import Loading from "@/components/ui/Loading";
 import SuccessDataFound from "@/components/ui/SuccessDataFound";
 import SearchInput from "@/components/ui/SearchInput";
 import EmptyState from "@/components/ui/EmptyState";
-import { Trophy, Calendar, Target, Plus } from "lucide-react";
+import { Trophy, Calendar, Target, Plus, ArrowRight } from "lucide-react";
 import { useSession } from "next-auth/react";
 import DetailButton from "@/components/ui/DetailButton";
 import Toast from "@/components/ui/Toast";
@@ -49,6 +49,7 @@ const Competitions = () => {
 
   const router = useRouter();
   const { data: session } = useSession();
+  const isPrivileged = session?.user?.role === "admin" || session?.user?.role === "instructor";
 
   // Helper Toast
   const showToast = (message: string, type: "success" | "error") => {
@@ -176,62 +177,64 @@ const Competitions = () => {
                   </div>
                 )}
 
-                <div className="grid gap-6 lg:gap-8 grid-cols-1 lg:grid-cols-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
                   {filteredCompetitions.map((item) => (
                     <div
                       key={item.id}
-                      className="bg-white rounded-3xl lg:rounded-[2.5rem] border-2 border-slate-200 shadow-[0_6px_0_0_#cbd5e1] sm:shadow-[0_8px_0_0_#cbd5e1] hover:border-emerald-400 hover:shadow-[0_8px_0_0_#34d399] transition-all duration-300 overflow-hidden group hover:-translate-y-2 flex flex-col"
+                      onClick={() => router.push(`/competitions/${item.id}`)}
+                      className="bg-white rounded-3xl lg:rounded-[2.5rem] border-2 border-slate-200 shadow-[0_6px_0_0_#cbd5e1] sm:shadow-[0_8px_0_0_#cbd5e1] hover:border-emerald-400 hover:shadow-[0_8px_0_0_#34d399] transition-all duration-300 overflow-hidden group hover:-translate-y-2 flex flex-col h-full cursor-pointer"
                     >
                       {/* Image Section */}
-                      <div className="relative h-40 md:h-60 border-b-2 border-slate-100 overflow-hidden">
+                      <div className="relative h-40 md:h-52 border-b-2 border-slate-100 overflow-hidden">
                         <img
                           src={item.image}
                           alt={item.title}
                           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                         />
-                        <div className="absolute inset-0 bg-linear-to-t from-black/50 to-transparent" />
+                        <div className="absolute inset-0 bg-linear-to-t from-black/60 to-transparent" />
+
+                        {/* Category Badge - Floating */}
+                        <div className="absolute top-4 right-4 px-3 py-1 rounded-full flex items-center gap-1.5 border-2 shadow-sm bg-white/90 border-white/80">
+                           <Target className="h-3.5 w-3.5 text-emerald-600" strokeWidth={3} />
+                           <span className="text-[10px] font-black uppercase tracking-wide text-emerald-700">
+                             {item.category}
+                           </span>
+                        </div>
                       </div>
 
                       {/* Content Section */}
-                      <div className="p-4 sm:p-6 flex flex-col flex-1">
-                        <h3 className="text-lg sm:text-xl font-black text-slate-800 leading-tight mb-3 sm:mb-4 group-hover:text-emerald-600 transition-colors line-clamp-2">
-                          {item.title}
-                        </h3>
+                      <div className="p-4 sm:p-6 flex flex-col flex-1 justify-between">
+                        <div className="mb-4">
+                          <h3 className="text-lg sm:text-xl font-black text-slate-800 leading-tight mb-2 group-hover:text-emerald-600 transition-colors line-clamp-2">
+                            {item.title}
+                          </h3>
 
-                        <div className="space-y-2.5 sm:space-y-3 mb-5 sm:mb-6 bg-slate-50 p-3.5 sm:p-4 rounded-xl border-2 border-slate-100">
-                          <div className="flex items-center justify-between text-[11px] sm:text-sm">
-                            <div className="flex items-center gap-2 text-slate-500 font-bold">
-                              <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-400" />
-                              <span>Tanggal</span>
+                          {/* Quick Info */}
+                          <div className="space-y-2.5 sm:space-y-3 mt-4 bg-slate-50 p-3.5 sm:p-4 rounded-xl border-2 border-slate-100">
+                            <div className="flex items-center justify-between text-[11px] sm:text-sm">
+                              <div className="flex items-center gap-2 text-slate-500 font-bold">
+                                <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-400" />
+                                <span>Tanggal</span>
+                              </div>
+                              <span className="text-slate-800 font-black">{item.date}</span>
                             </div>
-                            <span className="text-slate-800 font-black">{item.date}</span>
-                          </div>
-                          
-                          <div className="w-full h-px bg-slate-200 dashed"></div>
+                            
+                            <div className="w-full h-px bg-slate-200 dashed"></div>
 
-                          <div className="flex items-center justify-between text-[11px] sm:text-sm">
-                            <div className="flex items-center gap-2 text-slate-500 font-bold">
-                              <Trophy className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-400" />
-                              <span>Hadiah</span>
-                            </div>
-                            <span className="text-emerald-600 font-black bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100">
-                              {item.prize}
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* Action Row: Category on Left, Buttons on Right */}
-                        <div className="mt-auto pt-5 border-t-2 border-slate-50 flex items-center justify-between gap-2">
-                          <div className="flex-1">
-                            <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border font-bold ${badgeStyles[item.category]}`}>
-                              <Target className="h-3 w-3" strokeWidth={3} />
-                              <span className="text-[9px] uppercase tracking-widest whitespace-nowrap">
-                                {item.category}
+                            <div className="flex items-center justify-between text-[11px] sm:text-sm">
+                              <div className="flex items-center gap-2 text-slate-500 font-bold">
+                                <Trophy className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-400" />
+                                <span>Hadiah</span>
+                              </div>
+                              <span className="text-emerald-600 font-black bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100">
+                                {item.prize}
                               </span>
                             </div>
                           </div>
-                      
-                          <div className="flex items-center gap-2">
+                        </div>
+
+                        {/* Action Row */}
+                        <div className="mt-auto pt-5 border-t-2 border-slate-50 flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
                             <DetailButton
                               role={session?.user?.role as any}
                               onClick={() => router.push(`/competitions/${item.id}`)}
@@ -244,7 +247,6 @@ const Competitions = () => {
                               confirmTitle="Hapus Kompetisi?"
                               confirmMessage="Apakah Anda yakin ingin menghapus kompetisi ini?"
                             />
-                          </div>
                         </div>
                       </div>
                     </div>

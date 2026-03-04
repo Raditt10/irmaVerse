@@ -123,6 +123,7 @@ export async function GET(req: NextRequest) {
         grade: GRADE_LABEL[m.grade as keyof typeof GRADE_LABEL] || m.grade,
         startedAt: m.startedAt,
         thumbnailUrl: m.thumbnailUrl,
+        location: m.location,
         createdAt: m.createdAt,
         isJoined: isJoined,
         program: m.program
@@ -185,6 +186,7 @@ export async function POST(req: NextRequest) {
       materialType,
       materialContent,
       materialLink,
+      location,
     } = body;
 
     // Detailed validation
@@ -270,6 +272,7 @@ export async function POST(req: NextRequest) {
         materialType: materialType || null,
         content: materialContent || null,
         link: materialLink || null,
+        location: location || null,
         updatedAt: new Date(),
       } as any,
     });
