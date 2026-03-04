@@ -153,7 +153,7 @@ const RekapanDetailPage = () => {
               className="inline-flex items-center gap-2 text-slate-500 hover:text-teal-600 font-bold transition-all group px-4 py-2 rounded-xl border-2 border-transparent hover:border-slate-200 hover:bg-white hover:shadow-sm mb-6"
             >
               <ArrowLeft className="h-5 w-5 group-hover:-translate-x-1 transition-transform stroke-3" />
-              Kembali ke Daftar Rekapan
+              Kembali
             </button>
 
             {/* Header Card */}

@@ -125,6 +125,7 @@ export async function GET(
       startedAt: m.startedAt,
       thumbnailUrl: m.thumbnailUrl,
       content: m.content || m.rekapan?.content || null,
+      hasRekapan: Array.isArray(m.rekapan) ? m.rekapan.length > 0 : !!m.rekapan,
       link: m.link,
       location: m.location,
       materialType: m.materialType,

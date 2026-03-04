@@ -48,12 +48,8 @@ export async function GET(req: NextRequest) {
       Susulan: "Program Susulan",
     };
 
-    // For non-privileged users, only show programs they are enrolled in
-    const filtered = isPrivileged
-      ? programs
-      : programs.filter((p) => p.enrollments.some((e) => e.userId === user.id));
-
-    const result = filtered.map((p) => {
+    // Semua user (privileged & non-privileged) bisa melihat semua program kurikulum
+    const result = programs.map((p) => {
       const isEnrolled = p.enrollments.some((e) => e.userId === user.id);
 
       return {

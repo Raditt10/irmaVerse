@@ -57,6 +57,7 @@ interface Material {
   isJoined?: boolean;
   points?: string[];
   attendedAt?: string;
+  hasRekapan?: boolean;
   inviteDetails?: InviteDetail[];
 }
 
@@ -161,6 +162,7 @@ const MaterialDetail = () => {
         isJoined: data.isJoined ?? false,
         points: data.points || [],
         attendedAt: data.attendedAt || undefined,
+        hasRekapan: data.hasRekapan ?? false,
         inviteDetails: data.inviteDetails || [],
       };
 
@@ -249,7 +251,7 @@ const MaterialDetail = () => {
               onClick={() => router.push("/materials")}
               className="mt-4 px-6 py-3 rounded-xl bg-teal-400 text-white font-black border-2 border-teal-600 border-b-4 hover:bg-teal-500 active:border-b-2 active:translate-y-0.5 transition-all"
             > 
-              Kembali ke Daftar
+              Kembali
             </button>
           </div>
         </div>
@@ -407,9 +409,13 @@ const MaterialDetail = () => {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {/* Rekapan Button */}
                     <button
-                      onClick={() =>
-                        router.push(`/materials/${material.id}/rekapan`)
-                      }
+                      onClick={() => {
+                        if (material.hasRekapan) {
+                          router.push(`/materials/${material.id}/rekapan`);
+                        } else {
+                          showToast("Maaf, Kajian ini belum memuat rekapan materi", "warning" as any);
+                        }
+                      }}
                       className="flex items-center gap-4 p-5 rounded-2xl border-2 border-amber-200 bg-amber-50 hover:bg-amber-100 hover:border-amber-300 transition-all text-left group shadow-[0_3px_0_0_#fcd34d] hover:shadow-[0_3px_0_0_#f59e0b] active:translate-y-0.5 active:shadow-none"
                     >
                       <div className="w-12 h-12 rounded-2xl bg-amber-200 border-2 border-amber-300 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">

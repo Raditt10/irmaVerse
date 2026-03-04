@@ -155,12 +155,12 @@ const OurPrograms = () => {
             <div className="mb-8 lg:mb-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
               <div className="flex-1">
                 <h1 className="text-2xl lg:text-4xl font-black text-slate-800 tracking-tight mb-1.5 leading-tight">
-                  {isPrivileged ? "Kelola Kursus" : "Kursus Tersedia"}
+                  {isPrivileged ? "Kelola Program" : "Program Kurikulum"}
                 </h1>
                 <p className="text-slate-500 font-medium text-xs lg:text-lg">
                   {isPrivileged
-                    ? "Buat dan kelola kursus kurikulum untuk anggota"
-                    : "Ikuti kursus untuk meningkatkan pengetahuan keagamaan"}
+                    ? "Buat dan kelola program kurikulum untuk anggota"
+                    : "Ikuti program untuk meningkatkan pengetahuan keagamaan"}
                 </p>
               </div>
 
@@ -168,13 +168,13 @@ const OurPrograms = () => {
                 <div className="flex flex-wrap gap-3 text-xs font-bold">
                   <div className="flex items-center gap-2 px-3 py-2 bg-purple-50 text-purple-700 rounded-lg border border-purple-200 shadow-sm">
                     <Layers className="h-3.5 w-3.5" />
-                    <span>{programs.length} Kursus</span>
+                    <span>{programs.length} Program</span>
                   </div>
                 </div>
 
                 {isPrivileged && (
                   <AddButton
-                    label="Buat Kursus"
+                    label="Buat Program"
                     onClick={() => router.push("/programs/create")}
                     icon={<Plus className="h-5 w-5" />}
                     color="emerald"
@@ -189,7 +189,7 @@ const OurPrograms = () => {
               <div className="mb-8 flex flex-col gap-4">
                 <div className="w-full">
                   <SearchInput
-                    placeholder="Cari kursus seru..."
+                    placeholder="Cari program ..."
                     value={searchTerm}
                     onChange={setSearchTerm}
                     className="w-full"
@@ -245,18 +245,18 @@ const OurPrograms = () => {
 
             {loading ? (
               <div className="text-center py-20">
-                <Loading text="Memuat kursus..." />
+                <Loading text="Memuat Program..." />
               </div>
             ) : programs.length === 0 ? (
               <EmptyState
                 icon="search"
-                title="Belum ada kursus"
-                description="Kursus kurikulum belum tersedia saat ini. Cek lagi nanti ya!"
+                title="Belum ada Program"
+                description="Program kurikulum belum tersedia saat ini. Cek lagi nanti ya!"
               />
             ) : filteredPrograms.length === 0 ? (
               <EmptyState
                 icon="search"
-                title="Tidak ada kursus yang cocok"
+                title="Tidak ada Program yang cocok"
                 description="Coba cari dengan kata kunci lain atau ubah filter kategorinya!"
                 actionLabel="Reset Pencarian"
                 onAction={() => {
@@ -269,7 +269,7 @@ const OurPrograms = () => {
                 {searchTerm && (
                   <div className="mb-8">
                     <SuccessDataFound
-                      message={`Ditemukan ${filteredPrograms.length} kursus sesuai pencarian`}
+                      message={`Ditemukan ${filteredPrograms.length} program sesuai pencarian`}
                       icon="sparkles"
                     />
                   </div>
@@ -403,8 +403,8 @@ const OurPrograms = () => {
 
       <CartoonConfirmDialog
         type="warning"
-        title="Hapus Kursus?"
-        message="Apakah Anda yakin ingin menghapus kursus ini? Materi di dalamnya tidak akan terhapus."
+        title="Hapus Program?"
+        message="Apakah Anda yakin ingin menghapus program ini? Materi di dalamnya tidak akan terhapus."
         confirmText="Ya, Hapus"
         cancelText="Batal"
         isOpen={showConfirmDelete}
