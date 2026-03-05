@@ -92,6 +92,8 @@ export async function PATCH(
       pemateri,
       thumbnailUrl,
       status,
+      contactNumber,
+      contactEmail,
     } = body;
 
     const updateData: any = {};
@@ -104,6 +106,8 @@ export async function PATCH(
     if (pemateri) updateData.pemateri = pemateri;
     if (thumbnailUrl !== undefined) updateData.thumbnailUrl = thumbnailUrl;
     if (status) updateData.status = status;
+    if (contactNumber !== undefined) updateData.contactNumber = contactNumber || null;
+    if (contactEmail !== undefined) updateData.contactEmail = contactEmail || null;
 
     const updatedSchedule = await prisma.schedule.update({
       where: { id: id },

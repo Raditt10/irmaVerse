@@ -125,6 +125,7 @@ export async function GET(
       content: m.content,
       link: m.link,
       materialType: m.materialType,
+      isAttendanceOpen: m.isAttendanceOpen,
       isJoined:
         m.courseenrollment?.length > 0 ||
         (m.materialinvite || []).some((inv: any) => inv.status === "accepted"),

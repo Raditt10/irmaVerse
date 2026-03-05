@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import DashboardHeader from "@/components/ui/Header";
 import Sidebar from "@/components/ui/Sidebar";
 import ChatbotButton from "@/components/ui/Chatbot";
+import Toast from "@/components/ui/Toast";
 import Loading from "@/components/ui/Loading";
 import {
   Users,
@@ -42,7 +43,14 @@ const AttendanceList = () => {
   const [attendances, setAttendances] = useState<AttendanceRecord[]>([]);
   const [material, setMaterial] = useState<MaterialInfo | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isAttendanceOpen, setIsAttendanceOpen] = useState(true);
+  const [toggling, setToggling] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [toast, setToast] = useState<{
+    show: boolean;
+    message: string;
+    type: "success" | "error";
+  }>({ show: false, message: "", type: "success" });
   
   const router = useRouter();
   const params = useParams();
@@ -80,10 +88,41 @@ const AttendanceList = () => {
       const data = await res.json();
       setAttendances(data.attendances || []);
       setMaterial(data.material || null);
+      if (data.material) {
+        setIsAttendanceOpen(data.material.isAttendanceOpen !== false);
+      }
     } catch (error) {
       console.error("Error fetching attendance:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const toggleAttendance = async () => {
+    try {
+      setToggling(true);
+      const res = await fetch(`/api/materials/${materialId}/attendance/toggle`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isOpen: !isAttendanceOpen })
+      });
+      
+      if (!res.ok) throw new Error("Gagal mengubah status absensi");
+      
+      const data = await res.json();
+      setIsAttendanceOpen(data.isAttendanceOpen);
+      
+      const message = data.isAttendanceOpen 
+        ? "Absensi telah dibuka" 
+        : "Absensi telah ditutup";
+        
+      setToast({ show: true, message, type: "success" });
+      
+    } catch (error) {
+      console.error("Error toggling attendance:", error);
+      setToast({ show: true, message: "Gagal mengubah status absensi", type: "error" });
+    } finally {
+      setToggling(false);
     }
   };
 
@@ -119,16 +158,20 @@ const AttendanceList = () => {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
               <div className="space-y-4">
                 <button
-                  onClick={() => router.push(`/materials/${materialId}`)}
+                  onClick={() => router.push(`/materials/`)}
                   className="inline-flex items-center gap-2 text-slate-500 hover:text-teal-600 font-bold transition-all group px-4 py-2 rounded-xl border-2 border-transparent hover:border-slate-200 hover:bg-white"
                 >
                   <ArrowLeft className="h-5 w-5 group-hover:-translate-x-1 transition-transform" />
-                  Kembali ke Materi
+                  Kembali
                 </button>
                 <div>
                   <h1 className="text-3xl lg:text-4xl font-black text-slate-800 tracking-tight flex items-center gap-3">
-                    <History className="w-8 h-8 md:w-10 md:h-10 text-teal-500" />
-                    Absensi Siswa
+                    Absensi Kajian
+                    {!isAttendanceOpen && (
+                      <span className="text-xs bg-rose-100 text-rose-600 px-3 py-1 rounded-full border border-rose-200 uppercase tracking-widest font-black">
+                        Ditutup
+                      </span>
+                    )}
                   </h1>
                   <p className="text-slate-500 font-bold mt-1 text-sm md:text-base">
                     {material?.title || "Daftar hadir peserta kajian"}
@@ -137,8 +180,29 @@ const AttendanceList = () => {
               </div>
 
               {/* Action Buttons */}
-              <div className="flex gap-3">
-                <button className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-white border-2 border-slate-200 text-slate-700 font-bold hover:border-teal-400 hover:text-teal-600 transition-all shadow-sm">
+              <div className="flex flex-wrap gap-3">
+                <button 
+                  onClick={toggleAttendance}
+                  disabled={toggling}
+                  className={`flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-black transition-all shadow-sm ${
+                    isAttendanceOpen 
+                      ? "bg-rose-50 border-2 border-rose-200 text-rose-600 hover:bg-rose-100 hover:border-rose-300" 
+                      : "bg-emerald-50 border-2 border-emerald-200 text-emerald-600 hover:bg-emerald-100 hover:border-emerald-300"
+                  }`}
+                >
+                  {isAttendanceOpen ? (
+                    <>
+                      <Clock className="h-5 w-5" />
+                      Tutup Absensi
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 className="h-5 w-5" />
+                      Buka Absensi
+                    </>
+                  )}
+                </button>
+                <button className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-white border-2 border-slate-200 text-slate-700 font-bold hover:border-teal-400 hover:text-teal-600 transition-all shadow-sm">
                   <Download className="h-5 w-5" />
                   Export Excel
                 </button>
@@ -147,7 +211,7 @@ const AttendanceList = () => {
 
             {/* Quick Stats Grid */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="bg-white p-5 rounded-5xl border-2 border-teal-100 shadow-[0_8px_0_0_#d1fae5] flex flex-col justify-between max-md:aspect-square">
+              <div className="bg-white p-5 rounded-[2.5rem] border-2 border-teal-100 shadow-[0_8px_0_0_#d1fae5] flex flex-col justify-between max-md:aspect-square">
                 <div className="flex justify-between items-start md:mb-5">
                   <div className="p-2.5 md:p-3 bg-teal-50 border-2 border-teal-100 rounded-2xl">
                     <Users className="w-6 h-6 md:w-8 md:h-8 text-teal-500" strokeWidth={2.5} />
@@ -159,7 +223,7 @@ const AttendanceList = () => {
                 </div>
               </div>
               
-              <div className="bg-white p-5 rounded-5xl border-2 border-blue-100 shadow-[0_8px_0_0_#dbeafe] flex flex-col justify-between max-md:aspect-square">
+              <div className="bg-white p-5 rounded-[2.5rem] border-2 border-blue-100 shadow-[0_8px_0_0_#dbeafe] flex flex-col justify-between max-md:aspect-square">
                 <div className="flex justify-between items-start md:mb-5">
                   <div className="p-2.5 md:p-3 bg-blue-50 border-2 border-blue-100 rounded-2xl">
                     <Calendar className="w-6 h-6 md:w-8 md:h-8 text-blue-500" strokeWidth={2.5} />
@@ -173,7 +237,7 @@ const AttendanceList = () => {
                 </div>
               </div>
 
-              <div className="hidden md:flex bg-white p-6 rounded-5xl border-2 border-slate-100 shadow-[0_8px_0_0_#f1f5f9] flex-col justify-center text-center">
+              <div className="hidden md:flex bg-white p-6 rounded-[2.5rem] border-2 border-slate-100 shadow-[0_8px_0_0_#f1f5f9] flex-col justify-center text-center">
                 <div className="text-teal-500 mb-2">
                   <CheckCircle2 className="w-10 h-10 mx-auto" />
                 </div>
@@ -181,7 +245,7 @@ const AttendanceList = () => {
                 <div className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">Status Sesi</div>
               </div>
 
-              <div className="hidden md:flex bg-white p-6 rounded-5xl border-2 border-slate-100 shadow-[0_8px_0_0_#f1f5f9] flex-col justify-center text-center">
+              <div className="hidden md:flex bg-white p-6 rounded-[2.5rem] border-2 border-slate-100 shadow-[0_8px_0_0_#f1f5f9] flex-col justify-center text-center">
                 <div className="text-slate-400 mb-2">
                   <Clock className="w-10 h-10 mx-auto" />
                 </div>
@@ -195,7 +259,7 @@ const AttendanceList = () => {
               <div className="bg-white rounded-3xl border-2 border-slate-200 p-4 shadow-sm flex flex-col md:flex-row gap-4 items-center justify-between">
                 <div className="w-full md:w-96">
                   <SearchInput
-                    placeholder="Cari nama siswa..."
+                    placeholder="Cari nama anggota..."
                     value={searchQuery}
                     onChange={setSearchQuery}
                     className="w-full border-2 border-teal-100 focus-within:border-teal-400 rounded-2xl shadow-none"
@@ -220,7 +284,7 @@ const AttendanceList = () => {
                   filteredAttendances.map((att) => (
                     <div
                       key={att.id}
-                      className="bg-white p-5 rounded-4xl border-2 border-slate-100 shadow-[0_4px_0_0_#f1f5f9] hover:shadow-[0_4px_0_0_#d1fae5] hover:border-teal-200 transition-all duration-300 group flex items-center gap-4"
+                      className="bg-white p-5 rounded-3xl border-2 border-slate-100 shadow-[0_4px_0_0_#f1f5f9] hover:shadow-[0_4px_0_0_#d1fae5] hover:border-teal-200 transition-all duration-300 group flex items-center gap-4"
                     >
                       <div className="w-14 h-14 rounded-full bg-slate-100 overflow-hidden border-2 border-slate-50 group-hover:border-teal-100 transition-colors shrink-0">
                         {att.user.avatar ? (
@@ -248,7 +312,7 @@ const AttendanceList = () => {
                     </div>
                   ))
                 ) : (
-                  <div className="col-span-full py-20 flex flex-col items-center justify-center text-center bg-white rounded-5xl border-2 border-dashed border-slate-300">
+                  <div className="col-span-full py-20 flex flex-col items-center justify-center text-center bg-white rounded-[2.5rem] border-2 border-dashed border-slate-300">
                     <div className="p-6 bg-slate-50 rounded-full mb-4">
                       <Users className="h-12 w-12 text-slate-300" />
                     </div>
@@ -262,6 +326,13 @@ const AttendanceList = () => {
         </div>
       </div>
       <ChatbotButton />
+
+      <Toast
+        show={toast.show}
+        message={toast.message}
+        type={toast.type}
+        onClose={() => setToast((prev) => ({ ...prev, show: false }))}
+      />
     </div>
   );
 };

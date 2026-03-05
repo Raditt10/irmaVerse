@@ -33,6 +33,7 @@ import DashboardHeader from "@/components/ui/Header";
 import ChatbotButton from "@/components/ui/Chatbot";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import Loading from "@/components/ui/Loading";
 
 // --- KOMPONEN LEVEL CARD YANG DIPERBARUI ---
 const LevelCardContent = () => (
@@ -365,7 +366,7 @@ const Dashboard = () => {
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   {loadingNews ? (
-                    <p className="text-center text-xs text-slate-400 font-bold py-10 col-span-1 md:col-span-2">Memuat kabar IRMA...</p>
+                    <Loading text="Memuat kabar IRMA..." />
                   ) : latestNews.length === 0 ? (
                     <p className="text-center text-xs text-slate-400 font-bold py-10 col-span-1 md:col-span-2">Belum ada kabar terbaru</p>
                   ) : (
@@ -407,7 +408,7 @@ const Dashboard = () => {
                 
                 <div className="space-y-3">
                   {loadingFinished ? (
-                    <p className="text-center text-xs text-slate-400 font-bold py-10">Memuat kajian...</p>
+                    <Loading text="Memuat kajian..." />
                   ) : finishedMaterials.length === 0 ? (
                     <p className="text-center text-xs text-slate-400 font-bold py-10">Belum ada kajian yang diselesaikan</p>
                   ) : (
@@ -485,7 +486,7 @@ const Dashboard = () => {
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {loadingQuizzes ? (
-                     <p className="text-center text-xs text-slate-400 font-bold py-10 col-span-1 md:col-span-2 lg:col-span-3">Memuat kuis...</p>
+                     <Loading text="Memuat kuis..." />
                   ) : upcomingQuizzes.length === 0 ? (
                      <p className="text-center text-xs text-slate-400 font-bold py-10 col-span-1 md:col-span-2 lg:col-span-3">Yey! Tidak ada kuis kajian yang tertunda.</p>
                   ) : (
@@ -577,7 +578,7 @@ const Dashboard = () => {
                   
                   {loadingInstructors ? (
                     <div className="text-center py-6">
-                      <p className="text-xs text-slate-400 font-bold">Memuat...</p>
+                      <Loading text="Memuat..." />
                     </div>
                   ) : favoriteInstructors.length === 0 ? (
                     <div className="text-center py-6">
@@ -621,10 +622,7 @@ const Dashboard = () => {
                   
                   <div className="space-y-4">
                     {loadingFinished ? (
-                      <div className="flex flex-col items-center justify-center py-6 gap-2">
-                        <div className="w-6 h-6 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin" />
-                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Memuat data...</p>
-                      </div>
+                      <Loading text="Memuat data..." />
                     ) : finishedMaterials.length === 0 ? (
                       <div className="text-center py-8">
                         <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto mb-3 border-2 border-slate-100">

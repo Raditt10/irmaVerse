@@ -171,7 +171,7 @@ const OurPrograms = () => {
 
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
                 <div className="flex flex-wrap gap-3 text-xs font-bold">
-                  <div className="flex items-center gap-2 px-3 py-2 bg-purple-50 text-purple-700 rounded-lg border border-purple-200 shadow-sm">
+                  <div className="flex items-center gap-2 px-3 py-2 bg-emerald-50 text-emerald-700 rounded-lg border border-emerald-200 shadow-sm">
                     <Layers className="h-3.5 w-3.5" />
                     <span>{programs.length} Program</span>
                   </div>
@@ -303,10 +303,7 @@ const OurPrograms = () => {
                               <Clock3 className="h-3.5 w-3.5 text-teal-400" />
                               <span>{program.duration}</span>
                             </div>
-                            <div className="flex items-center gap-1.5">
-                              <Users className="h-3.5 w-3.5 text-indigo-400" />
-                              <span>{program.enrollmentCount} Peserta</span>
-                            </div>
+
                           </div>
 
                           {/* Progress bar for enrolled users */}

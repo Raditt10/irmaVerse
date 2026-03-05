@@ -1,5 +1,4 @@
 "use client";
-
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -8,6 +7,7 @@ import Sidebar from "@/components/ui/Sidebar";
 import Toast from "@/components/ui/Toast";
 import CartoonConfirmDialog from "@/components/ui/ConfirmDialog";
 import Loading from "@/components/ui/Loading";
+import EmptyState from "@/components/ui/EmptyState";
 import {
   Settings,
   Plus,
@@ -275,29 +275,18 @@ export default function QuizManagePage() {
               </div>
             </div>
 
-            {/* Quiz List */}
             {filtered.length === 0 ? (
-              <div className="text-center py-20">
-                <div className="w-20 h-20 rounded-full bg-slate-100 border-4 border-dashed border-slate-200 flex items-center justify-center mx-auto mb-4">
-                  <ListChecks className="h-9 w-9 text-slate-300" />
-                </div>
-                <h3 className="text-lg font-black text-slate-600 mb-1">
-                  {search ? "Tidak ada hasil" : "Belum ada quiz"}
-                </h3>
-                <p className="text-slate-400 font-medium text-sm mb-6">
-                  {search
-                    ? "Coba kata kunci lain"
-                    : "Mulai buat quiz pertamamu!"}
-                </p>
-                {!search && (
-                  <button
-                    onClick={() => router.push("/quiz/create")}
-                    className="px-6 py-3 rounded-xl bg-teal-500 text-white font-black border-2 border-teal-700 border-b-4 hover:bg-teal-600 active:border-b-2 active:translate-y-0.5 transition-all"
-                  >
-                    <Plus className="inline h-4 w-4 mr-2" /> Buat Quiz
-                  </button>
-                )}
-              </div>
+              <EmptyState
+                icon={search ? "search" : "calendar"}
+                title={search ? "Tidak ada hasil" : "Belum ada quiz"}
+                description={
+                  search ? "Coba kata kunci lain" : "Mulai buat quiz pertamamu!"
+                }
+                actionLabel={!search ? "Buat Quiz" : undefined}
+                onAction={
+                  !search ? () => router.push("/quiz/create") : undefined
+                }
+              />
             ) : (
               <div className="space-y-3">
                 {filtered.map((quiz) => (

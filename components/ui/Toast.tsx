@@ -1,15 +1,25 @@
 "use client";
 import { Check, AlertCircle, X, AlertTriangle, Info } from "lucide-react";
-import React from "react";
+import React, { useEffect } from "react";
 
 export interface ToastProps {
   show: boolean;
   message: string;
   type: "success" | "error" | "warning" | "info";
   onClose?: () => void;
+  duration?: number;
 }
 
-const Toast: React.FC<ToastProps> = ({ show, message, type, onClose }) => {
+const Toast: React.FC<ToastProps> = ({ show, message, type, onClose, duration = 3000 }) => {
+  useEffect(() => {
+    if (show && onClose) {
+      const timer = setTimeout(() => {
+        onClose();
+      }, duration);
+      return () => clearTimeout(timer);
+    }
+  }, [show, onClose, duration]);
+
   if (!show) return null;
 
   const getGradient = () => {

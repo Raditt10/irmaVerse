@@ -7,6 +7,7 @@ import Sidebar from "@/components/ui/Sidebar";
 import ChatbotButton from "@/components/ui/Chatbot";
 import SearchInput from "@/components/ui/SearchInput";
 import Loading from "@/components/ui/Loading";
+import EmptyState from "@/components/ui/EmptyState";
 import SuccessDataFound from "@/components/ui/SuccessDataFound";
 import DetailButton from "@/components/ui/DetailButton";
 import {
@@ -237,15 +238,11 @@ const RekapanListPage = () => {
                     />
                   )}
                   {filteredInstructorMaterials.length === 0 ? (
-                    <div className="py-20 flex flex-col items-center justify-center text-center bg-white rounded-[2.5rem] border-2 border-dashed border-slate-300">
-                      <FileText className="h-16 w-16 text-slate-300 mb-4" />
-                      <h3 className="text-xl font-black text-slate-800 mb-2">
-                        Belum ada kajian
-                      </h3>
-                      <p className="text-slate-500">
-                        Kajian yang kamu cari tidak ditemukan.
-                      </p>
-                    </div>
+                    <EmptyState
+                      icon="search"
+                      title="Belum ada rekapan kajian"
+                      description="Rekapan kajian saat ini tidak tersedia."
+                    />
                   ) : (
                     filteredInstructorMaterials.map((material) => (
                       <div
@@ -406,17 +403,15 @@ const RekapanListPage = () => {
                     />
                   )}
                   {filteredRekapan.length === 0 ? (
-                    <div className="py-20 flex flex-col items-center justify-center text-center bg-white rounded-[2.5rem] border-2 border-dashed border-slate-300">
-                      <FileText className="h-16 w-16 text-slate-300 mb-4" />
-                      <h3 className="text-xl font-black text-slate-800 mb-2">
-                        Belum ada rekapan
-                      </h3>
-                      <p className="text-slate-500">
-                        {searchQuery
+                    <EmptyState
+                      icon={searchQuery ? "search" : "calendar"}
+                      title="Belum ada rekapan"
+                      description={
+                        searchQuery
                           ? "Rekapan yang kamu cari tidak ditemukan."
-                          : "Instruktur belum membuat rekapan untuk kajian yang kamu ikuti."}
-                      </p>
-                    </div>
+                          : "Instruktur belum membuat rekapan untuk kajian yang kamu ikuti."
+                      }
+                    />
                   ) : (
                     filteredRekapan.map((item) => (
                       <div

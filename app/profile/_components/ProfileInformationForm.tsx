@@ -17,6 +17,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import ImageCropDialog from "./ImageCropDialog";
 import Toast from "@/components/ui/Toast";
+import Loading from "@/components/ui/Loading";
 
 interface UserProfile {
   id: string;
@@ -229,7 +230,7 @@ const ProfileInformationForm = ({ stats, level, rank }: any) => {
     return (
       <div className="rounded-2xl bg-white border border-slate-200 p-8 shadow-sm">
         <div className="flex items-center justify-center h-64">
-          <p className="text-slate-600 font-bold animate-pulse">Memuat data pengguna...</p>
+          <Loading text="Memuat data pengguna..." />
         </div>
       </div>
     );

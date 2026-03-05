@@ -82,6 +82,9 @@ export async function POST(req: NextRequest) {
       location,
       pemateri,
       thumbnailUrl,
+      status: bodyStatus,
+      contactNumber,
+      contactEmail,
     } = body;
 
     // Detailed validation
@@ -138,8 +141,10 @@ export async function POST(req: NextRequest) {
         location,
         pemateri,
         thumbnailUrl,
+        contactNumber: contactNumber || null,
+        contactEmail: contactEmail || null,
         instructorId: session.user.id,
-        status: "segera_hadir",
+        status: bodyStatus || "segera_hadir",
       },
       include: {
         instructor: {

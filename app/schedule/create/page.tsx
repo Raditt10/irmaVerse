@@ -10,8 +10,21 @@ import DatePicker from "@/components/ui/DatePicker";
 import TimePicker from "@/components/ui/TimePicker";
 import { Input } from "@/components/ui/InputText";
 import { Textarea } from "@/components/ui/textarea";
-import { Calendar, MapPin, Clock, ArrowLeft, Upload, X, Save, Sparkles, Type, Users, Headset } from "lucide-react";
+import { Calendar, MapPin, Clock, ArrowLeft, Upload, X, Save, Sparkles, Type, Users, Headset, Phone, Mail } from "lucide-react";
 import Toast from "@/components/ui/Toast";
+import CategoryFilter from "@/components/ui/CategoryFilter";
+
+const statusMapping = {
+  "Segera Hadir": "segera_hadir",
+  "Sedang Berlangsung": "ongoing",
+  "Kegiatan Selesai": "completed",
+};
+
+const reverseStatusMapping = {
+  segera_hadir: "Segera Hadir",
+  ongoing: "Sedang Berlangsung",
+  completed: "Kegiatan Selesai",
+};
 
 const CreateSchedule = () => {
   const router = useRouter();
@@ -34,6 +47,9 @@ const CreateSchedule = () => {
     location: "",
     pemateri: "", // Diganti dari penanggungjawab agar konsisten dengan backend
     thumbnailUrl: "",
+    contactNumber: "",
+    contactEmail: "",
+    status: "segera_hadir",
   });
 
   // Helper Toast
@@ -119,9 +135,9 @@ const CreateSchedule = () => {
         throw new Error(error.error || "Gagal membuat jadwal");
       }
 
+      const data = await response.json();
       showToast("Kegiatan berhasil dibuat. Mengalihkan...", "success");
-      // REDIRECT KE HALAMAN UTAMA SCHEDULE
-      setTimeout(() => router.push("/schedule"), 1500);
+      setTimeout(() => router.push(`/schedule/${data.id}`), 1500);
     } catch (error: any) {
       console.error("Error creating schedule:", error);
       showToast(error.message || "Terjadi kesalahan saat membuat jadwal", "error");
@@ -209,6 +225,17 @@ const CreateSchedule = () => {
                         placeholder="Deskripsi lengkap tentang Kegiatan, materi yang akan dibahas, dll."
                       />
                     </div>
+                    <div className="space-y-2">
+                       <label className="block text-xs lg:text-sm font-bold text-slate-600 ml-1">Status Kegiatan</label>
+                       <CategoryFilter
+                         categories={["Segera Hadir", "Sedang Berlangsung", "Kegiatan Selesai"]}
+                         subCategories={[]}
+                         selectedCategory={reverseStatusMapping[formData.status as keyof typeof reverseStatusMapping] || "Segera Hadir"}
+                         selectedSubCategory=""
+                         onCategoryChange={(cat) => setFormData(prev => ({ ...prev, status: statusMapping[cat as keyof typeof statusMapping] }))}
+                         onSubCategoryChange={() => {}}
+                       />
+                    </div>
                   </div>
                 </div>
 
@@ -262,6 +289,42 @@ const CreateSchedule = () => {
                         onChange={handleChange}
                         placeholder="Contoh: Ustadz Ahmad Zaki"
                       />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Card Kontak */}
+                <div className="bg-white p-5 lg:p-8 rounded-3xl lg:rounded-[2.5rem] border-2 border-slate-200 shadow-[0_4px_0_0_#cbd5e1] lg:shadow-[0_8px_0_0_#cbd5e1]">
+                  <h2 className="text-lg lg:text-xl font-black text-slate-700 mb-4 lg:mb-6 flex items-center gap-2">
+                    <Users className="h-5 w-5 lg:h-6 lg:w-6 text-blue-500" /> Kontak Person
+                  </h2>
+                  <div className="space-y-4 lg:space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
+                      <div className="space-y-2">
+                        <label className="text-xs lg:text-sm font-bold text-slate-600 ml-1 flex items-center gap-1.5 justify-start">
+                          <Phone className="w-4 h-4 text-slate-800" strokeWidth={2.5}/> Nomor Telepon (WA)
+                        </label>
+                        <Input
+                          type="tel"
+                          name="contactNumber"
+                          value={formData.contactNumber}
+                          onChange={handleChange}
+                          placeholder="Contoh: 08123456789"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-xs lg:text-sm font-bold text-slate-600 ml-1 flex items-center gap-1.5 justify-start">
+                          <Mail className="w-4 h-4 text-slate-800" strokeWidth={2.5}/> Email
+                        </label>
+                        <Input
+                          type="email"
+                          name="contactEmail"
+                          value={formData.contactEmail}
+                          onChange={handleChange}
+                          placeholder="email@example.com"
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>

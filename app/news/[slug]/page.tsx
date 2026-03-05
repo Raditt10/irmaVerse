@@ -8,6 +8,7 @@ import BackButton from "@/components/ui/BackButton";
 import { Calendar, Eye, Share2, Bookmark } from "lucide-react";
 import Link from "next/link";
 import ReactMarkdown from "react-markdown";
+import Loading from "@/components/ui/Loading";
 
 interface NewsDetail {
   id: string;
@@ -86,7 +87,7 @@ export default function NewsDetailPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 flex items-center justify-center">
-        <p className="text-slate-500">Memuat berita...</p>
+        <Loading text="Memuat berita..." size="lg" />
       </div>
     );
   }

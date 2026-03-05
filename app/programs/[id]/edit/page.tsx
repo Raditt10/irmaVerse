@@ -5,6 +5,7 @@ import DashboardHeader from "@/components/ui/Header";
 import Sidebar from "@/components/ui/Sidebar";
 import ChatbotButton from "@/components/ui/Chatbot";
 import Toast from "@/components/ui/Toast";
+import Loading from "@/components/ui/Loading";
 import {
   Type,
   ArrowLeft,
@@ -16,7 +17,9 @@ import {
   GraduationCap,
   Target,
   Clock,
+  Layers,
 } from "lucide-react";
+import CategoryFilter from "@/components/ui/CategoryFilter";
 import { Input } from "@/components/ui/InputText";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -60,7 +63,7 @@ const EditProgram = () => {
     try {
       setLoading(true);
       const res = await fetch(`/api/programs/${programId}`);
-      if (!res.ok) throw new Error("Gagal mengambil data kursus");
+      if (!res.ok) throw new Error("Gagal mengambil data program");
       const program = await res.json();
 
       setFormData({
@@ -75,7 +78,7 @@ const EditProgram = () => {
         benefits: program.benefits || [],
       });
     } catch (err: any) {
-      showToast(err.message || "Tidak bisa memuat data kursus", "error");
+      showToast(err.message || "Tidak bisa memuat data program", "error");
     } finally {
       setLoading(false);
     }
@@ -160,9 +163,9 @@ const EditProgram = () => {
       });
       if (!res.ok) {
         const errorData = await res.json();
-        throw new Error(errorData.error || "Gagal memperbarui kursus");
+        throw new Error(errorData.error || "Gagal memperbarui program");
       }
-      showToast("Kursus berhasil diperbarui! ✨", "success");
+      showToast("Program berhasil diperbarui! Mengalihkan..", "success");
       setTimeout(() => router.push(`/programs/${programId}`), 2000);
     } catch (error: any) {
       showToast(error.message || "Terjadi kesalahan", "error");
@@ -174,12 +177,7 @@ const EditProgram = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-[#FDFBF7] flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <Sparkles className="h-10 w-10 text-emerald-400 animate-spin" />
-          <p className="text-slate-500 font-bold animate-pulse">
-            Memuat data kursus...
-          </p>
-        </div>
+        <Loading text="Memuat data program..." size="lg" />
       </div>
     );
   }
@@ -202,10 +200,10 @@ const EditProgram = () => {
               </button>
               <div>
                 <h1 className="text-3xl lg:text-4xl font-black text-slate-800 tracking-tight mb-2">
-                  Edit Kursus
+                  Edit Program
                 </h1>
                 <p className="text-slate-500 font-medium text-lg">
-                  Perbarui informasi dan detail kursus.
+                  Perbarui informasi dan detail program.
                 </p>
                 <div className="mt-4 inline-flex items-center gap-2 text-sm font-bold bg-rose-50 text-rose-600 px-3 py-2 rounded-xl border-2 border-rose-100">
                   <span className="text-rose-500 font-black text-lg leading-none mt-1">*</span> Wajib diisi
@@ -222,12 +220,12 @@ const EditProgram = () => {
                 {/* Detail */}
                 <div className="bg-white p-6 lg:p-8 rounded-[2.5rem] border-2 border-slate-200 shadow-[0_8px_0_0_#cbd5e1]">
                   <h2 className="text-xl font-black text-slate-700 mb-6 flex items-center gap-2">
-                    <Type className="h-6 w-6 text-emerald-500" /> Detail Kursus
+                    <Type className="h-6 w-6 text-emerald-500" /> Detail Program
                   </h2>
                   <div className="space-y-6">
                     <div className="space-y-2">
                       <label className="block text-sm font-bold text-slate-600 ml-1">
-                        Nama Kursus <span className="text-red-500">*</span>
+                        Nama Program <span className="text-red-500">*</span>
                       </label>
                       <Input
                         type="text"
@@ -235,19 +233,19 @@ const EditProgram = () => {
                         required
                         value={formData.title}
                         onChange={handleInputChange}
-                        placeholder="Nama kursus..."
+                        placeholder="Nama program..."
                       />
                     </div>
                     <div className="space-y-2">
                       <label className="block text-sm font-bold text-slate-600 ml-1">
-                        Deskripsi Kursus <span className="text-red-500">*</span>
+                        Deskripsi Program <span className="text-red-500">*</span>
                       </label>
                       <Textarea
                         name="description"
                         rows={6}
                         value={formData.description}
                         onChange={handleInputChange}
-                        placeholder="Deskripsi kursus..."
+                        placeholder="Deskripsi program..."
                       />
                     </div>
                     <div className="space-y-2 pt-4 border-t-2 border-slate-50">
@@ -384,6 +382,21 @@ const EditProgram = () => {
                   </div>
                 </div>
 
+                {/* Kategori Program */}
+                <div className="bg-white p-6 lg:p-8 rounded-[2.5rem] border-2 border-slate-200 shadow-[0_8px_0_0_#cbd5e1]">
+                  <h3 className="text-sm font-bold text-slate-700 mb-4 ml-1 flex items-center gap-2">
+                    <Layers className="h-4 w-4 text-emerald-500" /> Kategori Program
+                  </h3>
+                  <CategoryFilter
+                    categories={["Program Wajib", "Program Ekstra", "Next Level"]}
+                    subCategories={[]}
+                    selectedCategory={formData.category}
+                    selectedSubCategory=""
+                    onCategoryChange={(cat) => setFormData({ ...formData, category: cat })}
+                    onSubCategoryChange={() => {}}
+                  />
+                </div>
+
                 {/* Target Kelas */}
                 <div className="bg-white p-6 lg:p-8 rounded-[2.5rem] border-2 border-slate-200 shadow-[0_8px_0_0_#cbd5e1]">
                   <h3 className="text-sm font-bold text-slate-700 mb-4 ml-1 flex items-center gap-2">
@@ -416,7 +429,7 @@ const EditProgram = () => {
                   {/* Thumbnail */}
                   <div className="bg-white p-6 rounded-[2.5rem] border-2 border-slate-200 shadow-[0_8px_0_0_#cbd5e1] text-center">
                     <label className="block text-sm font-bold text-slate-600 mb-4">
-                      Banner Kursus
+                      Banner Program
                     </label>
                     <div className="relative group overflow-hidden rounded-3xl border-2 border-dashed border-slate-300 aspect-video flex flex-col items-center justify-center bg-slate-50 hover:bg-emerald-50 hover:border-emerald-400 transition-all cursor-pointer">
                       <input
@@ -474,7 +487,7 @@ const EditProgram = () => {
                       ) : (
                         <>
                           <Rocket className="h-6 w-6" />
-                          Perbarui Kursus
+                          Perbarui Program
                         </>
                       )}
                     </button>

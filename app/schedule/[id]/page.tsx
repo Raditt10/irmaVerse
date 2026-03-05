@@ -40,6 +40,8 @@ interface Schedule {
   pemateriSpecialization?: string | null;
   status?: string;
   image?: string;
+  contactNumber?: string | null;
+  contactEmail?: string | null;
   instructorId?: string;
 }
 
@@ -204,19 +206,19 @@ const ScheduleDetail = () => {
                             <ButtonEdit 
                                 id={schedule.id} 
                                 basePath="/schedule" 
-                                className="py-2! px-3! md:px-4! min-w-0! text-xs md:text-sm h-10! md:h-auto!" 
+                                className="h-12 w-12" 
                             />
                             
                             <DeleteButton 
                                 onClick={() => setShowConfirmDelete(true)}
                                 variant="icon-only"
-                                className="p-2! md:p-2.5! rounded-xl h-10 w-10 md:h-auto md:w-auto"
+                                className="rounded-xl h-12 w-12"
                             />
                         </>
                     )}
 
-                    <button className="p-2 md:p-2.5 bg-white rounded-xl border-2 border-slate-200 text-slate-400 hover:text-teal-500 hover:border-teal-400 transition-all shadow-sm h-10 w-10 md:h-auto md:w-auto flex items-center justify-center">
-                        <Share2 className="h-4 w-4 md:h-5 md:w-5" strokeWidth={2.5} />
+                    <button className="w-12 h-12 bg-white rounded-2xl border-2 border-slate-200 text-slate-400 hover:text-teal-500 hover:border-teal-400 border-b-4 active:border-b-2 active:translate-y-0.5 transition-all shadow-md flex items-center justify-center group">
+                        <Share2 className="h-5 w-5 stroke-[2.5] group-hover:scale-110 transition-transform" />
                     </button>
                 </div>
             </div>
@@ -338,17 +340,44 @@ const ScheduleDetail = () => {
                       — HUBUNGI NARAHUBUNG —
                     </p>
                     
-                    <button
-                      onClick={() =>
-                        router.push(
-                          `/instructors/chat?name=${encodeURIComponent(schedule.pemateri || "Narahubung")}`,
-                        )
-                      }
-                      className="w-full p-4 rounded-2xl bg-white border-2 border-slate-200 flex items-center justify-center gap-2 hover:border-teal-400 hover:bg-teal-50 transition-all group mt-2"
-                    >
-                      <MessageCircle className="w-5 h-5 text-teal-500 group-hover:scale-110 transition-transform" strokeWidth={3} />
-                      <span className="font-bold text-slate-600">Kirim Pesan</span>
-                    </button>
+                    {schedule.contactNumber && (
+                      <button
+                        onClick={() => {
+                          const phone = schedule.contactNumber?.replace(/\D/g, "");
+                          window.open(`https://wa.me/${phone}`, "_blank");
+                        }}
+                        className="w-full p-4 rounded-2xl bg-emerald-50 border-2 border-emerald-200 flex items-center justify-center gap-2 hover:bg-emerald-100 transition-all group mt-2"
+                      >
+                        <MessageCircle className="w-5 h-5 text-emerald-500 group-hover:scale-110 transition-transform" strokeWidth={3} />
+                        <span className="font-bold text-emerald-700">WhatsApp Narahubung</span>
+                      </button>
+                    )}
+
+                    {schedule.contactEmail && (
+                      <button
+                        onClick={() => {
+                          window.location.href = `mailto:${schedule.contactEmail}`;
+                        }}
+                        className="w-full p-4 rounded-2xl bg-blue-50 border-2 border-blue-200 flex items-center justify-center gap-2 hover:bg-blue-100 transition-all group mt-2"
+                      >
+                        <Mail className="w-5 h-5 text-blue-500 group-hover:scale-110 transition-transform" strokeWidth={3} />
+                        <span className="font-bold text-blue-700">Email Narahubung</span>
+                      </button>
+                    )}
+
+                    {!schedule.contactNumber && !schedule.contactEmail && (
+                      <button
+                        onClick={() =>
+                          router.push(
+                            `/instructors/chat?name=${encodeURIComponent(schedule.pemateri || "Narahubung")}`,
+                          )
+                        }
+                        className="w-full p-4 rounded-2xl bg-white border-2 border-slate-200 flex items-center justify-center gap-2 hover:border-teal-400 hover:bg-teal-50 transition-all group mt-2"
+                      >
+                        <MessageCircle className="w-5 h-5 text-teal-500 group-hover:scale-110 transition-transform" strokeWidth={3} />
+                        <span className="font-bold text-slate-600">Kirim Pesan</span>
+                      </button>
+                    )}
                   </div>
                 </div>
 

@@ -70,7 +70,10 @@ const Members = () => {
         points: u.points || 0,
         status: u.status || "Aktif",
       }));
-      setMembers(mapped);
+      
+      // Hanya tampilkan yang role-nya 'user'
+      const onlyUsers = mapped.filter((u: any) => u.role?.toLowerCase() === "user");
+      setMembers(onlyUsers);
     } catch (error) {
       console.error("Error fetching members:", error);
       setNotification({

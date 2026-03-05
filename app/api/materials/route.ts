@@ -125,6 +125,7 @@ export async function GET(req: NextRequest) {
         thumbnailUrl: m.thumbnailUrl,
         location: m.location,
         createdAt: m.createdAt,
+        isAttendanceOpen: m.isAttendanceOpen,
         isJoined: isJoined,
         program: m.program
           ? { id: m.program.id, title: m.program.title }

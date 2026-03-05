@@ -18,7 +18,9 @@ import {
   Clock,
   Trash2,
   Target,
+  Layers,
 } from "lucide-react";
+import CategoryFilter from "@/components/ui/CategoryFilter";
 
 const CreateProgram = () => {
   const router = useRouter();
@@ -331,6 +333,21 @@ const CreateProgram = () => {
                       </button>
                     </div>
                   </div>
+                </div>
+
+                {/* Kategori Program */}
+                <div className="bg-white p-6 lg:p-8 rounded-[2.5rem] border-2 border-slate-200 shadow-[0_8px_0_0_#cbd5e1]">
+                  <h3 className="text-sm font-bold text-slate-700 mb-4 ml-1 flex items-center gap-2">
+                    <Layers className="h-4 w-4 text-emerald-500" /> Kategori Program
+                  </h3>
+                  <CategoryFilter
+                    categories={["Program Wajib", "Program Ekstra", "Next Level"]}
+                    subCategories={[]}
+                    selectedCategory={formData.category}
+                    selectedSubCategory=""
+                    onCategoryChange={(cat) => setFormData({ ...formData, category: cat })}
+                    onSubCategoryChange={() => {}}
+                  />
                 </div>
 
                 {/* Target Kelas */}

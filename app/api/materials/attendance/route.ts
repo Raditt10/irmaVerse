@@ -29,6 +29,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
+    // Check if attendance is open for this material using raw query since Prisma client generation was blocked
+    const materialData = await prisma.$queryRaw<any[]>`SELECT isAttendanceOpen FROM material WHERE id = ${materialId}`;
+    const isAttendanceOpen = materialData.length > 0 ? (materialData[0].isAttendanceOpen !== 0 && materialData[0].isAttendanceOpen !== false) : true;
+
+    if (!isAttendanceOpen) {
+      return NextResponse.json(
+        { error: "Maaf, Absensi pada kajian ini telah ditutup oleh instruktur" },
+        { status: 403 }
+      );
+    }
+
     // Check if user already attended
     const existingAttendance = await prisma.attendance.findFirst({
       where: {
@@ -47,28 +58,46 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Create new attendance record with form data
+    // Create new attendance record with form data using raw query
+    const attendanceId = `att-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`;
+    
+    // Default values mapping to prevent undefined issues in SQL
+    const status = attendanceData?.status || "hadir";
+    const sessionName = attendanceData?.session || null;
+    const date = attendanceData?.date || null;
+    const time = attendanceData?.time || null;
+    const location = attendanceData?.location || null;
+    const notes = attendanceData?.notes || null;
+    const reason = attendanceData?.reason || null;
+    const instructorArrival = attendanceData?.instructorArrival || null;
+    const startTime = attendanceData?.startTime || null;
+    const endTime = attendanceData?.endTime || null;
+    
+    // Survey mapping
+    const rating = surveyData?.rating || null;
+    const clarity = surveyData?.clarity || null;
+    const relevance = surveyData?.relevance || null;
+    const feedback = surveyData?.feedback || null;
+
     const attendance = await prisma.attendance.create({
       data: {
-        id: `att-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+        id: attendanceId,
         userId: user.id,
-        materialId: materialId,
-        status: attendanceData?.status || "hadir",
-        session: attendanceData?.session,
-        date: attendanceData?.date,
-        time: attendanceData?.time,
-        location: attendanceData?.location,
-        notes: attendanceData?.notes,
-        reason: attendanceData?.reason,
-        instructorArrival: attendanceData?.instructorArrival,
-        startTime: attendanceData?.startTime,
-        endTime: attendanceData?.endTime,
-        rating: surveyData?.rating,
-        clarity: surveyData?.clarity,
-        relevance: surveyData?.relevance,
-        feedback: surveyData?.feedback,
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        materialId,
+        status,
+        session: sessionName,
+        date,
+        time,
+        location,
+        notes,
+        reason,
+        instructorArrival,
+        startTime,
+        endTime,
+        rating,
+        clarity,
+        relevance,
+        feedback,
       },
     });
 
@@ -99,9 +128,13 @@ export async function POST(req: NextRequest) {
       { status: 201 },
     );
   } catch (error) {
-    console.error("Attendance error:", error);
+    console.error("Attendance error DETAILS:", error);
+    if (error instanceof Error) {
+        console.error("Attendance error MESSAGE:", error.message);
+        console.error("Attendance error STACK:", error.stack);
+    }
     return NextResponse.json(
-      { error: "Failed to record attendance" },
+      { error: "Failed to record attendance", details: error instanceof Error ? error.message : String(error) },
       { status: 500 },
     );
   }

@@ -146,6 +146,8 @@ model Schedule {
   thumbnailUrl    String?
   status          ScheduleStatus @default(segera_hadir)
   instructorId    String
+  contactNumber   String?
+  contactEmail    String?
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
   instructor      User           @relation("instructorSchedules", fields: [instructorId], references: [id], onDelete: Cascade)
@@ -315,6 +317,7 @@ model material {
   materialinvite                                 materialinvite[]
   rekapan                                        rekapan?
   quizzes                                        material_quiz[]
+  isAttendanceOpen                               Boolean            @default(true)
 
   @@index([instructorId], map: "Material_instructorId_fkey")
   @@index([nextCourseId], map: "Material_nextCourseId_fkey")

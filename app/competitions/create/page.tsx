@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/InputText";
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar, MapPin, ArrowLeft, Upload, X, Save, Sparkles, Trophy, Tag, Users, Plus, ShieldCheck, ListChecks, Headset, Phone, Mail } from "lucide-react";
 import Toast from "@/components/ui/Toast";
+import Loading from "@/components/ui/Loading";
 
 const CreateCompetition = () => {
   const router = useRouter();
@@ -60,7 +61,7 @@ const CreateCompetition = () => {
   if (status === "loading") {
     return (
       <div className="min-h-screen bg-linear-to-br from-slate-50 via-white to-slate-100 flex items-center justify-center">
-        <p className="text-slate-500">Memuat...</p>
+        <Loading text="Memuat..." />
       </div>
     );
   }
@@ -244,7 +245,6 @@ const CreateCompetition = () => {
               </button>
               <div>
                 <h1 className="text-2xl lg:text-4xl font-black text-slate-800 tracking-tight mb-2 flex items-center gap-2 lg:gap-3">
-                  <Trophy className="h-6 w-6 lg:h-8 lg:w-8 text-amber-500" />
                   Buat Informasi Lomba
                 </h1>
                 <p className="text-slate-500 font-medium text-sm lg:text-lg">

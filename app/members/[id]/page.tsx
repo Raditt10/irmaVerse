@@ -21,6 +21,7 @@ import {
   CheckCircle2,
   Crosshair,
 } from "lucide-react";
+import Loading from "@/components/ui/Loading";
 
 interface MemberDetail {
   id: string;
@@ -128,7 +129,7 @@ const MemberDetail = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-linear-to-br from-slate-50 via-white to-slate-100 flex items-center justify-center">
-        <p className="text-slate-500">Memuat...</p>
+        <Loading text="Memuat..." size="lg" />
       </div>
     );
   }

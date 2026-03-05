@@ -14,6 +14,7 @@ import Toast from "@/components/ui/Toast";
 import EmptyState from "@/components/ui/EmptyState";
 import AddButton from "@/components/ui/AddButton";
 import SuccessDataFound from "@/components/ui/SuccessDataFound";
+import Loading from "@/components/ui/Loading";
 
 interface NewsItem {
   id: string;
@@ -301,8 +302,8 @@ const News = () => {
             </div>
 
             {loading ? (
-              <div className="text-center py-12">
-                <p className="text-slate-500">Memuat berita...</p>
+              <div className="py-12">
+                <Loading text="Memuat berita..." size="lg" />
               </div>
             ) : filteredNews.length === 0 ? (
               <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">

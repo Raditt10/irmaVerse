@@ -9,6 +9,7 @@ import { ArrowLeft, Eye, Edit3, Image as ImageIcon } from "lucide-react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { Toaster, toast } from "sonner";
+import Loading from "@/components/ui/Loading";
 
 const MDEditor = dynamic(() => import("@uiw/react-md-editor"), { ssr: false });
 
@@ -150,7 +151,7 @@ export default function EditNewsPage() {
   if (fetchingNews) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 flex items-center justify-center">
-        <p className="text-slate-500">Memuat berita...</p>
+        <Loading text="Memuat berita..." size="lg" />
       </div>
     );
   }

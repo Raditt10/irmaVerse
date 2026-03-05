@@ -36,6 +36,10 @@ export async function GET(
       );
     }
 
+    // Get isAttendanceOpen directly with raw SQL since client is outdated
+    const rawMat = await prisma.$queryRaw<any[]>`SELECT isAttendanceOpen FROM material WHERE id = ${materialId}`;
+    const rawAttendanceOpen = rawMat.length > 0 ? (rawMat[0].isAttendanceOpen !== 0 && rawMat[0].isAttendanceOpen !== false) : true;
+
     const user = await prisma.user.findUnique({
       where: { email: session.user.email },
     });
@@ -84,6 +88,7 @@ export async function GET(
         id: material.id,
         title: material.title,
         date: material.date,
+        isAttendanceOpen: rawAttendanceOpen,
       },
       attendances: attendanceWithUsers,
       total: attendanceWithUsers.length,

@@ -35,6 +35,7 @@ import {
   CheckSquare,
   Square,
 } from "lucide-react";
+import Loading from "@/components/ui/Loading";
 
 const CreateMaterial = () => {
   const router = useRouter();
@@ -1087,7 +1088,7 @@ export default function CreateMaterialPage() {
     <Suspense
       fallback={
         <div className="min-h-screen bg-[#FDFBF7] flex items-center justify-center">
-          <p className="text-slate-500 font-bold animate-pulse">Memuat...</p>
+          <Loading text="Memuat..." size="lg" />
         </div>
       }
     >

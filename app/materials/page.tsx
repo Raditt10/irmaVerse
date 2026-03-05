@@ -188,19 +188,31 @@ const Materials = () => {
     }
   };
 
-  const getTodayMaterial = () => {
-    if (!isPrivileged || materials.length === 0) return null;
-    const today = new Date();
+  const getTodayMaterials = () => {
+    if (!isPrivileged || materials.length === 0) return [];
+    
+    const now = new Date();
+    const today = new Date(now);
     today.setHours(0, 0, 0, 0);
+    const todayTimestamp = today.getTime();
+    
+    const currentTimeStr = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
 
-    const todayMaterial = materials.find((m) => {
+    return materials.filter((m) => {
       const materialDate = new Date(m.date);
       materialDate.setHours(0, 0, 0, 0);
-      return materialDate.getTime() === today.getTime();
-    });
+      
+      const isToday = materialDate.getTime() === todayTimestamp;
+      if (!isToday) return false;
 
-    return todayMaterial || null;
+      // Filter out past materials
+      const startTime = m.startedAt || "00:00";
+      return currentTimeStr < startTime;
+    });
   };
+
+  const todayMaterials = getTodayMaterials();
+  const firstTodayMaterial = todayMaterials[0] || null;
 
   return (
     <div className="min-h-screen bg-[#FDFBF7]">
@@ -237,60 +249,45 @@ const Materials = () => {
             </div>
 
             {/* --- LATEST MATERIAL CARD --- */}
-            {isPrivileged && getTodayMaterial() && (
+            {isPrivileged && firstTodayMaterial && (
               <div className="mb-8 bg-linear-to-br from-teal-50 to-cyan-50 rounded-3xl lg:rounded-[2.5rem] border-2 border-teal-200 p-5 lg:p-8 shadow-[0_4px_0_0_#cbd5e1] relative overflow-hidden group hover:border-teal-300 transition-all">
                 <div className="absolute top-0 right-0 -mt-4 -mr-4 w-32 h-32 bg-teal-100 rounded-full blur-3xl opacity-60" />
 
                 <div className="relative z-10">
                   <div className="flex items-center gap-2 mb-4 lg:mb-5">
                     <div className="p-1.5 lg:p-2 bg-white rounded-lg lg:rounded-xl border border-teal-100 shadow-sm">
-                        <Sparkles className="h-4 w-4 lg:h-5 lg:w-5 text-teal-500" strokeWidth={2.5} />
+                      <Sparkles className="h-4 w-4 lg:h-5 lg:w-5 text-teal-500" strokeWidth={2.5} />
                     </div>
                     <h2 className="text-sm lg:text-lg font-black text-slate-800 tracking-tight">Jadwal Kajianmu Hari Ini</h2>
+                    {todayMaterials.length > 1 && (
+                      <span className="px-2.5 py-1 bg-white border border-teal-200 text-teal-600 text-[10px] lg:text-xs font-black rounded-lg shadow-sm">
+                        Dan {todayMaterials.length - 1} lainnya
+                      </span>
+                    )}
                   </div>
 
                   <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 lg:gap-8">
                     <div className="flex-1 min-w-0">
                       <h3 className="text-xl md:text-3xl font-black text-slate-800 mb-2 lg:mb-3 leading-tight truncate">
-                        {getTodayMaterial()?.title}
+                        {firstTodayMaterial?.title}
                       </h3>
                       
                       <div className="flex flex-wrap items-center gap-3">
+                        <div className="flex items-center gap-2 text-xs md:text-sm font-bold text-slate-600 bg-white/80 px-3 py-2 rounded-xl border border-teal-100 shadow-sm">
+                          <Calendar className="h-4 w-4 text-teal-500" />
+                          {new Date(firstTodayMaterial!.date).toLocaleDateString("id-ID", { 
+                            day: 'numeric', month: 'long', year: 'numeric' 
+                          })}
+                        </div>
+                        
+                        {firstTodayMaterial?.startedAt && (
                           <div className="flex items-center gap-2 text-xs md:text-sm font-bold text-slate-600 bg-white/80 px-3 py-2 rounded-xl border border-teal-100 shadow-sm">
-                            <Calendar className="h-4 w-4 text-teal-500" />
-                            {new Date(getTodayMaterial()!.date).toLocaleDateString("id-ID", { 
-                                day: 'numeric', month: 'long', year: 'numeric' 
-                            })}
+                            <Clock className="h-4 w-4 text-teal-500" />
+                            {firstTodayMaterial?.startedAt} WIB
                           </div>
-                          
-                          {getTodayMaterial()?.startedAt && (
-                          <div className="flex items-center gap-2 text-xs md:text-sm font-bold text-slate-600 bg-white/80 px-3 py-2 rounded-xl border border-teal-100 shadow-sm">
-                              <Clock className="h-4 w-4 text-teal-500" />
-                              {getTodayMaterial()?.startedAt} WIB
-                          </div>
-                          )}
+                        )}
                       </div>
                     </div>
-
-                    <div className="flex flex-row items-center gap-3 w-full lg:w-auto shrink-0 mt-1 lg:mt-0">
-                      <button
-                        onClick={() => router.push(`/materials/${getTodayMaterial()?.id}/edit`)}
-                        className="flex-1 lg:flex-none lg:w-36 flex justify-center items-center px-6 py-2.5 rounded-xl bg-teal-400 text-white font-bold border-2 border-teal-600 border-b-4 hover:bg-teal-500 hover:border-b-4 active:border-b-2 active:translate-y-0.5 transition-all text-sm md:text-base"
-                      >
-                        Edit
-                      </button>
-                      
-                      <div className="flex-1 lg:flex-none">
-                        <DeleteButton
-                          label="Hapus"
-                          onClick={() => handleDeleteMaterial(getTodayMaterial()!.id)}
-                          variant="with-label"
-                          showConfirm={true}
-                          className="w-full lg:w-36 justify-center text-sm md:text-base"
-                        />
-                      </div>
-                    </div>
-
                   </div>
                 </div>
               </div>

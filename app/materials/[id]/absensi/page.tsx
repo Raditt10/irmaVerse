@@ -16,8 +16,11 @@ import {
 import DashboardHeader from "@/components/ui/Header";
 import Sidebar from "@/components/ui/Sidebar";
 import ChatbotButton from "@/components/ui/Chatbot";
+import BackButton from "@/components/ui/BackButton";
 import { Input } from "@/components/ui/InputText";
 import { useSession } from "next-auth/react";
+import Loading from "@/components/ui/Loading";
+import Toast from "@/components/ui/Toast";
 
 type AttendanceForm = {
     session: string;
@@ -43,23 +46,31 @@ const Absensi = () => {
     const router = useRouter();
     const [user, setUser] = useState<any>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isCheckingStatus, setIsCheckingStatus] = useState(true);
+    const [isAttendanceOpen, setIsAttendanceOpen] = useState(true);
 
     // State untuk file upload
     const [proofFile, setProofFile] = useState<File | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
     const [attendance, setAttendance] = useState<AttendanceForm>({
-        session: "Kedudukan Akal dan Wahyu",
-        date: "2024-12-15",
-        time: "13:00 - 15:00",
-        location: "Aula Utama",
+        session: "",
+        date: "",
+        time: "",
+        location: "",
         status: "hadir",
         notes: "",
         reason: "",
-        instructorArrival: "12:45",
-        startTime: "13:00",
-        endTime: "15:00",
+        instructorArrival: "",
+        startTime: "",
+        endTime: "",
     });
+
+    const [toast, setToast] = useState<{
+        show: boolean;
+        message: string;
+        type: "success" | "error" | "warning" | "info";
+    }>({ show: false, message: "", type: "success" });
 
     const [survey, setSurvey] = useState<SurveyForm>({
         rating: 4,
@@ -68,14 +79,56 @@ const Absensi = () => {
         feedback: "",
     });
 
+    const { data: sessionInfo } = useSession();
+
     useEffect(() => {
-        setUser({
-            id: "user-123",
-            full_name: "Rafaditya Syahputra",
-            email: "rafaditya@irmaverse.local",
-            avatar: "RS",
-        });
-    }, []);
+        if (sessionInfo?.user) {
+            setUser({
+                id: sessionInfo.user.id,
+                full_name: sessionInfo.user.name,
+                email: sessionInfo.user.email,
+                avatar: sessionInfo.user.avatar,
+            });
+        }
+
+        // Fetch material data and check if attendance is open
+        const fetchMaterialData = async () => {
+            try {
+                const materialId = window.location.pathname.split("/")[2];
+                const res = await fetch(`/api/materials/${materialId}`);
+                if (res.ok) {
+                    const materialData = await res.json();
+                    const isAttendanceOpen = materialData.isAttendanceOpen !== false;
+                    setIsAttendanceOpen(isAttendanceOpen);
+                    
+                    if (!isAttendanceOpen) {
+                        setToast({ show: true, message: "Maaf, Absensi pada kajian ini telah ditutup oleh instruktur", type: "error" });
+                    }
+
+                    // Populate form with real data
+                    setAttendance(prev => ({
+                        ...prev,
+                        session: materialData.title || "",
+                        date: materialData.date ? new Date(materialData.date).toISOString().split('T')[0] : "",
+                        location: materialData.location || "Online/Onsite",
+                        time: materialData.startedAt ? materialData.startedAt : "",
+                        startTime: materialData.startedAt ? materialData.startedAt : "",
+                    }));
+                } else {
+                     setToast({ show: true, message: "Gagal memuat data kajian", type: "error" });
+                }
+            } catch (error) {
+                console.error("Error checking status/data:", error);
+                setToast({ show: true, message: "Terjadi kesalahan saat memuat data", type: "error" });
+            } finally {
+                setIsCheckingStatus(false);
+            }
+        };
+
+        if (sessionInfo) {
+            fetchMaterialData();
+        }
+    }, [router, sessionInfo]);
 
     // Handler untuk upload file
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -99,10 +152,15 @@ const Absensi = () => {
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
+
+        if (!isAttendanceOpen) {
+            setToast({ show: true, message: "Absensi untuk kajian ini sudah ditutup oleh instruktur.", type: "error" });
+            return;
+        }
         
         // Validasi sederhana jika status hadir tapi tidak ada bukti
         if (attendance.status === "hadir" && !proofFile) {
-            alert("Mohon sertakan foto bukti kehadiran.");
+            setToast({ show: true, message: "Mohon sertakan foto bukti kehadiran.", type: "warning" });
             return;
         }
 
@@ -148,7 +206,8 @@ const Absensi = () => {
                     });
 
                     if (!response.ok) {
-                        throw new Error("Failed to record attendance");
+                        const errorData = await response.json();
+                        throw new Error(errorData.details || errorData.error || "Failed to record attendance");
                     }
 
                     // Trigger refresh jadwal kajian
@@ -157,20 +216,20 @@ const Absensi = () => {
                     }
 
                     console.log("Absensi terkirim:", { attendanceData, surveyData, proofFile });
-                    alert("Absensi terkirim! Terima kasih, absensi dan angket sudah dicatat.");
-                    router.push("/materials");
-                } catch (error) {
+                    setToast({ show: true, message: "Absensi terkirim! Terima kasih, absensi dan angket sudah dicatat.", type: "success" });
+                    setTimeout(() => router.push("/materials"), 1500);
+                } catch (error: any) {
                     console.error("Error submitting attendance:", error);
-                    alert("Gagal menyimpan absensi. Silakan coba lagi.");
+                    setToast({ show: true, message: `Gagal: ${error.message}`, type: "error" });
                 } finally {
                     setIsSubmitting(false);
                 }
     };
 
-    if (!user) {
+    if (!user || isCheckingStatus) {
         return (
             <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-                <p className="text-slate-500">Memuat...</p>
+                <Loading text="Memuat..." size="lg" />
             </div>
         );
     }
@@ -190,13 +249,17 @@ const Absensi = () => {
                                 <h1 className="text-4xl font-black text-slate-800">Absensi Kajian</h1>
                                 <p className="text-slate-600 text-lg">Isi kehadiran dan angket kajian minggu ini</p>
                             </div>
-                            <button
+                            <BackButton
+                                label="Kembali saja"
                                 onClick={() => router.push("/materials")}
-                                className="px-4 py-2 rounded-lg bg-white border border-slate-200 text-slate-700 font-semibold shadow-sm hover:bg-slate-50"
-                            >
-                                Kembali ke kajian
-                            </button>
+                            />
                         </div>
+
+                        {!isAttendanceOpen && (
+                            <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700">
+                                Absensi untuk kajian ini sudah ditutup oleh instruktur. Form tidak dapat dikirim.
+                            </div>
+                        )}
 
                         <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                             {/* Absensi */}
@@ -467,10 +530,10 @@ const Absensi = () => {
                                     </div>
                                     <button
                                         type="submit"
-                                        disabled={isSubmitting}
+                                        disabled={isSubmitting || !isAttendanceOpen}
                                         className="px-5 py-3 rounded-xl bg-linear-to-r from-emerald-500 to-cyan-500 text-white font-semibold shadow-lg hover:from-emerald-600 hover:to-cyan-600 transition-all disabled:opacity-60"
                                     >
-                                        {isSubmitting ? "Mengirim..." : "Kirim sekarang"}
+                                        {isSubmitting ? "Mengirim..." : !isAttendanceOpen ? "Absensi ditutup" : "Kirim sekarang"}
                                     </button>
                                 </div>
                             </div>
@@ -479,6 +542,12 @@ const Absensi = () => {
                 </div>
             </div>
             <ChatbotButton />
+            <Toast
+                show={toast.show}
+                message={toast.message}
+                type={toast.type}
+                onClose={() => setToast((prev) => ({ ...prev, show: false }))}
+            />
         </div>
     );
 };

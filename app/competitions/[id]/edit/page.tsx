@@ -16,6 +16,7 @@ import {
   Calendar, MapPin, Tag, Users, ShieldCheck, ListChecks, Award, Headset, Phone, Mail
 } from "lucide-react";
 import Toast from "@/components/ui/Toast"; // Import Toast
+import Loading from "@/components/ui/Loading";
 
 const EditCompetition = () => {
   const router = useRouter();
@@ -133,7 +134,7 @@ const EditCompetition = () => {
   if (status === "loading" || fetchingData) {
     return (
       <div className="min-h-screen bg-linear-to-br from-slate-50 via-white to-slate-100 flex items-center justify-center">
-        <p className="text-slate-500">Memuat...</p>
+        <Loading text="Memuat..." />
       </div>
     );
   }
@@ -216,8 +217,8 @@ const EditCompetition = () => {
       }
 
       const data = await response.json();
-      showToast("Perlombaan berhasil diperbarui!", "success");
-      setTimeout(() => router.push("/competitions"), 1500);
+      showToast("Informasi Perlombaan berhasil diedit! Mengalihkan...", "success");
+      setTimeout(() => router.push(`/competitions/${competitionId}`), 1500);
 
     } catch (error: any) {
       showToast(error.message || "Terjadi kesalahan saat memperbarui perlombaan", "error");
@@ -243,8 +244,7 @@ const EditCompetition = () => {
                 Kembali
               </button>
               <div>
-                <h1 className="text-2xl lg:text-4xl font-black text-slate-800 tracking-tight mb-2 flex items-center gap-2 lg:gap-3">
-                  <Trophy className="h-6 w-6 lg:h-8 lg:w-8 text-amber-500" />
+                <h1 className="text-2xl lg:text-4xl font-black text-slate-800 tracking-tight mb-2 flex items-center gap-2 lg:gap-3">                
                   Edit Informasi Lomba
                 </h1>
                 <p className="text-slate-500 font-medium text-sm lg:text-lg">

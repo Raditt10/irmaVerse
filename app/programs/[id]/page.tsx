@@ -7,6 +7,7 @@ import Sidebar from "@/components/ui/Sidebar";
 import ChatbotButton from "@/components/ui/Chatbot";
 import Toast from "@/components/ui/Toast";
 import CartoonConfirmDialog from "@/components/ui/ConfirmDialog"; // Import Confirm Dialog
+import Loading from "@/components/ui/Loading";
 import {
   Calendar,
   User,
@@ -172,10 +173,7 @@ const ProgramDetail = () => {
         <div className="flex w-full">
           <Sidebar />
           <div className="flex-1 flex flex-col items-center justify-center min-h-[80vh]">
-            <Sparkles className="h-12 w-12 text-teal-400 animate-spin mb-4" />
-            <p className="text-slate-500 font-bold animate-pulse">
-              Sedang memuat detail kursus...
-            </p>
+            <Loading text="Sedang memuat detail kursus..." size="lg" />
           </div>
         </div>
       </div>

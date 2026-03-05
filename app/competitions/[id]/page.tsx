@@ -7,6 +7,9 @@ import ChatbotButton from "@/components/ui/Chatbot";
 import { useSession } from "next-auth/react";
 import CartoonConfirmDialog from "@/components/ui/ConfirmDialog";
 import Toast from "@/components/ui/Toast";
+import Loading from "@/components/ui/Loading";
+import ButtonEdit from "@/components/ui/ButtonEdit";
+import DeleteButton from "@/components/ui/DeleteButton";
 import { 
   ArrowLeft, 
   Calendar, 
@@ -22,7 +25,8 @@ import {
   Users,
   Edit,
   Trash2,
-  Contact
+  Contact,
+  Share2
 } from "lucide-react";
 
 interface Competition {
@@ -67,7 +71,7 @@ const CompetitionDetail = () => {
   const competitionId = params.id as string;
 
   // Assume user with role admin or instruktur is privileged.
-  const isPrivileged = session?.user?.role === "admin" || session?.user?.role === "instructor";
+  const isPrivileged = session?.user?.role === "admin" || session?.user?.role === "instruktur";
 
   const showToast = (message: string, type: "success" | "error") => {
     setToast({ show: true, message, type });
@@ -147,7 +151,7 @@ const CompetitionDetail = () => {
   if (!user) {
     return (
       <div className="min-h-screen bg-[#FDFBF7] flex items-center justify-center">
-        <p className="text-slate-500">Memuat...</p>
+        <Loading text="Memuat..." />
       </div>
     );
   }
@@ -161,8 +165,7 @@ const CompetitionDetail = () => {
           <div className="flex-1 px-4 sm:px-6 lg:px-8 py-6">
             <div className="max-w-5xl mx-auto">
               <div className="flex flex-col items-center justify-center py-12">
-                <Sparkles className="h-10 w-10 text-teal-400 animate-spin" />
-                <p className="text-slate-500 font-bold mt-2">Memuat detail kompetisi...</p>
+                <Loading text="Memuat detail kompetisi..." />
               </div>
             </div>
           </div>
@@ -215,22 +218,21 @@ const CompetitionDetail = () => {
               <div className="flex items-center gap-3 self-end sm:self-auto">
                 {isPrivileged && (
                   <>
-                    <button
-                      onClick={() => router.push(`/competitions/${competitionId}/edit`)}
-                      className="w-[46px] h-[46px] rounded-[14px] bg-[#00c689] text-white border-2 border-[#00a874] border-b-4 hover:bg-[#00d08f] hover:border-b-2 hover:translate-y-0.5 active:translate-y-1 active:border-b-0 transition-all flex items-center justify-center p-0"
-                      title="Edit Kompetisi"
-                    >
-                      <Edit className="w-5 h-5" strokeWidth={2.5} />
-                    </button>
-                    <button
+                    <ButtonEdit
+                      id={competitionId}
+                      basePath="/competitions"
+                      className="h-12 w-12"
+                    />
+                    <DeleteButton
                       onClick={() => setShowConfirmDelete(true)}
-                      className="w-[46px] h-[46px] rounded-[14px] bg-[#ff3366] text-white border-2 border-[#e62050] border-b-4 hover:bg-[#ff4775] hover:border-b-2 hover:translate-y-0.5 active:translate-y-1 active:border-b-0 transition-all flex items-center justify-center p-0"
-                      title="Hapus Kompetisi"
-                    >
-                      <Trash2 className="w-5 h-5" strokeWidth={2.5} />
-                    </button>
+                      variant="icon-only"
+                      className="rounded-xl h-12 w-12"
+                    />
                   </>
                 )}
+                <button className="w-12 h-12 bg-white rounded-2xl border-2 border-slate-200 text-slate-400 hover:text-teal-500 hover:border-teal-400 border-b-4 active:border-b-2 active:translate-y-0.5 transition-all shadow-md flex items-center justify-center group">
+                  <Share2 className="h-5 w-5 stroke-[2.5] group-hover:scale-110 transition-transform" />
+                </button>
               </div>
             </div>
 
@@ -431,20 +433,47 @@ const CompetitionDetail = () => {
                       — HUBUNGI NARAHUBUNG —
                     </p>
                     
-                    <button
-                      onClick={() => {
-                        const phone = (competition.contactNumber || "").replace(/[^0-9]/g, "");
-                        if (!phone) {
-                          setToast({ show: true, message: "Maaf, nomor telepon ini tidak valid", type: "error" });
-                          return;
-                        }
-                        window.open(`https://wa.me/${phone}`, "_blank", "noopener,noreferrer");
-                      }}
-                      className="w-full p-4 rounded-2xl bg-white border-2 border-slate-200 flex items-center justify-center gap-2 hover:border-teal-400 hover:bg-teal-50 transition-all group mt-2"
-                    >
-                      <MessageCircle className="w-5 h-5 text-teal-500 group-hover:scale-110 transition-transform" strokeWidth={3} />
-                      <span className="font-bold text-slate-600">Kirim Pesan</span>
-                    </button>
+                    {competition.contactNumber && (
+                      <button
+                        onClick={() => {
+                          const phone = competition.contactNumber.replace(/\D/g, "");
+                          window.open(`https://wa.me/${phone}`, "_blank", "noopener,noreferrer");
+                        }}
+                        className="w-full p-4 rounded-2xl bg-emerald-50 border-2 border-emerald-200 flex items-center justify-center gap-2 hover:bg-emerald-100 transition-all group mt-2"
+                      >
+                        <MessageCircle className="w-5 h-5 text-emerald-500 group-hover:scale-110 transition-transform" strokeWidth={3} />
+                        <span className="font-bold text-emerald-700">WhatsApp Narahubung</span>
+                      </button>
+                    )}
+
+                    {competition.contactEmail && (
+                      <button
+                        onClick={() => {
+                          window.location.href = `mailto:${competition.contactEmail}`;
+                        }}
+                        className="w-full p-4 rounded-2xl bg-blue-50 border-2 border-blue-200 flex items-center justify-center gap-2 hover:bg-blue-100 transition-all group mt-2"
+                      >
+                        <Mail className="w-5 h-5 text-blue-500 group-hover:scale-110 transition-transform" strokeWidth={3} />
+                        <span className="font-bold text-blue-700">Email Narahubung</span>
+                      </button>
+                    )}
+
+                    {!competition.contactNumber && !competition.contactEmail && (
+                      <button
+                        onClick={() => {
+                          const phone = (competition.contactNumber || "").replace(/[^0-9]/g, "");
+                          if (!phone) {
+                            setToast({ show: true, message: "Maaf, nomor telepon ini tidak valid", type: "error" });
+                            return;
+                          }
+                          window.open(`https://wa.me/${phone}`, "_blank", "noopener,noreferrer");
+                        }}
+                        className="w-full p-4 rounded-2xl bg-white border-2 border-slate-200 flex items-center justify-center gap-2 hover:border-teal-400 hover:bg-teal-50 transition-all group mt-2"
+                      >
+                        <MessageCircle className="w-5 h-5 text-teal-500 group-hover:scale-110 transition-transform" strokeWidth={3} />
+                        <span className="font-bold text-slate-600">Kirim Pesan</span>
+                      </button>
+                    )}
                   </div>
                 </div>
 

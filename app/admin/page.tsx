@@ -123,10 +123,10 @@ export default function AdminDashboard() {
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
             <div>
               <h1 className="text-2xl md:text-4xl font-black text-slate-800 tracking-tight mb-1">
-                Admin Dashboard
+                Pusat Admin
               </h1>
               <p className="text-slate-500 mt-1 font-bold text-base md:text-lg ml-1">
-                Kelola ekosistem IRMA Verse dengan kontrol penuh.
+                Kelola aplikasi IRMA Verse ini dengan kontrol penuh, dan bertanggung jawab.
               </p>
             </div>
 
