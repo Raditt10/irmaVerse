@@ -27,6 +27,8 @@ import {
   Heart,
   Eye,
   User,
+  AlertCircle,
+  MapPin,
 } from "lucide-react";
 import Sidebar from "@/components/ui/Sidebar";
 import DashboardHeader from "@/components/ui/Header";
@@ -91,6 +93,14 @@ const Dashboard = () => {
   const [loadingFinished, setLoadingFinished] = useState(true);
   const [latestNews, setLatestNews] = useState<any[]>([]);
   const [loadingNews, setLoadingNews] = useState(true);
+  const [todayMaterials, setTodayMaterials] = useState<any[]>([]);
+  const [loadingToday, setLoadingToday] = useState(true);
+  const [dynamicStats, setDynamicStats] = useState({
+    totalAttended: 0,
+    quizCompleted: 0,
+    quizPending: 0,
+    avgScore: 0,
+  });
 
   // Redirect non-user roles away from overview
   React.useEffect(() => {
@@ -136,6 +146,20 @@ const Dashboard = () => {
         if (materialsRes.ok) {
           allMaterialsData = await materialsRes.json();
           setMaterials(allMaterialsData.slice(0, 5));
+
+          // Find today's kajian (materials scheduled for today that user has joined)
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          const todayEnd = new Date(today);
+          todayEnd.setHours(23, 59, 59, 999);
+          const todayKajian = allMaterialsData.filter((m: any) => {
+            const mDate = new Date(m.date);
+            return mDate >= today && mDate <= todayEnd && m.isJoined;
+          });
+          setTodayMaterials(todayKajian);
+          setLoadingToday(false);
+        } else {
+          setLoadingToday(false);
         }
 
         if (attendanceRes.ok) {
@@ -184,16 +208,34 @@ const Dashboard = () => {
           
           if (quizRes.ok) {
             const quizData = await quizRes.json();
-            // Cek kuis yang (1) user sudah attend material nya, (2) belum kerjakan kuisnya (tidak ada lastAttempt)
             const attendedMaterialIds = finished.map((att: any) => att.materialId);
             
-            const pendingQuizzes = Array.isArray(quizData) 
-              ? quizData.filter((q: any) => 
-                  !q.lastAttempt && // Belum punya percobaan/skor
-                  !q.isStandalone && // Bukan kuis mandiri
-                  attendedMaterialIds.includes(q.materialId) // Sudah hadir kajiannya
-                )
-              : [];
+            const allQuizzes = Array.isArray(quizData) ? quizData : [];
+            const completedQuizzes = allQuizzes.filter((q: any) => q.lastAttempt);
+            const pendingQuizzes = allQuizzes.filter((q: any) => 
+              !q.lastAttempt &&
+              !q.isStandalone &&
+              attendedMaterialIds.includes(q.materialId)
+            );
+
+            // Compute average score from completed quizzes
+            let avgScore = 0;
+            if (completedQuizzes.length > 0) {
+              const totalPct = completedQuizzes.reduce((sum: number, q: any) => {
+                const pct = q.lastAttempt.totalScore > 0
+                  ? Math.round((q.lastAttempt.score / q.lastAttempt.totalScore) * 100)
+                  : 0;
+                return sum + pct;
+              }, 0);
+              avgScore = Math.round(totalPct / completedQuizzes.length);
+            }
+
+            setDynamicStats({
+              totalAttended: finished.length,
+              quizCompleted: completedQuizzes.length,
+              quizPending: pendingQuizzes.length,
+              avgScore,
+            });
               
             setUpcomingQuizzes(pendingQuizzes.slice(0, 3));
           }
@@ -240,13 +282,7 @@ const Dashboard = () => {
     return quizButtonColors[index % quizButtonColors.length];
   };
     
-  const stats = {
-    totalPoints: 2450,
-    totalBadges: 8,
-    totalQuizzes: 24,
-    averageScore: 87,
-    streak: 7,
-  };
+
 
   const quickActions = [
     { title: "Pengumuman", icon: Bell, link: "/announcements" },
@@ -307,53 +343,113 @@ const Dashboard = () => {
             {/* LEFT COLUMN */}
             <div className="xl:col-span-8 space-y-8">
               
-              {/* Stats Row */}
+              {/* Stats Row - Dynamic from user progress */}
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                {/* Stat 1 */}
-                {/* Stat 1 - Badges (Amber) */}
-                <div className="bg-white p-5 md:p-6 rounded-[2.5rem] border-2 border-amber-100 shadow-[0_6px_0_0_#fef3c7] sm:shadow-[0_8px_0_0_#fef3c7] hover:shadow-[0_4px_0_0_#fef3c7] hover:translate-y-1 hover:border-amber-200 transition-all duration-300 group max-md:aspect-square flex flex-col justify-between">
-                  <div className="flex justify-between items-start md:mb-4">
-                    <div className="p-2.5 md:p-3 bg-amber-50 border-2 border-amber-100 rounded-2xl group-hover:scale-110 transition-transform">
-                      <Award className="w-6 h-6 md:w-7 md:h-7 text-amber-500" strokeWidth={2.5} />
-                    </div>
-                    <span className="text-[10px] font-black px-2.5 py-1 md:px-3 bg-amber-100 text-amber-600 rounded-full border border-amber-200">Total</span>
-                  </div>
-                  <div className="flex flex-col gap-1">
-                    <div className="text-2xl md:text-3xl font-black text-slate-800 leading-none">{stats.totalBadges}</div>
-                    <div className="text-[10px] text-slate-400 font-black tracking-wide uppercase">Badges Koleksi</div>
-                  </div>
-                </div>
-
-                {/* Stat 2 */}
-                {/* Stat 2 - Kuis (Emerald) */}
+                {/* Stat 1 - Kajian Dihadiri */}
                 <div className="bg-white p-5 md:p-6 rounded-[2.5rem] border-2 border-emerald-100 shadow-[0_6px_0_0_#d1fae5] sm:shadow-[0_8px_0_0_#d1fae5] hover:shadow-[0_4px_0_0_#d1fae5] hover:translate-y-1 hover:border-emerald-200 transition-all duration-300 group max-md:aspect-square flex flex-col justify-between">
                   <div className="flex justify-between items-start md:mb-4">
                     <div className="p-2.5 md:p-3 bg-emerald-50 border-2 border-emerald-100 rounded-2xl group-hover:scale-110 transition-transform">
-                      <BarChart3 className="w-6 h-6 md:w-7 md:h-7 text-emerald-500" strokeWidth={2.5} />
+                      <CheckCircle className="w-6 h-6 md:w-7 md:h-7 text-emerald-500" strokeWidth={2.5} />
                     </div>
-                    <span className="text-[10px] font-black px-2.5 py-1 md:px-3 bg-emerald-100 text-emerald-600 rounded-full border border-emerald-200">{stats.averageScore}%</span>
+                    <span className="text-[10px] font-black px-2.5 py-1 md:px-3 bg-emerald-100 text-emerald-600 rounded-full border border-emerald-200">Total</span>
                   </div>
                   <div className="flex flex-col gap-1">
-                    <div className="text-2xl md:text-3xl font-black text-slate-800 leading-none">{stats.totalQuizzes}</div>
+                    <div className="text-2xl md:text-3xl font-black text-slate-800 leading-none">{dynamicStats.totalAttended}</div>
+                    <div className="text-[10px] text-slate-400 font-black tracking-wide uppercase">Kajian Dihadiri</div>
+                  </div>
+                </div>
+
+                {/* Stat 2 - Kuis Selesai */}
+                <div className="bg-white p-5 md:p-6 rounded-[2.5rem] border-2 border-amber-100 shadow-[0_6px_0_0_#fef3c7] sm:shadow-[0_8px_0_0_#fef3c7] hover:shadow-[0_4px_0_0_#fef3c7] hover:translate-y-1 hover:border-amber-200 transition-all duration-300 group max-md:aspect-square flex flex-col justify-between">
+                  <div className="flex justify-between items-start md:mb-4">
+                    <div className="p-2.5 md:p-3 bg-amber-50 border-2 border-amber-100 rounded-2xl group-hover:scale-110 transition-transform">
+                      <BarChart3 className="w-6 h-6 md:w-7 md:h-7 text-amber-500" strokeWidth={2.5} />
+                    </div>
+                    <span className="text-[10px] font-black px-2.5 py-1 md:px-3 bg-amber-100 text-amber-600 rounded-full border border-amber-200">{dynamicStats.avgScore}%</span>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <div className="text-2xl md:text-3xl font-black text-slate-800 leading-none">{dynamicStats.quizCompleted}</div>
                     <div className="text-[10px] text-slate-400 font-black tracking-wide uppercase">Kuis Selesai</div>
                   </div>
                 </div>
 
-                {/* Stat 3 */}
-                {/* Stat 3 - Streak (Rose) */}
+                {/* Stat 3 - Kuis Pending */}
                 <div className="bg-white p-5 md:p-6 rounded-[2.5rem] border-2 border-rose-100 shadow-[0_6px_0_0_#ffe4e6] sm:shadow-[0_8px_0_0_#ffe4e6] hover:shadow-[0_4px_0_0_#ffe4e6] hover:translate-y-1 hover:border-rose-200 transition-all duration-300 group max-md:aspect-square flex flex-col justify-between">
                   <div className="flex justify-between items-start md:mb-4">
                     <div className="p-2.5 md:p-3 bg-rose-50 border-2 border-rose-100 rounded-2xl group-hover:scale-110 transition-transform">
-                      <Flame className="w-6 h-6 md:w-7 md:h-7 text-rose-500" strokeWidth={2.5} />
+                      <AlertCircle className="w-6 h-6 md:w-7 md:h-7 text-rose-500" strokeWidth={2.5} />
                     </div>
-                    <span className="text-[10px] font-black px-2.5 py-1 md:px-3 bg-rose-100 text-rose-600 rounded-full border border-rose-200">Mantap!</span>
+                    <span className="text-[10px] font-black px-2.5 py-1 md:px-3 bg-rose-100 text-rose-600 rounded-full border border-rose-200">{dynamicStats.quizPending > 0 ? "Segera!" : "Aman"}</span>
                   </div>
                   <div className="flex flex-col gap-1">
-                    <div className="text-2xl md:text-3xl font-black text-slate-800 leading-none">{stats.streak} Hari</div>
-                    <div className="text-[10px] text-slate-400 font-black tracking-wide uppercase">Konsistensi</div>
+                    <div className="text-2xl md:text-3xl font-black text-slate-800 leading-none">{dynamicStats.quizPending}</div>
+                    <div className="text-[10px] text-slate-400 font-black tracking-wide uppercase">Kuis Tertunda</div>
                   </div>
                 </div>
               </div>
+
+              {/* Today's Kajian Section */}
+              {!loadingToday && todayMaterials.length > 0 && (
+                <section>
+                  <div className="flex items-center gap-3 mb-5 px-2">
+                    <div className="p-2 bg-amber-50 border-2 border-amber-200 rounded-xl shadow-[0_3px_0_0_#fcd34d]">
+                      <Calendar className="w-5 h-5 text-amber-600" />
+                    </div>
+                    <div>
+                      <h2 className="text-xl font-black text-slate-800">Kajian Hari Ini</h2>
+                      <p className="text-[11px] text-slate-400 font-bold">Jangan sampai ketinggalan!</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    {todayMaterials.map((material) => (
+                      <div
+                        key={material.id}
+                        onClick={() => router.push(`/materials/${material.id}`)}
+                        className="bg-linear-to-r from-amber-50 to-white rounded-3xl border-2 border-amber-200 p-5 lg:p-6 hover:border-amber-400 hover:shadow-[0_4px_0_0_#fbbf24] transition-all duration-300 cursor-pointer group flex flex-col md:flex-row md:items-center justify-between gap-4 relative overflow-hidden"
+                      >
+                        <div className="absolute top-0 right-0 w-20 h-20 bg-amber-100/50 rounded-full -mr-6 -mt-6" />
+                        <div className="flex-1 min-w-0 relative z-10">
+                          <div className="flex flex-wrap items-center gap-2 mb-2">
+                            <span className="px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-wide border bg-amber-100 text-amber-700 border-amber-300 flex items-center gap-1">
+                              <Clock className="w-3 h-3" />
+                              {material.startedAt || new Date(material.date).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}
+                            </span>
+                            <span className="px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-wide border bg-emerald-50 text-emerald-600 border-emerald-200">
+                              {material.category}
+                            </span>
+                          </div>
+                          <h3 className="text-lg md:text-xl font-black text-slate-800 leading-tight mb-1 group-hover:text-amber-700 transition-colors">
+                            {material.title}
+                          </h3>
+                          <div className="flex flex-wrap items-center gap-3 text-xs font-semibold text-slate-400 mt-2">
+                            <div className="flex items-center gap-1.5">
+                              <User className="h-3.5 w-3.5" />
+                              {material.instructor}
+                            </div>
+                            {material.location && (
+                              <div className="flex items-center gap-1.5">
+                                <MapPin className="h-3.5 w-3.5" />
+                                {material.location}
+                              </div>
+                            )}
+                            <div className="flex items-center gap-1.5">
+                              <BookOpen className="h-3.5 w-3.5" />
+                              {material.grade}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="shrink-0 relative z-10">
+                          <button className="flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-amber-400 text-white font-black border-2 border-amber-500 border-b-4 hover:bg-amber-500 active:border-b-2 active:translate-y-0.5 transition-all text-sm shadow-[0_4px_0_0_#d97706]">
+                            <Play className="h-4 w-4 fill-white" />
+                            Ikuti
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
 
               {/* News Section */}
               <section>
@@ -532,43 +628,51 @@ const Dashboard = () => {
               {/* Feature Cards Stack */}
               <div className="space-y-4">
                 
-                {/* Daily Challenge Card */}
-                <div className="bg-white p-5 rounded-[2rem] border-2 border-slate-100 shadow-sm flex items-center gap-4 hover:border-amber-300 hover:shadow-[0_4px_0_0_#fcd34d] transition-all group">
-                  <div className="w-14 h-14 rounded-full bg-amber-50 border-2 border-amber-100 flex items-center justify-center shrink-0 group-hover:rotate-12 transition-transform">
-                    <Zap className="w-7 h-7 text-amber-500 fill-amber-500" />
+                {/* Dynamic Mission Card */}
+                <div className="bg-white p-5 rounded-[2rem] border-2 border-slate-100 shadow-sm hover:border-amber-300 hover:shadow-[0_4px_0_0_#fcd34d] transition-all group">
+                  <div className="flex items-center gap-4 mb-3">
+                    <div className="w-14 h-14 rounded-full bg-amber-50 border-2 border-amber-100 flex items-center justify-center shrink-0 group-hover:rotate-12 transition-transform">
+                      <Zap className="w-7 h-7 text-amber-500 fill-amber-500" />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-black text-slate-800 text-lg">Misi Kamu</h4>
+                      <p className="text-xs text-slate-500 font-bold">Progress hari ini</p>
+                    </div>
                   </div>
-                  <div className="flex-1">
-                    <h4 className="font-black text-slate-800 text-lg">Misi Harian</h4>
-                    <p className="text-xs text-slate-500 font-bold">Selesaikan 2 Kuis</p>
+                  <div className="space-y-2">
+                    {todayMaterials.length > 0 && (
+                      <div className="flex items-center gap-3 p-3 rounded-xl bg-amber-50 border border-amber-100">
+                        <Calendar className="w-4 h-4 text-amber-600 shrink-0" />
+                        <p className="text-xs font-bold text-slate-700 flex-1">
+                          {todayMaterials.length} kajian hari ini
+                        </p>
+                        <Link href="/materials" className="text-[10px] font-black text-amber-600 hover:text-amber-700">
+                          Lihat
+                        </Link>
+                      </div>
+                    )}
+                    {dynamicStats.quizPending > 0 && (
+                      <div className="flex items-center gap-3 p-3 rounded-xl bg-rose-50 border border-rose-100">
+                        <HelpCircle className="w-4 h-4 text-rose-500 shrink-0" />
+                        <p className="text-xs font-bold text-slate-700 flex-1">
+                          {dynamicStats.quizPending} kuis belum dikerjakan
+                        </p>
+                        <Link href="/quiz" className="text-[10px] font-black text-rose-500 hover:text-rose-600">
+                          Kerjakan
+                        </Link>
+                      </div>
+                    )}
+                    {todayMaterials.length === 0 && dynamicStats.quizPending === 0 && (
+                      <div className="flex items-center gap-3 p-3 rounded-xl bg-emerald-50 border border-emerald-100">
+                        <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" />
+                        <p className="text-xs font-bold text-emerald-700">
+                          Semua misi selesai! Mashaallah 🌟
+                        </p>
+                      </div>
+                    )}
                   </div>
-                  <button className="px-6 py-2.5 bg-emerald-400 text-white text-xs font-black rounded-2xl h-11 border-b-4 border-emerald-600 hover:bg-emerald-500 hover:shadow-[0_4px_0_0_#10b981] active:border-b-0 active:translate-y-1 transition-all shadow-[0_4px_0_0_#059669]">
-                    Mulai
-                  </button>
                 </div>
 
-                {/* Ci Irma Chatbot Promo */}
-                <div className="bg-emerald-50 p-5 rounded-[2rem] border-2 border-emerald-200 relative overflow-hidden group">
-                  {/* Decorative blobs */}
-                  <div className="absolute top-[-20%] right-[-10%] w-24 h-24 bg-cyan-200 rounded-full opacity-20 group-hover:scale-125 transition-transform" />
-                  
-                  <div className="flex items-center gap-3 mb-3 relative z-10">
-                    <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-md">
-                      <img src="/ciirma.webp" alt="AI" className="w-full h-full object-cover" />
-                    </div>
-                    <div>
-                      <h4 className="font-black text-slate-800 text-base">Ci Irma AI</h4>
-                      <span className="text-xs text-emerald-600 flex items-center gap-1.5 font-bold bg-white px-2 py-0.5 rounded-full border border-emerald-100 w-fit">
-                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" /> Online
-                      </span>
-                    </div>
-                  </div>
-                  <p className="text-sm text-slate-600 mb-4 font-bold relative z-10 leading-relaxed">
-                    "Ada PR yang susah? Atau mau curhat? Irma siap bantu kamu!"
-                  </p>
-                  <button className="w-full py-3 bg-white text-slate-800 font-black text-sm rounded-2xl shadow-[0_4px_0_0_#cbd5e1] border-2 border-slate-200 hover:shadow-[0_2px_0_0_#cbd5e1] hover:translate-y-[2px] active:translate-y-[4px] active:shadow-none transition-all flex items-center justify-center gap-2 relative z-10">
-                    <MessageSquare className="w-5 h-5 text-cyan-500" strokeWidth={3} /> Chat Sekarang
-                  </button>
-                </div>
 
                 {/* Instruktur Favoritmu */}
                 <div className="bg-white p-5 rounded-[2rem] border-2 border-rose-100 shadow-[0_6px_0_0_#ffe4e6] hover:shadow-[0_4px_0_0_#ffe4e6] hover:translate-y-1 transition-all duration-300 group">

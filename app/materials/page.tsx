@@ -475,6 +475,7 @@ const Materials = () => {
                                     isJoined={material.isJoined}
                                     attendedAt={material.attendedAt}
                                     materialDate={material.date}
+                                    onNoRekapan={() => showToast("Maaf, untuk kajian ini belum tersedia rekapan materinya", "error")}
                                   />
                                 </div>
                                 <DetailButton

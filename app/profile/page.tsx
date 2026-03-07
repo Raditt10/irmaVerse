@@ -1,5 +1,6 @@
 "use client";
 import { useSession } from "next-auth/react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   Award,
@@ -15,15 +16,19 @@ import {
   Sparkles,
   Users,
   Calendar,
+  HelpCircle,
   PenSquare,
   FileText,
   GraduationCap,
   TrendingUp,
   Zap,
+  AlertCircle,
+  UserCheck,
 } from "lucide-react";
 import DashboardHeader from "@/components/ui/Header";
 import Sidebar from "@/components/ui/Sidebar";
 import ProfileInformationForm from "./_components/ProfileInformationForm";
+import Loading from "@/components/ui/Loading";
 
 const Profile = () => {
   const { data: session } = useSession({
@@ -37,15 +42,143 @@ const Profile = () => {
 
   const isInstruktur = session?.user?.role === "instruktur";
 
-  // ========== USER STATS ==========
-  const userStats = {
-    totalPoints: 2450,
-    totalBadges: 8,
-    totalQuizzes: 24,
-    averageScore: 87,
-    streak: 7,
-    level: 5,
-    rank: 12,
+  // ========== DYNAMIC USER STATS ==========
+  const [userStats, setUserStats] = useState({
+    totalAttended: 0,
+    quizCompleted: 0,
+    quizPending: 0,
+    avgScore: 0,
+    badges: 0,
+  });
+  const [loadingStats, setLoadingStats] = useState(true);
+  const [friends, setFriends] = useState<any[]>([]);
+  const [loadingFriends, setLoadingFriends] = useState(true);
+  const [userActivities, setUserActivities] = useState<any[]>([]);
+  const [loadingActivities, setLoadingActivities] = useState(true);
+
+  useEffect(() => {
+    if (!session?.user?.id || isInstruktur) return;
+
+    const fetchUserData = async () => {
+      try {
+        const [attendanceRes, quizRes, membersRes] = await Promise.all([
+          fetch("/api/materials/attendance"),
+          fetch("/api/quiz"),
+          fetch("/api/members"),
+        ]);
+
+        // --- Attendance data ---
+        let attendedList: any[] = [];
+        if (attendanceRes.ok) {
+          const aData = await attendanceRes.json();
+          attendedList = Array.isArray(aData) ? aData : [];
+        }
+
+        // --- Quiz data ---
+        let completedQuizzes: any[] = [];
+        let pendingCount = 0;
+        let avgScore = 0;
+        if (quizRes.ok) {
+          const quizData = await quizRes.json();
+          const allQuizzes = Array.isArray(quizData) ? quizData : [];
+          completedQuizzes = allQuizzes.filter((q: any) => q.lastAttempt);
+          const attendedIds = attendedList.map((a: any) => a.materialId);
+          pendingCount = allQuizzes.filter(
+            (q: any) => !q.lastAttempt && !q.isStandalone && attendedIds.includes(q.materialId)
+          ).length;
+
+          if (completedQuizzes.length > 0) {
+            const totalPct = completedQuizzes.reduce((sum: number, q: any) => {
+              const pct = q.lastAttempt.totalScore > 0
+                ? Math.round((q.lastAttempt.score / q.lastAttempt.totalScore) * 100)
+                : 0;
+              return sum + pct;
+            }, 0);
+            avgScore = Math.round(totalPct / completedQuizzes.length);
+          }
+        }
+
+        setUserStats({
+          totalAttended: attendedList.length,
+          quizCompleted: completedQuizzes.length,
+          quizPending: pendingCount,
+          avgScore,
+          badges: 0,
+        });
+        setLoadingStats(false);
+
+        // --- Build activities from real data ---
+        const activities: any[] = [];
+
+        // Add attendance activities
+        attendedList
+          .sort((a: any, b: any) => new Date(b.attendedAt).getTime() - new Date(a.attendedAt).getTime())
+          .slice(0, 5)
+          .forEach((att: any) => {
+            activities.push({
+              type: "material",
+              title: `Menghadiri kajian "${att.materialTitle || "Kajian"}"`,
+              date: formatActivityDate(att.attendedAt),
+              sortDate: new Date(att.attendedAt).getTime(),
+            });
+          });
+
+        // Add quiz activities
+        completedQuizzes
+          .sort((a: any, b: any) => new Date(b.lastAttempt.completedAt).getTime() - new Date(a.lastAttempt.completedAt).getTime())
+          .slice(0, 5)
+          .forEach((q: any) => {
+            const pct = q.lastAttempt.totalScore > 0
+              ? Math.round((q.lastAttempt.score / q.lastAttempt.totalScore) * 100)
+              : 0;
+            activities.push({
+              type: "quiz",
+              title: `Menyelesaikan kuis "${q.title}"`,
+              date: formatActivityDate(q.lastAttempt.completedAt),
+              sortDate: new Date(q.lastAttempt.completedAt).getTime(),
+              points: `${pct}%`,
+            });
+          });
+
+        // Sort all by date and take latest 5
+        activities.sort((a, b) => b.sortDate - a.sortDate);
+        setUserActivities(activities.slice(0, 5));
+        setLoadingActivities(false);
+
+        // --- Friends (other members) ---
+        if (membersRes.ok) {
+          const members = await membersRes.json();
+          const otherMembers = Array.isArray(members)
+            ? members.filter((m: any) => m.id !== session.user.id)
+            : [];
+          setFriends(otherMembers);
+        }
+        setLoadingFriends(false);
+      } catch (error) {
+        console.error("Error fetching profile data:", error);
+        setLoadingStats(false);
+        setLoadingFriends(false);
+        setLoadingActivities(false);
+      }
+    };
+
+    fetchUserData();
+  }, [session?.user?.id, isInstruktur]);
+
+  const formatActivityDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    const time = date.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
+
+    if (diffDays === 0) return `Hari ini, ${time}`;
+    if (diffDays === 1) return `Kemarin, ${time}`;
+    if (diffDays < 7) return `${diffDays} hari lalu`;
+    return date.toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
   };
 
   // ========== INSTRUKTUR STATS ==========
@@ -56,25 +189,6 @@ const Profile = () => {
     totalSesi: 64,
     kepuasan: 92,
   };
-
-  // ========== USER PROGRAMS ==========
-  const programs = [
-    { id: "1", title: "Kedudukan akal dan wahyu", duration: "3 bulan", level: "Program Wajib", status: "in-progress" },
-    { id: "2", title: "Kursus Bahasa Arab", duration: "6 bulan", level: "Program Wajib", status: "done" },
-    { id: "3", title: "Training Imam & Khatib", duration: "2 bulan", level: "Lanjutan", status: "in-progress" },
-    { id: "4", title: "Tahsin & Tajwid Intensif", duration: "4 bulan", level: "Program Wajib", status: "done" },
-    { id: "5", title: "Manajemen Masjid Modern", duration: "3 bulan", level: "Lanjutan", status: "upcoming" },
-    { id: "6", title: "Media Dakwah Digital", duration: "5 bulan", level: "Program Wajib", status: "upcoming" },
-  ] as const;
-
-  // ========== USER ACTIVITIES ==========
-  const userActivities = [
-    { type: "quiz", title: "Menyelesaikan Quiz Dasar Islam", date: "Hari ini, 14:30", points: "+50" },
-    { type: "badge", title: "Mendapat Badge Konsisten", date: "Hari ini, 09:00", points: "+100" },
-    { type: "discussion", title: "Berkomentar di Diskusi Sholat", date: "Kemarin, 20:15", points: "+20" },
-    { type: "material", title: "Membaca Materi Tauhid", date: "Kemarin, 18:00", points: "+30" },
-    { type: "level", title: "Naik ke Level 5", date: "2 hari lalu", points: "+200" },
-  ];
 
   // ========== INSTRUKTUR ACTIVITIES ==========
   const instrukturActivities = [
@@ -87,22 +201,22 @@ const Profile = () => {
 
   const getUserActivityIcon = (type: string) => {
     switch (type) {
-      case "quiz": return <BarChart3 className="h-5 w-5 text-indigo-600" />;
+      case "quiz": return <HelpCircle className="h-5 w-5 text-emerald-600" />;
       case "badge": return <Award className="h-5 w-5 text-amber-600" />;
       case "discussion": return <MessageCircle className="h-5 w-5 text-emerald-600" />;
-      case "material": return <BookOpen className="h-5 w-5 text-blue-600" />;
-      case "level": return <Trophy className="h-5 w-5 text-rose-600" />;
+      case "material": return <BookOpen className="h-5 w-5 text-teal-600" />;
+      case "level": return <Trophy className="h-5 w-5 text-emerald-700" />;
       default: return <Star className="h-5 w-5 text-slate-600" />;
     }
   };
 
   const getUserActivityBg = (type: string) => {
     switch (type) {
-      case "quiz": return "bg-indigo-100 border-indigo-200";
-      case "badge": return "bg-amber-100 border-amber-200";
-      case "discussion": return "bg-emerald-100 border-emerald-200";
-      case "material": return "bg-blue-100 border-blue-200";
-      case "level": return "bg-rose-100 border-rose-200";
+      case "quiz": return "bg-emerald-100 border-emerald-200";
+      case "badge": return "bg-emerald-50 border-emerald-200";
+      case "discussion": return "bg-teal-100 border-teal-200";
+      case "material": return "bg-teal-50 border-teal-200";
+      case "level": return "bg-emerald-50 border-emerald-300";
       default: return "bg-slate-100 border-slate-200";
     }
   };
@@ -162,17 +276,17 @@ const Profile = () => {
                 {/* 1. Profile Form Card */}
                 <div className="bg-white rounded-[2.5rem] border-2 border-slate-200 shadow-[4px_4px_0_0_#cbd5e1] p-6 lg:p-8">
                   <ProfileInformationForm
-                    stats={userStats || 0}
-                    level={userStats.level || 0}
-                    rank={userStats.rank || 0}
+                    stats={userStats}
+                    level={0}
+                    rank={0}
                   />
                 </div>
 
                 {/* 2. Activity History */}
                 <div className="bg-white rounded-[2.5rem] border-2 border-slate-200 shadow-[4px_4px_0_0_#cbd5e1] p-6 lg:p-8">
                   <div className="flex items-center gap-3 mb-6">
-                    <div className={`p-2 rounded-xl border ${isInstruktur ? "bg-emerald-50 border-emerald-100" : "bg-indigo-50 border-indigo-100"}`}>
-                      <Clock3 className={`h-6 w-6 ${isInstruktur ? "text-emerald-500" : "text-indigo-500"}`} />
+                    <div className={`p-2 rounded-xl border ${isInstruktur ? "bg-emerald-50 border-emerald-100" : "bg-emerald-50 border-emerald-100"}`}>
+                      <Clock3 className={`h-6 w-6 ${isInstruktur ? "text-emerald-500" : "text-emerald-500"}`} />
                     </div>
                     <h2 className="text-xl lg:text-2xl font-black text-slate-800">Aktivitas Terbaru</h2>
                   </div>
@@ -197,27 +311,37 @@ const Profile = () => {
                             </div>
                           </div>
                         ))
-                      : userActivities.map((activity, index) => (
-                          <div
-                            key={index}
-                            className="flex items-center gap-4 p-4 rounded-3xl border-2 border-slate-100 bg-slate-50/50 hover:bg-white hover:border-indigo-200 hover:shadow-sm transition-all duration-300 group"
-                          >
-                            <div className={`h-12 w-12 shrink-0 rounded-2xl flex items-center justify-center border-2 ${getUserActivityBg(activity.type)}`}>
-                              {getUserActivityIcon(activity.type)}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="font-bold text-slate-800 truncate group-hover:text-indigo-600 transition-colors">
-                                {activity.title}
-                              </p>
-                              <p className="text-xs font-bold text-slate-400 mt-0.5">
-                                {activity.date}
-                              </p>
-                            </div>
-                            <span className="text-emerald-500 font-black text-sm bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100">
-                              {activity.points}
-                            </span>
+                      : loadingActivities ? (
+                          <Loading text="Memuat aktivitas..." />
+                        ) : userActivities.length === 0 ? (
+                          <div className="text-center py-8 bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200">
+                            <p className="text-slate-400 font-bold text-sm">Belum ada aktivitas tercatat.</p>
                           </div>
-                        ))}
+                        ) : (
+                          userActivities.map((activity, index) => (
+                            <div
+                              key={index}
+                              className="flex items-center gap-4 p-4 rounded-3xl border-2 border-slate-100 bg-slate-50/50 hover:bg-white hover:border-emerald-200 hover:shadow-sm transition-all duration-300 group"
+                            >
+                              <div className={`h-12 w-12 shrink-0 rounded-2xl flex items-center justify-center border-2 ${getUserActivityBg(activity.type)}`}>
+                                {getUserActivityIcon(activity.type)}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="font-bold text-slate-800 truncate group-hover:text-emerald-600 transition-colors">
+                                  {activity.title}
+                                </p>
+                                <p className="text-xs font-bold text-slate-400 mt-0.5">
+                                  {activity.date}
+                                </p>
+                              </div>
+                              {activity.points && (
+                                <span className="text-emerald-500 font-black text-sm bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100">
+                                  {activity.points}
+                                </span>
+                              )}
+                            </div>
+                          ))
+                        )}
                   </div>
                 </div>
               </div>
@@ -294,15 +418,18 @@ const Profile = () => {
                     </div>
                   ) : (
                     /* ===== USER STATS ===== */
+                    loadingStats ? (
+                      <Loading text="Memuat statistik..." />
+                    ) : (
                     <div className="grid grid-cols-1 gap-4">
-                      <div className="flex items-center justify-between p-4 rounded-3xl border-2 border-amber-100 bg-linear-to-r from-amber-50 to-orange-50">
+                      <div className="flex items-center justify-between p-4 rounded-3xl border-2 border-emerald-100 bg-linear-to-r from-emerald-50 to-teal-50">
                         <div className="flex items-center gap-3">
-                          <div className="bg-white p-2 rounded-xl border border-amber-200 shadow-xs">
-                            <Trophy className="h-5 w-5 text-amber-500" />
+                          <div className="bg-white p-2 rounded-xl border border-emerald-200 shadow-xs">
+                            <CheckCircle2 className="h-5 w-5 text-emerald-500" />
                           </div>
-                          <span className="text-sm font-bold text-amber-800">Total Poin</span>
+                          <span className="text-sm font-bold text-emerald-800">Kajian Dihadiri</span>
                         </div>
-                        <span className="text-xl font-black text-amber-600">{userStats.totalPoints}</span>
+                        <span className="text-xl font-black text-emerald-600">{userStats.totalAttended}</span>
                       </div>
 
                       <div className="flex items-center justify-between p-4 rounded-3xl border-2 border-sky-100 bg-linear-to-r from-sky-50 to-blue-50">
@@ -312,7 +439,7 @@ const Profile = () => {
                           </div>
                           <span className="text-sm font-bold text-sky-800">Badge</span>
                         </div>
-                        <span className="text-xl font-black text-sky-600">{userStats.totalBadges}</span>
+                        <span className="text-xl font-black text-sky-600">{userStats.badges}</span>
                       </div>
 
                       <div className="flex items-center justify-between p-4 rounded-3xl border-2 border-purple-100 bg-linear-to-r from-purple-50 to-fuchsia-50">
@@ -320,78 +447,102 @@ const Profile = () => {
                           <div className="bg-white p-2 rounded-xl border border-purple-200 shadow-xs">
                             <BookOpen className="h-5 w-5 text-purple-500" />
                           </div>
-                          <span className="text-sm font-bold text-purple-800">Quiz</span>
+                          <span className="text-sm font-bold text-purple-800">Kuis Selesai</span>
                         </div>
-                        <span className="text-xl font-black text-purple-600">{userStats.totalQuizzes}</span>
+                        <span className="text-xl font-black text-purple-600">{userStats.quizCompleted}</span>
                       </div>
 
                       <div className="flex items-center justify-between p-4 rounded-3xl border-2 border-rose-100 bg-linear-to-r from-rose-50 to-red-50">
                         <div className="flex items-center gap-3">
                           <div className="bg-white p-2 rounded-xl border border-rose-200 shadow-xs">
-                            <Flame className="h-5 w-5 text-rose-500" />
+                            <AlertCircle className="h-5 w-5 text-rose-500" />
                           </div>
-                          <span className="text-sm font-bold text-rose-800">Streak</span>
+                          <span className="text-sm font-bold text-rose-800">Kuis Tertunda</span>
                         </div>
-                        <span className="text-xl font-black text-rose-600">{userStats.streak} Hari</span>
+                        <span className="text-xl font-black text-rose-600">{userStats.quizPending}</span>
                       </div>
 
-                      <div className="flex items-center justify-between p-4 rounded-3xl border-2 border-emerald-100 bg-linear-to-r from-emerald-50 to-teal-50">
+                      <div className="flex items-center justify-between p-4 rounded-3xl border-2 border-amber-100 bg-linear-to-r from-amber-50 to-orange-50">
                         <div className="flex items-center gap-3">
-                          <div className="bg-white p-2 rounded-xl border border-emerald-200 shadow-xs">
-                            <Target className="h-5 w-5 text-emerald-500" />
+                          <div className="bg-white p-2 rounded-xl border border-amber-200 shadow-xs">
+                            <Target className="h-5 w-5 text-amber-500" />
                           </div>
-                          <span className="text-sm font-bold text-emerald-800">Rata-rata</span>
+                          <span className="text-sm font-bold text-amber-800">Rata-rata Skor</span>
                         </div>
-                        <span className="text-xl font-black text-emerald-600">{userStats.averageScore}%</span>
+                        <span className="text-xl font-black text-amber-600">{userStats.avgScore}%</span>
                       </div>
                     </div>
+                    )
                   )}
                 </div>
 
-                {/* Program Tuntas — hanya untuk USER */}
+                {/* Teman di IRMA — hanya untuk USER */}
                 {!isInstruktur && (
                   <div className="bg-white rounded-[2.5rem] border-2 border-slate-200 shadow-[4px_4px_0_0_#cbd5e1] p-6 lg:p-8">
-                    <div className="flex items-center gap-3 mb-6">
-                      <div className="p-2 bg-teal-50 rounded-xl border border-teal-100">
-                        <CheckCircle2 className="h-6 w-6 text-teal-500" />
+                    <div className="flex items-center justify-between mb-6">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-teal-50 rounded-xl border border-teal-100">
+                          <UserCheck className="h-6 w-6 text-teal-500" />
+                        </div>
+                        <div>
+                          <h2 className="text-xl font-black text-slate-800 leading-tight">Teman di IRMA</h2>
+                          <p className="text-xs font-bold text-slate-400">Anggota yang kamu kenal</p>
+                        </div>
                       </div>
-                      <div>
-                        <h2 className="text-xl font-black text-slate-800 leading-tight">Program Tuntas</h2>
-                        <p className="text-xs font-bold text-slate-400">Kurikulum yang selesai</p>
-                      </div>
+                      {friends.length > 0 && (
+                        <span className="text-xs font-black text-teal-600 bg-teal-50 px-3 py-1 rounded-full border border-teal-200">
+                          {friends.length}
+                        </span>
+                      )}
                     </div>
 
-                    <div className="flex flex-col gap-4">
-                      {programs
-                        .filter((program) => program.status === "done")
-                        .map((program) => (
-                          <Link key={program.id} href={`/programs/${program.id}`} className="relative group block">
-                            <div className="bg-white rounded-3xl border-2 border-slate-200 p-5 shadow-sm hover:border-teal-400 hover:shadow-[0_4px_0_0_#34d399] active:translate-y-0.5 active:shadow-none transition-all duration-200 flex flex-col gap-2 cursor-pointer">
-                              <div className="flex justify-between items-start">
-                                <p className="text-sm lg:text-base font-bold text-slate-800 leading-tight group-hover:text-teal-600 transition-colors line-clamp-2">
-                                  {program.title}
-                                </p>
-                                <Sparkles className="h-4 w-4 text-amber-400 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
-                              </div>
-                              <div className="flex flex-wrap items-center gap-3 mt-1">
-                                <span className="flex items-center gap-1.5 bg-slate-100 px-2 py-1 rounded-lg border border-slate-200">
-                                  <Clock3 className="h-3 w-3 text-slate-500" />
-                                  <span className="text-[10px] font-bold text-slate-600 uppercase">{program.duration}</span>
+                    {loadingFriends ? (
+                      <Loading text="Memuat teman..." />
+                    ) : friends.length === 0 ? (
+                      <div className="text-center py-8 bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200">
+                        <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mx-auto mb-3 border-2 border-slate-100 shadow-sm">
+                          <Users className="w-6 h-6 text-slate-300" />
+                        </div>
+                        <p className="text-slate-400 font-bold text-sm">Belum ada teman.</p>
+                        <Link href="/friends" className="mt-3 inline-block px-5 py-2 bg-teal-400 text-white text-xs font-black rounded-2xl border-b-4 border-teal-600 hover:bg-teal-500 active:border-b-0 active:translate-y-1 transition-all">
+                          Cari Teman
+                        </Link>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col gap-3">
+                        {friends.slice(0, 5).map((friend: any) => (
+                          <Link
+                            key={friend.id}
+                            href={`/members/${friend.id}`}
+                            className="flex items-center gap-3 p-3 rounded-2xl border-2 border-slate-100 hover:border-teal-300 hover:shadow-[0_4px_0_0_#5eead4] hover:-translate-y-0.5 transition-all group bg-white"
+                          >
+                            <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-slate-100 group-hover:border-teal-200 shrink-0 bg-slate-100 flex items-center justify-center">
+                              {friend.avatar ? (
+                                <img src={friend.avatar} alt={friend.name} className="w-full h-full object-cover" />
+                              ) : (
+                                <span className="text-sm font-black text-slate-400">
+                                  {friend.name?.charAt(0)?.toUpperCase() || "?"}
                                 </span>
-                                <span className="bg-teal-50 px-2 py-1 rounded-lg border border-teal-100 text-[10px] font-bold text-teal-600 uppercase">
-                                  {program.level}
-                                </span>
-                              </div>
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-bold text-slate-800 truncate group-hover:text-teal-600 transition-colors">
+                                {friend.name}
+                              </p>
+                              <p className="text-[10px] font-bold text-slate-400 capitalize">{friend.role || "Anggota"}</p>
                             </div>
                           </Link>
                         ))}
-
-                      {programs.filter((p) => p.status === "done").length === 0 && (
-                        <div className="text-center py-8 bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200">
-                          <p className="text-slate-400 font-bold text-sm">Belum ada program yang tuntas.</p>
-                        </div>
-                      )}
-                    </div>
+                        {friends.length > 5 && (
+                          <Link
+                            href="/friends"
+                            className="w-full py-2.5 bg-teal-50 text-teal-600 text-xs font-black rounded-2xl border-2 border-teal-100 hover:bg-teal-100 transition-all text-center block mt-1"
+                          >
+                            Lihat Semua ({friends.length})
+                          </Link>
+                        )}
+                      </div>
+                    )}
                   </div>
                 )}
 
