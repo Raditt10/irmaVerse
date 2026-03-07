@@ -286,6 +286,7 @@ const RekapanListPage = () => {
                               Anda (Instruktur)
                             </div>
                             <div className="w-1.5 h-1.5 rounded-full bg-slate-300 hidden sm:block"></div>
+                            <div className="w-[6px] h-[6px] rounded-full bg-slate-300 hidden sm:block"></div>
                             <div className="flex items-center gap-1.5">
                               <Clock className="h-4 w-4 text-slate-400" />-
                             </div>
@@ -306,7 +307,7 @@ const RekapanListPage = () => {
                                 `/materials/${material.id}/rekapan/edit`,
                               )
                             }
-                            className="flex-1 md:flex-none flex items-center justify-center gap-2 px-5 h-13 rounded-xl bg-white text-emerald-600 font-bold border-2 border-emerald-200 border-b-4 hover:bg-emerald-50 hover:border-emerald-400 hover:text-emerald-700 active:border-b-2 active:translate-y-0.5 transition-all text-sm"
+                            className="flex-1 md:flex-none flex items-center justify-center gap-2 px-5 h-[52px] rounded-xl bg-white text-emerald-600 font-bold border-2 border-emerald-200 border-b-4 hover:bg-emerald-50 hover:border-emerald-400 hover:text-emerald-700 active:border-b-2 active:translate-y-0.5 transition-all text-sm"
                           >
                             {material.content || material.link
                               ? "Edit Rekapan"
@@ -322,41 +323,27 @@ const RekapanListPage = () => {
               /* --- USER VIEW (LAMA) --- */
               <>
                 {/* --- STATISTIK CARDS --- */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-                  <div className="bg-white rounded-[2rem] border-2 border-slate-200 shadow-[0_4px_0_0_#cbd5e1] p-6 flex items-center gap-5">
-                    <div className="p-4 bg-emerald-100 rounded-2xl border border-emerald-200">
-                      <CheckCircle2 className="h-8 w-8 text-emerald-600" />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+                    <div className="bg-white rounded-[2rem] border-2 border-slate-200 shadow-[0_4px_0_0_#cbd5e1] p-6 flex items-center gap-5">
+                      <div className="p-4 bg-emerald-100 rounded-2xl border border-emerald-200">
+                        <CheckCircle2 className="h-8 w-8 text-emerald-600" />
+                      </div>
+                      <div>
+                        <p className="text-slate-500 font-bold text-sm uppercase tracking-wider">
+                          Total Hadir
+                        </p>
+                        <p className="text-3xl font-black text-slate-800">
+                          {totalHadir}{" "}
+                          <span className="text-base text-slate-500 font-semibold">
+                            Kajian
+                          </span>
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-slate-500 font-bold text-sm uppercase tracking-wider">
-                        Total Hadir
-                      </p>
-                      <p className="text-3xl font-black text-slate-800">
-                        {totalHadir}{" "}
-                        <span className="text-base text-slate-500 font-semibold">
-                          Kajian
-                        </span>
-                      </p>
-                    </div>
-                  </div>
 
-                  <div className="bg-white rounded-[2rem] border-2 border-slate-200 shadow-[0_4px_0_0_#cbd5e1] p-6 flex items-center gap-5">
-                    <div className="p-4 bg-amber-100 rounded-2xl border border-amber-200">
-                      <TrendingUp className="h-8 w-8 text-amber-600" />
-                    </div>
-                    <div>
-                      <p className="text-slate-500 font-bold text-sm uppercase tracking-wider">
-                        Persentase
-                      </p>
-                      <p className="text-3xl font-black text-slate-800">
-                        {persentaseKehadiran}%
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="bg-white rounded-[2rem] border-2 border-slate-200 shadow-[0_4px_0_0_#cbd5e1] p-6 flex items-center gap-5">
-                    <div className="p-4 bg-red-100 rounded-2xl border border-red-200">
-                      <XCircle className="h-8 w-8 text-red-600" />
+                    <div className="bg-white rounded-[2rem] border-2 border-slate-200 shadow-[0_4px_0_0_#cbd5e1] p-6 flex items-center gap-5">
+                      <div className="p-4 bg-red-100 rounded-2xl border border-red-200">
+                        <XCircle className="h-8 w-8 text-red-600" />
                     </div>
                     <div>
                       <p className="text-slate-500 font-bold text-sm uppercase tracking-wider">

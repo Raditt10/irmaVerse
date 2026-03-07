@@ -108,7 +108,7 @@ const Absensi = () => {
                     // Populate form with real data
                     setAttendance(prev => ({
                         ...prev,
-                        session: materialData.title || "",
+                          session: materialData.title || "",
                         date: materialData.date ? new Date(materialData.date).toISOString().split('T')[0] : "",
                         location: materialData.location || "Online/Onsite",
                         time: materialData.startedAt ? materialData.startedAt : "",

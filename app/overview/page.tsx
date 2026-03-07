@@ -571,27 +571,33 @@ const Dashboard = () => {
                 </div>
 
                 {/* Instruktur Favoritmu */}
-                <div className="bg-white p-5 rounded-[2rem] border-2 border-slate-100 shadow-sm">
-                  <h4 className="font-black mb-4 text-sm tracking-wide uppercase text-center bg-rose-50 rounded-lg py-1 border border-rose-100 text-rose-600 flex items-center justify-center gap-2">
-                    <Heart className="w-4 h-4 fill-rose-500 text-rose-500" /> Instruktur Favoritmu
-                  </h4>
+                <div className="bg-white p-5 rounded-[2rem] border-2 border-rose-100 shadow-[0_6px_0_0_#ffe4e6] hover:shadow-[0_4px_0_0_#ffe4e6] hover:translate-y-1 transition-all duration-300 group">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="p-2 bg-rose-50 border-2 border-rose-100 rounded-xl shadow-sm group-hover:rotate-12 transition-transform duration-300">
+                      <Heart className="w-5 h-5 fill-rose-500 text-rose-500" />
+                    </div>
+                    <h4 className="font-black text-slate-800 text-lg">Instruktur Favorit</h4>
+                  </div>
                   
                   {loadingInstructors ? (
                     <div className="text-center py-6">
                       <Loading text="Memuat..." />
                     </div>
                   ) : favoriteInstructors.length === 0 ? (
-                    <div className="text-center py-6">
-                      <p className="text-xs text-slate-500 font-bold mb-4">Belum ada instruktur favorit</p>
-                      <Link href="/instructors" className="w-full py-2 bg-rose-400 text-white text-xs font-black rounded-xl hover:bg-rose-500 transition-all inline-block">
-                        Tambah Favorit
+                    <div className="text-center py-8 bg-rose-50/50 rounded-3xl border-2 border-dashed border-rose-200">
+                      <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mx-auto mb-3 border-2 border-rose-100 shadow-sm">
+                        <Heart className="w-6 h-6 text-rose-300" />
+                      </div>
+                      <p className="text-xs text-slate-400 font-bold mb-4 px-4">Kamu belum menambahkan instruktur favorit.</p>
+                      <Link href="/instructors" className="px-6 py-2.5 bg-rose-400 text-white text-xs font-black rounded-2xl border-b-4 border-rose-600 hover:bg-rose-500 active:border-b-0 active:translate-y-1 transition-all inline-block shadow-lg shadow-rose-200">
+                        Cari Instruktur
                       </Link>
                     </div>
                   ) : (
                     <div className="space-y-3">
                       {favoriteInstructors.slice(0, 3).map((instructor) => (
-                        <div key={instructor.id} className="flex items-center gap-3 p-3 rounded-2xl bg-rose-50 border border-rose-100 hover:border-rose-300 hover:bg-rose-100 transition-all group cursor-pointer">
-                          <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0 border-2 border-rose-200">
+                        <div key={instructor.id} className="flex items-center gap-3 p-3 rounded-2xl bg-white border-2 border-slate-100 hover:border-rose-300 hover:shadow-[0_4px_0_0_#fda4af] hover:-translate-y-1 transition-all group cursor-pointer">
+                          <div className="w-12 h-12 rounded-2xl overflow-hidden shrink-0 border-2 border-slate-100 group-hover:border-rose-200 transition-colors">
                             <img 
                               src={instructor.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${instructor.name}`}
                               alt={instructor.name} 
@@ -599,13 +605,18 @@ const Dashboard = () => {
                             />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-black text-slate-900 truncate">{instructor.name}</p>
-                            <p className="text-xs text-rose-600 font-bold truncate">{instructor.bidangKeahlian || instructor.specialization || 'Umum'}</p>
+                            <p className="text-sm font-black text-slate-800 truncate group-hover:text-rose-600 transition-colors">{instructor.name}</p>
+                            <p className="text-[10px] text-slate-400 font-bold truncate bg-slate-100 w-fit px-2 py-0.5 rounded-md mt-1 group-hover:bg-rose-50 group-hover:text-rose-500 transition-colors">
+                              {instructor.bidangKeahlian || instructor.specialization || 'Umum'}
+                            </p>
+                          </div>
+                          <div className="w-8 h-8 rounded-full bg-rose-50 flex items-center justify-center text-rose-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                             <ArrowRight className="w-4 h-4" strokeWidth={3} />
                           </div>
                         </div>
                       ))}
                       {favoriteInstructors.length > 3 && (
-                        <Link href="/instructors" className="w-full py-2.5 bg-slate-900 text-white text-xs font-black rounded-xl hover:bg-slate-800 transition-all text-center block">
+                        <Link href="/instructors" className="w-full py-3 bg-rose-50 text-rose-600 text-xs font-black rounded-2xl border-2 border-rose-100 hover:bg-rose-100 hover:border-rose-200 transition-all text-center block mt-2">
                           Lihat Semua ({favoriteInstructors.length})
                         </Link>
                       )}
