@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { getXpProgress, getLevelTitle } from "@/lib/gamification";
 
 // GET /api/friends/profile/[userId] - Ambil profil publik user + stats
 export async function GET(
@@ -61,24 +62,60 @@ export async function GET(
       prisma.courseenrollment.count({ where: { userId } }),
     ]);
 
-    // Ambil aktivitas terkini (quiz attempts, course enrollments)
-    const recentQuizzes = await prisma.quiz_attempt.findMany({
+    // Ambil aktivitas terkini dari ActivityLog (atau fallback ke quiz attempts)
+    const recentActivityLogs = await prisma.activityLog.findMany({
       where: { userId },
-      include: {
-        quiz: { select: { title: true } },
+      orderBy: { createdAt: "desc" },
+      take: 10,
+      select: {
+        id: true,
+        type: true,
+        title: true,
+        description: true,
+        xpEarned: true,
+        createdAt: true,
       },
-      orderBy: { completedAt: "desc" },
-      take: 5,
     });
 
-    const recentActivities = recentQuizzes.map((qa) => ({
-      id: qa.id,
-      type: "quiz" as const,
-      title: `Menyelesaikan quiz: ${qa.quiz.title}`,
-      date: qa.completedAt.toISOString(),
-      score: qa.score,
-      totalScore: qa.totalScore,
-    }));
+    let recentActivities;
+    if (recentActivityLogs.length > 0) {
+      recentActivities = recentActivityLogs.map((a) => ({
+        id: a.id,
+        type: a.type,
+        title: a.title,
+        description: a.description,
+        xpEarned: a.xpEarned,
+        date: a.createdAt.toISOString(),
+      }));
+    } else {
+      // Fallback: kalau belum ada ActivityLog, tampilkan quiz attempts
+      const recentQuizzes = await prisma.quiz_attempt.findMany({
+        where: { userId },
+        include: { quiz: { select: { title: true } } },
+        orderBy: { completedAt: "desc" },
+        take: 5,
+      });
+      recentActivities = recentQuizzes.map((qa) => ({
+        id: qa.id,
+        type: "quiz_completed",
+        title: `Menyelesaikan quiz: ${qa.quiz.title}`,
+        date: qa.completedAt.toISOString(),
+        xpEarned: 50,
+        score: qa.score,
+        totalScore: qa.totalScore,
+      }));
+    }
+
+    // Ambil badges yang dimiliki user
+    const earnedBadges = await prisma.userBadge.findMany({
+      where: { userId },
+      include: { badge: true },
+      orderBy: { earnedAt: "desc" },
+      take: 6,
+    });
+
+    const xpProgress = getXpProgress(user.points);
+    const levelTitle = getLevelTitle(user.level);
 
     // Ambil mutual friends (untuk tampilkan "X teman yang sama")
     const mutualFriendsCount = 0; // Will be enriched in status API
@@ -99,6 +136,19 @@ export async function GET(
         totalEnrollments: programEnrollCount + courseEnrollCount,
       },
       recentActivities,
+      earnedBadges: earnedBadges.map((ub) => ({
+        id: ub.badge.id,
+        code: ub.badge.code,
+        name: ub.badge.name,
+        description: ub.badge.description,
+        icon: ub.badge.icon,
+        category: ub.badge.category,
+        earnedAt: ub.earnedAt.toISOString(),
+      })),
+      xpProgress: {
+        ...xpProgress,
+        levelTitle,
+      },
     });
   } catch (error: any) {
     console.error("Error fetching user profile:", error);

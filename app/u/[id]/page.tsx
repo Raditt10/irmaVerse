@@ -18,7 +18,6 @@ import {
   Activity,
   Trophy,
   Users,
-  UserCheck,
   MessageCircle,
   Zap,
   Target,
@@ -26,6 +25,10 @@ import {
   GraduationCap,
   Brain,
   Flame,
+  Shield,
+  CheckCircle2,
+  BarChart3,
+  FileText,
 } from "lucide-react";
 
 interface UserProfile {
@@ -45,7 +48,6 @@ interface UserProfile {
   lastSeen: string;
   bidangKeahlian: string | null;
 }
-
 interface ProfileStats {
   followersCount: number;
   followingCount: number;
@@ -55,16 +57,33 @@ interface ProfileStats {
   courseEnrollCount: number;
   totalEnrollments: number;
 }
-
 interface RecentActivity {
   id: string;
   type: string;
   title: string;
+  description?: string | null;
+  xpEarned?: number;
   date: string;
   score?: number;
   totalScore?: number;
 }
-
+interface EarnedBadge {
+  id: string;
+  code: string;
+  name: string;
+  description: string;
+  icon: string;
+  category: string;
+  earnedAt: string;
+}
+interface XpProgress {
+  currentLevel: number;
+  currentLevelXp: number;
+  nextLevelXp: number;
+  progressXp: number;
+  progressPercent: number;
+  levelTitle: string;
+}
 interface FriendshipStatus {
   isOwnProfile: boolean;
   isFollowing: boolean;
@@ -81,6 +100,8 @@ export default function UserPublicProfile() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [stats, setStats] = useState<ProfileStats | null>(null);
   const [activities, setActivities] = useState<RecentActivity[]>([]);
+  const [earnedBadges, setEarnedBadges] = useState<EarnedBadge[]>([]);
+  const [xpProgress, setXpProgress] = useState<XpProgress | null>(null);
   const [friendshipStatus, setFriendshipStatus] =
     useState<FriendshipStatus | null>(null);
   const [loading, setLoading] = useState(true);
@@ -88,22 +109,22 @@ export default function UserPublicProfile() {
   useEffect(() => {
     if (userId) {
       fetchProfile();
-      if (session?.user?.id) {
-        fetchFriendshipStatus();
-      }
+      if (session?.user?.id) fetchFriendshipStatus();
     }
   }, [userId, session?.user?.id]);
 
   const fetchProfile = async () => {
     try {
       const res = await fetch(`/api/friends/profile/${userId}`);
-      if (!res.ok) throw new Error("Failed to fetch profile");
+      if (!res.ok) throw new Error("Failed");
       const data = await res.json();
       setProfile(data.user);
       setStats(data.stats);
       setActivities(data.recentActivities || []);
-    } catch (error) {
-      console.error("Error fetching profile:", error);
+      setEarnedBadges(data.earnedBadges || []);
+      setXpProgress(data.xpProgress || null);
+    } catch (e) {
+      console.error(e);
     } finally {
       setLoading(false);
     }
@@ -112,46 +133,76 @@ export default function UserPublicProfile() {
   const fetchFriendshipStatus = async () => {
     try {
       const res = await fetch(`/api/friends/status/${userId}`);
-      if (res.ok) {
-        const data = await res.json();
-        setFriendshipStatus(data);
-      }
-    } catch (error) {
-      console.error("Error fetching friendship status:", error);
+      if (res.ok) setFriendshipStatus(await res.json());
+    } catch (e) {
+      console.error(e);
     }
   };
 
-  const handleStartChat = () => {
-    // Navigasi ke halaman chat dengan user ini
-    router.push(`/chat-rooms?userId=${userId}`);
+  const handleStartChat = () => router.push(`/chat-rooms?userId=${userId}`);
+  const isOnline = (ls: string) => Date.now() - new Date(ls).getTime() < 300000;
+
+  const formatLastSeen = (ls: string) => {
+    const m = Math.floor((Date.now() - new Date(ls).getTime()) / 60000);
+    if (m < 5) return "Online";
+    if (m < 60) return `${m} menit yang lalu`;
+    const h = Math.floor(m / 60);
+    if (h < 24) return `${h} jam yang lalu`;
+    return `${Math.floor(h / 24)} hari yang lalu`;
   };
 
-  const isOnline = (lastSeen: string) => {
-    const diff = Date.now() - new Date(lastSeen).getTime();
-    return diff < 5 * 60 * 1000; // 5 menit
+  const formatDate = (d: string) => {
+    const ms = Date.now() - new Date(d).getTime();
+    const min = Math.floor(ms / 60000);
+    if (min < 1) return "Baru saja";
+    if (min < 60) return `${min} menit lalu`;
+    const hr = Math.floor(min / 60);
+    if (hr < 24) return `${hr} jam lalu`;
+    const dy = Math.floor(hr / 24);
+    if (dy < 7) return `${dy} hari lalu`;
+    return new Date(d).toLocaleDateString("id-ID", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
   };
 
-  const formatLastSeen = (lastSeen: string) => {
-    const diff = Date.now() - new Date(lastSeen).getTime();
-    const minutes = Math.floor(diff / 60000);
-    const hours = Math.floor(minutes / 60);
-    const days = Math.floor(hours / 24);
-
-    if (minutes < 5) return "Online";
-    if (minutes < 60) return `${minutes} menit yang lalu`;
-    if (hours < 24) return `${hours} jam yang lalu`;
-    return `${days} hari yang lalu`;
+  const getIcon = (t: string) => {
+    const map: Record<string, React.ReactNode> = {
+      quiz_completed: <BarChart3 className="h-5 w-5 text-indigo-600" />,
+      badge_earned: <Award className="h-5 w-5 text-amber-600" />,
+      forum_post: <MessageCircle className="h-5 w-5 text-emerald-600" />,
+      material_read: <BookOpen className="h-5 w-5 text-blue-600" />,
+      level_up: <Trophy className="h-5 w-5 text-rose-600" />,
+      course_enrolled: <GraduationCap className="h-5 w-5 text-purple-600" />,
+      program_enrolled: <FileText className="h-5 w-5 text-teal-600" />,
+      friend_added: <Users className="h-5 w-5 text-pink-600" />,
+      attendance_marked: <CheckCircle2 className="h-5 w-5 text-green-600" />,
+      streak_maintained: <Flame className="h-5 w-5 text-orange-600" />,
+    };
+    return map[t] || <Brain className="h-5 w-5 text-blue-600" />;
   };
 
-  if (loading) {
+  const getBg = (t: string) => {
+    const map: Record<string, string> = {
+      quiz_completed: "bg-indigo-50",
+      badge_earned: "bg-amber-50",
+      level_up: "bg-rose-50",
+      course_enrolled: "bg-purple-50",
+      program_enrolled: "bg-teal-50",
+      friend_added: "bg-pink-50",
+    };
+    return map[t] || "bg-blue-50";
+  };
+
+  if (loading)
     return (
       <div className="min-h-screen bg-[#FDFBF7] flex items-center justify-center">
         <Loading text="Memuat profil..." size="lg" />
       </div>
     );
-  }
 
-  if (!profile) {
+  if (!profile)
     return (
       <div className="min-h-screen bg-[#FDFBF7] flex flex-col">
         <DashboardHeader />
@@ -174,58 +225,45 @@ export default function UserPublicProfile() {
                 onClick={() => router.back()}
                 className="inline-flex items-center gap-2 px-6 py-3 bg-emerald-500 text-white font-bold rounded-xl hover:bg-emerald-600 transition-colors"
               >
-                <ArrowLeft className="h-4 w-4" />
-                Kembali
+                <ArrowLeft className="h-4 w-4" /> Kembali
               </button>
             </div>
           </div>
         </div>
       </div>
     );
-  }
 
   const online = isOnline(profile.lastSeen);
 
   return (
     <div className="min-h-screen bg-[#FDFBF7] flex flex-col font-sans">
       <DashboardHeader />
-
       <div className="flex flex-1">
         <div className="hidden lg:block h-[calc(100vh-80px)] sticky top-20">
           <Sidebar />
         </div>
-
         <main className="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-10">
-          {/* Back Button */}
           <button
             onClick={() => router.back()}
             className="flex items-center gap-2 text-slate-500 hover:text-emerald-600 mb-6 transition-colors font-bold text-sm"
           >
-            <ArrowLeft className="h-4 w-4" />
-            Kembali
+            <ArrowLeft className="h-4 w-4" /> Kembali
           </button>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
-            {/* ─── LEFT COLUMN: Profile Card ─── */}
+            {/* LEFT: Profile Card */}
             <div className="lg:col-span-1">
               <div className="bg-white border-2 border-slate-200 rounded-[2rem] shadow-[0_6px_0_0_#cbd5e1] overflow-hidden sticky top-24">
-                {/* Banner gradient */}
                 <div className="h-28 bg-gradient-to-br from-emerald-400 via-teal-400 to-cyan-500 relative">
-                  <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg%20width%3D%2260%22%20height%3D%2260%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M0%2030%20Q15%200%2030%2030%20T60%2030%22%20fill%3D%22none%22%20stroke%3D%22rgba(255%2C255%2C255%2C0.15)%22%20stroke-width%3D%222%22/%3E%3C/svg%3E')] opacity-50" />
-                  {/* Online Status */}
                   <div className="absolute top-4 right-4 flex items-center gap-1.5 bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full">
                     <span
-                      className={`h-2.5 w-2.5 rounded-full ${
-                        online ? "bg-emerald-400 animate-pulse" : "bg-slate-300"
-                      }`}
+                      className={`h-2.5 w-2.5 rounded-full ${online ? "bg-emerald-400 animate-pulse" : "bg-slate-300"}`}
                     />
                     <span className="text-[10px] font-black text-white uppercase tracking-tight">
                       {formatLastSeen(profile.lastSeen)}
                     </span>
                   </div>
                 </div>
-
-                {/* Avatar */}
                 <div className="px-6 pb-6 -mt-14">
                   <div className="flex justify-center mb-4">
                     <Avatar className="h-28 w-28 border-4 border-white shadow-xl">
@@ -241,8 +279,6 @@ export default function UserPublicProfile() {
                       </AvatarFallback>
                     </Avatar>
                   </div>
-
-                  {/* Name & Role */}
                   <div className="text-center mb-4">
                     <h1 className="text-2xl font-black text-slate-800 mb-1">
                       {profile.name || "Pengguna"}
@@ -257,21 +293,24 @@ export default function UserPublicProfile() {
                       )}
                       {profile.role}
                     </div>
+                    {xpProgress && (
+                      <div className="mt-2">
+                        <span className="px-3 py-1 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 text-white text-[10px] font-black shadow-sm">
+                          {xpProgress.levelTitle}
+                        </span>
+                      </div>
+                    )}
                     {profile.bidangKeahlian && (
                       <p className="text-xs text-slate-400 font-medium mt-2">
                         {profile.bidangKeahlian}
                       </p>
                     )}
                   </div>
-
-                  {/* Bio */}
                   {profile.bio && (
                     <p className="text-sm text-slate-600 text-center leading-relaxed mb-4 px-2">
                       {profile.bio}
                     </p>
                   )}
-
-                  {/* Followers / Following */}
                   {stats && (
                     <div className="flex items-center justify-center gap-6 mb-5">
                       <div className="text-center">
@@ -293,8 +332,6 @@ export default function UserPublicProfile() {
                       </div>
                     </div>
                   )}
-
-                  {/* Action Buttons */}
                   {friendshipStatus && !friendshipStatus.isOwnProfile && (
                     <div className="space-y-3">
                       <FollowButton
@@ -309,13 +346,11 @@ export default function UserPublicProfile() {
                           onClick={handleStartChat}
                           className="w-full flex items-center justify-center gap-2 py-2.5 bg-blue-50 text-blue-600 font-bold rounded-xl border-2 border-blue-100 hover:bg-blue-100 transition-colors text-sm"
                         >
-                          <MessageCircle className="h-4 w-4" />
-                          Kirim Pesan
+                          <MessageCircle className="h-4 w-4" /> Kirim Pesan
                         </button>
                       )}
                     </div>
                   )}
-
                   {friendshipStatus?.isOwnProfile && (
                     <button
                       onClick={() => router.push("/profile")}
@@ -324,8 +359,6 @@ export default function UserPublicProfile() {
                       Edit Profil
                     </button>
                   )}
-
-                  {/* Info Items */}
                   <div className="mt-5 space-y-3">
                     <div className="flex items-center gap-3 text-sm">
                       <div className="w-9 h-9 rounded-xl bg-teal-50 flex items-center justify-center flex-shrink-0">
@@ -343,11 +376,7 @@ export default function UserPublicProfile() {
                         Bergabung{" "}
                         {new Date(profile.createdAt).toLocaleDateString(
                           "id-ID",
-                          {
-                            year: "numeric",
-                            month: "long",
-                            day: "numeric",
-                          },
+                          { year: "numeric", month: "long", day: "numeric" },
                         )}
                       </span>
                     </div>
@@ -356,66 +385,155 @@ export default function UserPublicProfile() {
               </div>
             </div>
 
-            {/* ─── RIGHT COLUMN: Stats & Activity ─── */}
+            {/* RIGHT: Stats & Activity */}
             <div className="lg:col-span-2 space-y-6">
-              {/* Gamification Stats */}
+              {/* Stat Cards */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                <div className="bg-white border-2 border-slate-200 rounded-2xl p-5 shadow-[0_4px_0_0_#cbd5e1] text-center hover:border-amber-300 hover:shadow-[0_4px_0_0_#fbbf24] transition-all">
-                  <div className="w-12 h-12 bg-amber-50 rounded-xl flex items-center justify-center mx-auto mb-3 border border-amber-100">
-                    <Zap
-                      className="h-6 w-6 text-amber-500"
-                      fill="currentColor"
-                    />
+                {[
+                  {
+                    icon: (
+                      <Zap
+                        className="h-6 w-6 text-amber-500"
+                        fill="currentColor"
+                      />
+                    ),
+                    val: profile.level,
+                    lbl: "Level",
+                    bg: "bg-amber-50",
+                    bdr: "border-amber-100",
+                    hv: "hover:border-amber-300 hover:shadow-[0_4px_0_0_#fbbf24]",
+                  },
+                  {
+                    icon: (
+                      <Star
+                        className="h-6 w-6 text-emerald-500"
+                        fill="currentColor"
+                      />
+                    ),
+                    val: profile.points.toLocaleString(),
+                    lbl: "Poin",
+                    bg: "bg-emerald-50",
+                    bdr: "border-emerald-100",
+                    hv: "hover:border-emerald-300 hover:shadow-[0_4px_0_0_#34d399]",
+                  },
+                  {
+                    icon: <Flame className="h-6 w-6 text-orange-500" />,
+                    val: profile.streak,
+                    lbl: "Streak",
+                    bg: "bg-orange-50",
+                    bdr: "border-orange-100",
+                    hv: "hover:border-orange-300 hover:shadow-[0_4px_0_0_#fb923c]",
+                  },
+                  {
+                    icon: <Trophy className="h-6 w-6 text-purple-500" />,
+                    val: profile.badges,
+                    lbl: "Badge",
+                    bg: "bg-purple-50",
+                    bdr: "border-purple-100",
+                    hv: "hover:border-purple-300 hover:shadow-[0_4px_0_0_#a855f7]",
+                  },
+                ].map((s, i) => (
+                  <div
+                    key={i}
+                    className={`bg-white border-2 border-slate-200 rounded-2xl p-5 shadow-[0_4px_0_0_#cbd5e1] text-center ${s.hv} transition-all`}
+                  >
+                    <div
+                      className={`w-12 h-12 ${s.bg} rounded-xl flex items-center justify-center mx-auto mb-3 border ${s.bdr}`}
+                    >
+                      {s.icon}
+                    </div>
+                    <div className="text-2xl font-black text-slate-800">
+                      {s.val}
+                    </div>
+                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                      {s.lbl}
+                    </div>
                   </div>
-                  <div className="text-2xl font-black text-slate-800">
-                    {profile.level}
-                  </div>
-                  <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                    Level
-                  </div>
-                </div>
-
-                <div className="bg-white border-2 border-slate-200 rounded-2xl p-5 shadow-[0_4px_0_0_#cbd5e1] text-center hover:border-emerald-300 hover:shadow-[0_4px_0_0_#34d399] transition-all">
-                  <div className="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center mx-auto mb-3 border border-emerald-100">
-                    <Star
-                      className="h-6 w-6 text-emerald-500"
-                      fill="currentColor"
-                    />
-                  </div>
-                  <div className="text-2xl font-black text-slate-800">
-                    {profile.points.toLocaleString()}
-                  </div>
-                  <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                    Poin
-                  </div>
-                </div>
-
-                <div className="bg-white border-2 border-slate-200 rounded-2xl p-5 shadow-[0_4px_0_0_#cbd5e1] text-center hover:border-orange-300 hover:shadow-[0_4px_0_0_#fb923c] transition-all">
-                  <div className="w-12 h-12 bg-orange-50 rounded-xl flex items-center justify-center mx-auto mb-3 border border-orange-100">
-                    <Flame className="h-6 w-6 text-orange-500" />
-                  </div>
-                  <div className="text-2xl font-black text-slate-800">
-                    {profile.streak}
-                  </div>
-                  <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                    Streak
-                  </div>
-                </div>
-
-                <div className="bg-white border-2 border-slate-200 rounded-2xl p-5 shadow-[0_4px_0_0_#cbd5e1] text-center hover:border-purple-300 hover:shadow-[0_4px_0_0_#a855f7] transition-all">
-                  <div className="w-12 h-12 bg-purple-50 rounded-xl flex items-center justify-center mx-auto mb-3 border border-purple-100">
-                    <Trophy className="h-6 w-6 text-purple-500" />
-                  </div>
-                  <div className="text-2xl font-black text-slate-800">
-                    {profile.badges}
-                  </div>
-                  <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                    Badge
-                  </div>
-                </div>
+                ))}
               </div>
 
-              {/* Statistik Pembelajaran */}
+              {/* XP Progress */}
+              {xpProgress && (
+                <div className="bg-white border-2 border-slate-200 rounded-[2rem] p-6 shadow-[0_6px_0_0_#cbd5e1]">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <Zap
+                        className="h-5 w-5 text-amber-500"
+                        fill="currentColor"
+                      />
+                      <span className="font-black text-slate-800">
+                        Level {xpProgress.currentLevel}
+                      </span>
+                      <span className="text-xs font-bold text-slate-400">
+                        • {xpProgress.levelTitle}
+                      </span>
+                    </div>
+                    <span className="text-sm font-black text-amber-600">
+                      {profile.points.toLocaleString()} XP
+                    </span>
+                  </div>
+                  <div className="w-full bg-slate-100 rounded-full h-3 border border-slate-200 overflow-hidden">
+                    <div
+                      className="bg-gradient-to-r from-amber-400 via-orange-400 to-rose-400 h-3 rounded-full transition-all duration-700"
+                      style={{ width: `${xpProgress.progressPercent}%` }}
+                    />
+                  </div>
+                  <div className="flex justify-between mt-1.5 text-[10px] font-bold text-slate-400">
+                    <span>Lv {xpProgress.currentLevel}</span>
+                    <span>
+                      {xpProgress.progressXp} /{" "}
+                      {xpProgress.nextLevelXp - xpProgress.currentLevelXp} XP
+                    </span>
+                    <span>Lv {xpProgress.currentLevel + 1}</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Badges */}
+              {earnedBadges.length > 0 && (
+                <div className="bg-white border-2 border-slate-200 rounded-[2rem] p-6 shadow-[0_6px_0_0_#cbd5e1]">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-12 h-12 bg-purple-50 rounded-xl flex items-center justify-center border border-purple-100">
+                      <Shield className="h-6 w-6 text-purple-600" />
+                    </div>
+                    <div>
+                      <h2 className="text-xl font-black text-slate-800">
+                        Badge Diperoleh
+                      </h2>
+                      <p className="text-xs text-slate-500 font-medium">
+                        {earnedBadges.length} badge dikumpulkan
+                      </p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    {earnedBadges.map((b) => (
+                      <div
+                        key={b.id}
+                        className="relative bg-gradient-to-br from-amber-50 to-orange-50 border-2 border-amber-200 rounded-2xl p-4 text-center shadow-sm"
+                      >
+                        <div className="text-3xl mb-2">{b.icon}</div>
+                        <p className="text-xs font-black text-slate-700 leading-tight">
+                          {b.name}
+                        </p>
+                        <p className="text-[10px] font-medium text-slate-400 mt-1 line-clamp-2">
+                          {b.description}
+                        </p>
+                        <p className="text-[9px] font-bold text-amber-500 mt-1.5">
+                          {new Date(b.earnedAt).toLocaleDateString("id-ID", {
+                            day: "numeric",
+                            month: "short",
+                          })}
+                        </p>
+                        <div className="absolute -top-1 -right-1 w-5 h-5 bg-emerald-500 rounded-full flex items-center justify-center">
+                          <CheckCircle2 className="h-3.5 w-3.5 text-white" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Learning Stats */}
               {stats && (
                 <div className="bg-white border-2 border-slate-200 rounded-[2rem] p-6 shadow-[0_6px_0_0_#cbd5e1]">
                   <div className="flex items-center gap-3 mb-6">
@@ -431,7 +549,6 @@ export default function UserPublicProfile() {
                       </p>
                     </div>
                   </div>
-
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                     <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-4 border border-blue-100">
                       <div className="flex items-center gap-2 mb-2">
@@ -447,7 +564,6 @@ export default function UserPublicProfile() {
                         Quiz dikerjakan
                       </div>
                     </div>
-
                     <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-2xl p-4 border border-emerald-100">
                       <div className="flex items-center gap-2 mb-2">
                         <Target className="h-5 w-5 text-emerald-600" />
@@ -462,7 +578,6 @@ export default function UserPublicProfile() {
                         Rata-rata skor
                       </div>
                     </div>
-
                     <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-4 border border-purple-100">
                       <div className="flex items-center gap-2 mb-2">
                         <BookOpen className="h-5 w-5 text-purple-600" />
@@ -481,7 +596,7 @@ export default function UserPublicProfile() {
                 </div>
               )}
 
-              {/* Aktivitas Terkini */}
+              {/* Recent Activity */}
               <div className="bg-white border-2 border-slate-200 rounded-[2rem] p-6 shadow-[0_6px_0_0_#cbd5e1]">
                 <div className="flex items-center gap-3 mb-6">
                   <div className="w-12 h-12 bg-green-50 rounded-xl flex items-center justify-center border border-green-100">
@@ -496,7 +611,6 @@ export default function UserPublicProfile() {
                     </p>
                   </div>
                 </div>
-
                 {activities.length === 0 ? (
                   <div className="text-center py-12">
                     <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-3">
@@ -508,34 +622,37 @@ export default function UserPublicProfile() {
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    {activities.map((activity) => (
+                    {activities.map((a) => (
                       <div
-                        key={activity.id}
+                        key={a.id}
                         className="flex items-center gap-4 p-4 rounded-2xl hover:bg-slate-50 transition-colors group"
                       >
-                        <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:bg-blue-100 transition-colors">
-                          <Brain className="h-5 w-5 text-blue-600" />
+                        <div
+                          className={`w-10 h-10 ${getBg(a.type)} rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform`}
+                        >
+                          {getIcon(a.type)}
                         </div>
                         <div className="flex-1 min-w-0">
                           <h4 className="font-bold text-slate-700 text-sm truncate">
-                            {activity.title}
+                            {a.title}
                           </h4>
                           <p className="text-[11px] text-slate-400 font-medium">
-                            {new Date(activity.date).toLocaleDateString(
-                              "id-ID",
-                              {
-                                year: "numeric",
-                                month: "long",
-                                day: "numeric",
-                              },
-                            )}
+                            {formatDate(a.date)}
                           </p>
                         </div>
-                        {activity.score !== undefined && (
+                        {a.xpEarned !== undefined && a.xpEarned > 0 && (
+                          <div className="flex items-center gap-1 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-100">
+                            <Zap className="h-3.5 w-3.5 text-emerald-500" />
+                            <span className="text-xs font-black text-emerald-600">
+                              +{a.xpEarned}
+                            </span>
+                          </div>
+                        )}
+                        {a.score !== undefined && (
                           <div className="flex items-center gap-1 px-3 py-1 rounded-full bg-amber-50 border border-amber-100">
                             <Star className="h-3.5 w-3.5 text-amber-500" />
                             <span className="text-xs font-black text-amber-600">
-                              {activity.score}/{activity.totalScore}
+                              {a.score}/{a.totalScore}
                             </span>
                           </div>
                         )}

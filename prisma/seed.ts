@@ -5,6 +5,8 @@ import {
   NotificationType,
   NotificationStatus,
   FriendshipStatus,
+  ActivityType,
+  BadgeCategory,
 } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
@@ -17,6 +19,9 @@ async function main() {
   await prisma.chatMessage.deleteMany();
   await prisma.chatConversation.deleteMany();
 
+  await prisma.userBadge.deleteMany();
+  await prisma.activityLog.deleteMany();
+  await prisma.badge.deleteMany();
   await prisma.friendship.deleteMany();
   await prisma.notification.deleteMany();
   await prisma.materialinvite.deleteMany();
@@ -603,6 +608,484 @@ Hadis dibagi menjadi beberapa tingkatan berdasarkan kualitasnya...`,
     },
   });
 
+  // ── BADGES ──────────────────────────────────────────────────────────────────
+  console.log("🏅 Creating badges...");
+  const badgesData: {
+    code: string;
+    name: string;
+    description: string;
+    icon: string;
+    category: BadgeCategory;
+    requirement: string;
+    xpReward: number;
+  }[] = [
+    {
+      code: "first_quiz",
+      name: "Quiz Pertama",
+      description: "Menyelesaikan quiz pertamamu",
+      icon: "🎯",
+      category: "learning",
+      requirement: "Selesaikan 1 quiz",
+      xpReward: 50,
+    },
+    {
+      code: "quiz_master",
+      name: "Master Quiz",
+      description: "Menyelesaikan 10 quiz",
+      icon: "🧠",
+      category: "learning",
+      requirement: "Selesaikan 10 quiz",
+      xpReward: 200,
+    },
+    {
+      code: "quiz_legend",
+      name: "Legenda Quiz",
+      description: "Menyelesaikan 50 quiz",
+      icon: "👑",
+      category: "learning",
+      requirement: "Selesaikan 50 quiz",
+      xpReward: 500,
+    },
+    {
+      code: "streak_3",
+      name: "Konsisten 3 Hari",
+      description: "Login 3 hari berturut-turut",
+      icon: "🔥",
+      category: "streak",
+      requirement: "Streak 3 hari",
+      xpReward: 75,
+    },
+    {
+      code: "streak_7",
+      name: "Semangat Mingguan",
+      description: "Login 7 hari berturut-turut",
+      icon: "⚡",
+      category: "streak",
+      requirement: "Streak 7 hari",
+      xpReward: 150,
+    },
+    {
+      code: "streak_30",
+      name: "Istiqomah",
+      description: "Login 30 hari berturut-turut",
+      icon: "💎",
+      category: "streak",
+      requirement: "Streak 30 hari",
+      xpReward: 500,
+    },
+    {
+      code: "first_friend",
+      name: "Teman Pertama",
+      description: "Menambahkan teman pertamamu",
+      icon: "🤝",
+      category: "social",
+      requirement: "Tambahkan 1 teman",
+      xpReward: 30,
+    },
+    {
+      code: "social_butterfly",
+      name: "Kupu-Kupu Sosial",
+      description: "Memiliki 10 teman",
+      icon: "🦋",
+      category: "social",
+      requirement: "Miliki 10 teman",
+      xpReward: 200,
+    },
+    {
+      code: "community_pillar",
+      name: "Pilar Komunitas",
+      description: "Memiliki 50 teman",
+      icon: "🏛️",
+      category: "social",
+      requirement: "Miliki 50 teman",
+      xpReward: 500,
+    },
+    {
+      code: "level_5",
+      name: "Naik Kelas",
+      description: "Mencapai Level 5",
+      icon: "⭐",
+      category: "achievement",
+      requirement: "Capai Level 5",
+      xpReward: 100,
+    },
+    {
+      code: "level_10",
+      name: "Pelajar Handal",
+      description: "Mencapai Level 10",
+      icon: "🌟",
+      category: "achievement",
+      requirement: "Capai Level 10",
+      xpReward: 250,
+    },
+    {
+      code: "level_20",
+      name: "Ulama Digital",
+      description: "Mencapai Level 20",
+      icon: "✨",
+      category: "achievement",
+      requirement: "Capai Level 20",
+      xpReward: 500,
+    },
+    {
+      code: "active_learner",
+      name: "Pelajar Aktif",
+      description: "Mengikuti 5 program",
+      icon: "📚",
+      category: "learning",
+      requirement: "Ikuti 5 program",
+      xpReward: 150,
+    },
+    {
+      code: "forum_contributor",
+      name: "Kontributor Forum",
+      description: "Membuat 10 post di forum",
+      icon: "💬",
+      category: "social",
+      requirement: "Buat 10 post forum",
+      xpReward: 100,
+    },
+    {
+      code: "points_1000",
+      name: "Seribu Poin",
+      description: "Mengumpulkan 1000 poin XP",
+      icon: "🎖️",
+      category: "achievement",
+      requirement: "Kumpulkan 1000 XP",
+      xpReward: 100,
+    },
+    {
+      code: "points_5000",
+      name: "Lima Ribu Poin",
+      description: "Mengumpulkan 5000 poin XP",
+      icon: "🏆",
+      category: "achievement",
+      requirement: "Kumpulkan 5000 XP",
+      xpReward: 300,
+    },
+  ];
+
+  const badges: Record<string, string> = {};
+  for (const b of badgesData) {
+    const created = await prisma.badge.create({ data: b });
+    badges[b.code] = created.id;
+  }
+
+  // ── ACTIVITY LOGS ─────────────────────────────────────────────────────────────
+  console.log("📝 Creating activity logs...");
+  const now = new Date();
+
+  // Give user1 & user3 some XP points for demo purposes
+  await prisma.user.update({
+    where: { id: user1.id },
+    data: {
+      points: 320,
+      level: 3,
+      streak: 5,
+      badges: 2,
+      quizzes: 4,
+      averageScore: 82,
+    },
+  });
+  await prisma.user.update({
+    where: { id: user3.id },
+    data: {
+      points: 185,
+      level: 2,
+      streak: 3,
+      badges: 1,
+      quizzes: 2,
+      averageScore: 75,
+    },
+  });
+  await prisma.user.update({
+    where: { id: user2.id },
+    data: {
+      points: 560,
+      level: 5,
+      streak: 12,
+      badges: 4,
+      quizzes: 8,
+      averageScore: 88,
+    },
+  });
+
+  // user1 activities
+  const activitiesUser1: {
+    type: ActivityType;
+    title: string;
+    description: string;
+    xpEarned: number;
+    daysAgo: number;
+  }[] = [
+    {
+      type: "quiz_completed",
+      title: "Menyelesaikan Quiz: Rukun Iman",
+      description: "Skor 85/100 pada quiz Rukun Iman",
+      xpEarned: 75,
+      daysAgo: 0,
+    },
+    {
+      type: "program_enrolled",
+      title: "Mendaftar Program Aqidah & Akhlak",
+      description: "Bergabung di program pembelajaran aqidah",
+      xpEarned: 40,
+      daysAgo: 1,
+    },
+    {
+      type: "friend_added",
+      title: "Menambahkan teman baru",
+      description: "Berteman dengan Ustadzah Fatimah",
+      xpEarned: 15,
+      daysAgo: 2,
+    },
+    {
+      type: "quiz_completed",
+      title: "Menyelesaikan Quiz: Fiqih Shalat",
+      description: "Skor 90/100 pada quiz Fiqih Shalat",
+      xpEarned: 75,
+      daysAgo: 3,
+    },
+    {
+      type: "badge_earned",
+      title: "Badge Diperoleh: Quiz Pertama",
+      description: "Mendapatkan badge Quiz Pertama!",
+      xpEarned: 50,
+      daysAgo: 3,
+    },
+    {
+      type: "material_read",
+      title: "Membaca Materi: Kedudukan Akal dan Wahyu",
+      description: "Menyelesaikan bacaan materi",
+      xpEarned: 20,
+      daysAgo: 5,
+    },
+    {
+      type: "streak_maintained",
+      title: "Streak 5 Hari!",
+      description: "Berhasil login 5 hari berturut-turut",
+      xpEarned: 35,
+      daysAgo: 0,
+    },
+    {
+      type: "level_up",
+      title: "Naik ke Level 3!",
+      description: "Selamat! Kamu sekarang Pencari Ilmu",
+      xpEarned: 0,
+      daysAgo: 1,
+    },
+  ];
+
+  for (const a of activitiesUser1) {
+    const d = new Date(now);
+    d.setDate(d.getDate() - a.daysAgo);
+    d.setHours(d.getHours() - Math.floor(Math.random() * 12));
+    await prisma.activityLog.create({
+      data: {
+        userId: user1.id,
+        type: a.type,
+        title: a.title,
+        description: a.description,
+        xpEarned: a.xpEarned,
+        createdAt: d,
+      },
+    });
+  }
+
+  // user3 activities
+  const activitiesUser3: {
+    type: ActivityType;
+    title: string;
+    description: string;
+    xpEarned: number;
+    daysAgo: number;
+  }[] = [
+    {
+      type: "program_enrolled",
+      title: "Mendaftar Program Aqidah & Akhlak",
+      description: "Bergabung di program pembelajaran",
+      xpEarned: 40,
+      daysAgo: 0,
+    },
+    {
+      type: "quiz_completed",
+      title: "Menyelesaikan Quiz: Adab Belajar",
+      description: "Skor 72/100 pada quiz Adab Belajar",
+      xpEarned: 50,
+      daysAgo: 1,
+    },
+    {
+      type: "friend_added",
+      title: "Menambahkan teman baru",
+      description: "Berteman dengan Ustadz Ahmad Zaki",
+      xpEarned: 15,
+      daysAgo: 2,
+    },
+    {
+      type: "material_read",
+      title: "Membaca Materi: Fiqih Ibadah",
+      description: "Menyelesaikan bacaan materi fiqih",
+      xpEarned: 20,
+      daysAgo: 4,
+    },
+    {
+      type: "level_up",
+      title: "Naik ke Level 2!",
+      description: "Selamat! Kamu sekarang Pelajar",
+      xpEarned: 0,
+      daysAgo: 1,
+    },
+    {
+      type: "badge_earned",
+      title: "Badge Diperoleh: Teman Pertama",
+      description: "Mendapatkan badge Teman Pertama!",
+      xpEarned: 30,
+      daysAgo: 2,
+    },
+  ];
+
+  for (const a of activitiesUser3) {
+    const d = new Date(now);
+    d.setDate(d.getDate() - a.daysAgo);
+    d.setHours(d.getHours() - Math.floor(Math.random() * 12));
+    await prisma.activityLog.create({
+      data: {
+        userId: user3.id,
+        type: a.type,
+        title: a.title,
+        description: a.description,
+        xpEarned: a.xpEarned,
+        createdAt: d,
+      },
+    });
+  }
+
+  // user2 activities (instruktur)
+  const activitiesUser2: {
+    type: ActivityType;
+    title: string;
+    description: string;
+    xpEarned: number;
+    daysAgo: number;
+  }[] = [
+    {
+      type: "quiz_completed",
+      title: "Menyelesaikan Quiz: Tajwid Lanjutan",
+      description: "Skor 95/100",
+      xpEarned: 75,
+      daysAgo: 0,
+    },
+    {
+      type: "quiz_completed",
+      title: "Menyelesaikan Quiz: Tafsir Al-Baqarah",
+      description: "Skor 88/100",
+      xpEarned: 75,
+      daysAgo: 1,
+    },
+    {
+      type: "badge_earned",
+      title: "Badge Diperoleh: Master Quiz",
+      description: "Mendapatkan badge Master Quiz!",
+      xpEarned: 200,
+      daysAgo: 1,
+    },
+    {
+      type: "streak_maintained",
+      title: "Streak 7 Hari!",
+      description: "Login 7 hari berturut-turut",
+      xpEarned: 35,
+      daysAgo: 2,
+    },
+    {
+      type: "friend_added",
+      title: "Menambahkan teman baru",
+      description: "Berteman dengan Rafa Ardanza",
+      xpEarned: 15,
+      daysAgo: 3,
+    },
+    {
+      type: "level_up",
+      title: "Naik ke Level 5!",
+      description: "Selamat! Kamu sekarang Penuntut Ilmu",
+      xpEarned: 0,
+      daysAgo: 2,
+    },
+  ];
+
+  for (const a of activitiesUser2) {
+    const d = new Date(now);
+    d.setDate(d.getDate() - a.daysAgo);
+    d.setHours(d.getHours() - Math.floor(Math.random() * 12));
+    await prisma.activityLog.create({
+      data: {
+        userId: user2.id,
+        type: a.type,
+        title: a.title,
+        description: a.description,
+        xpEarned: a.xpEarned,
+        createdAt: d,
+      },
+    });
+  }
+
+  // ── USER BADGES ───────────────────────────────────────────────────────────────
+  console.log("🎖️ Assigning badges to users...");
+
+  // user1: first_quiz, streak_3
+  await prisma.userBadge.create({
+    data: {
+      userId: user1.id,
+      badgeId: badges["first_quiz"],
+      earnedAt: new Date(now.getTime() - 3 * 86400000),
+    },
+  });
+  await prisma.userBadge.create({
+    data: {
+      userId: user1.id,
+      badgeId: badges["streak_3"],
+      earnedAt: new Date(now.getTime() - 1 * 86400000),
+    },
+  });
+
+  // user2: first_quiz, quiz_master, streak_3, streak_7
+  await prisma.userBadge.create({
+    data: {
+      userId: user2.id,
+      badgeId: badges["first_quiz"],
+      earnedAt: new Date(now.getTime() - 10 * 86400000),
+    },
+  });
+  await prisma.userBadge.create({
+    data: {
+      userId: user2.id,
+      badgeId: badges["quiz_master"],
+      earnedAt: new Date(now.getTime() - 1 * 86400000),
+    },
+  });
+  await prisma.userBadge.create({
+    data: {
+      userId: user2.id,
+      badgeId: badges["streak_3"],
+      earnedAt: new Date(now.getTime() - 8 * 86400000),
+    },
+  });
+  await prisma.userBadge.create({
+    data: {
+      userId: user2.id,
+      badgeId: badges["streak_7"],
+      earnedAt: new Date(now.getTime() - 2 * 86400000),
+    },
+  });
+
+  // user3: first_friend
+  await prisma.userBadge.create({
+    data: {
+      userId: user3.id,
+      badgeId: badges["first_friend"],
+      earnedAt: new Date(now.getTime() - 2 * 86400000),
+    },
+  });
+
   console.log("✅ Data seeding completed!");
   console.log("📊 Summary:");
   console.log(`   - Users: 3 + 6 instructors`);
@@ -616,6 +1099,13 @@ Hadis dibagi menjadi beberapa tingkatan berdasarkan kualitasnya...`,
   console.log(`   - Friendships: 6 (mix of pending dan accepted)`);
   console.log(`   - Notifications: 5 (3 basic + 2 invitations)`);
   console.log(`   - Material Invites: 2`);
+  console.log(
+    `   - Badges: ${badgesData.length} (learning, social, achievement, streak)`,
+  );
+  console.log(
+    `   - Activity Logs: ${activitiesUser1.length + activitiesUser2.length + activitiesUser3.length} entries`,
+  );
+  console.log(`   - User Badges: 7 (user1: 2, user2: 4, user3: 1)`);
   console.log("\n💡 Test the search with these keywords:");
   console.log('   - "kedudukan" (untuk mencari berita tentang akal dan wahyu)');
   console.log('   - "ahmad" (untuk mencari instruktur)');
@@ -625,6 +1115,12 @@ Hadis dibagi menjadi beberapa tingkatan berdasarkan kualitasnya...`,
   console.log(`   - user1 ↔ user2: mutual (accepted)`);
   console.log(`   - user1 ↔ user3: mutual (accepted)`);
   console.log(`   - user2 → user3: one-way (pending)`);
+  console.log("\n🏅 Gamification test data:");
+  console.log(`   - user1: Level 3, 320 XP, 2 badges (first_quiz, streak_3)`);
+  console.log(
+    `   - user2: Level 5, 560 XP, 4 badges (first_quiz, quiz_master, streak_3, streak_7)`,
+  );
+  console.log(`   - user3: Level 2, 185 XP, 1 badge (first_friend)`);
 }
 
 function mapGrade(value: string): material_grade {

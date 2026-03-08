@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth";
+import { grantXp } from "@/lib/gamification";
 
 // POST /api/friends/follow - Follow seorang user
 export async function POST(req: Request) {
@@ -101,6 +102,19 @@ export async function POST(req: Request) {
     } catch (e) {
       // Notifikasi gagal tidak boleh block follow action
       console.error("Gagal kirim notifikasi:", e);
+    }
+
+    // Grant XP for following someone
+    try {
+      await grantXp({
+        userId: userId,
+        type: "friend_added",
+        title: `Mengikuti pengguna baru`,
+        description: `Mulai mengikuti seorang pengguna`,
+        metadata: { targetUserId, isMutual: status === "accepted" },
+      });
+    } catch (e) {
+      console.error("Gagal grant XP follow:", e);
     }
 
     return NextResponse.json({
