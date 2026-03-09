@@ -29,6 +29,7 @@ interface NewsItem {
     id: string;
     name: string | null;
     email: string;
+    avatar?: string | null;
   };
 }
 
@@ -357,13 +358,21 @@ const News = () => {
 
                         {/* Footer Info */}
                         <div className="flex items-center justify-between pt-4 mt-auto border-t-2 border-slate-100">
-                          <div className="flex items-center gap-2 min-w-0 mr-4">
-                             <div className="w-8 h-8 rounded-full bg-teal-400 border-2 border-teal-500 flex shrink-0 items-center justify-center text-xs text-white font-black shadow-sm">
+                          <div className="flex items-center gap-2.5 min-w-0 mr-4">
+                            {item.author.avatar ? (
+                              <img
+                                src={item.author.avatar}
+                                alt={item.author.name || "Author"}
+                                className="w-8 h-8 rounded-full object-cover border-2 border-white shadow-sm"
+                              />
+                            ) : (
+                              <div className="w-8 h-8 rounded-full bg-teal-400 border-2 border-teal-500 flex shrink-0 items-center justify-center text-xs text-white font-black shadow-sm">
                                 {(item.author.name || "A").charAt(0).toUpperCase()}
-                             </div>
-                             <span className="text-sm font-bold text-slate-600 truncate">
-                                {item.author.name || "Admin IRMA"}
-                             </span>
+                              </div>
+                            )}
+                            <span className="text-sm font-bold text-slate-600 truncate">
+                              {item.author.name || "Admin IRMA"}
+                            </span>
                           </div>
 
                           <div className="flex shrink-0 gap-2 items-center">

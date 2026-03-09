@@ -39,6 +39,7 @@ export async function GET(
           select: {
             name: true,
             email: true,
+            avatar: true,
           },
         },
         courseenrollment: {
@@ -116,6 +117,7 @@ export async function GET(
       date: m.date,
       instructor: m.users?.name || null,
       instructorEmail: m.users?.email || null,
+      instructorAvatar: m.users?.avatar || null,
       category:
         CATEGORY_LABEL[m.category as keyof typeof CATEGORY_LABEL] || m.category,
       grade: GRADE_LABEL[m.grade as keyof typeof GRADE_LABEL] || m.grade,

@@ -310,8 +310,11 @@ const Sidebar = () => {
     <>
       <style>{scrollbarStyles}</style>
       
+      {/* Spacer for Fixed Desktop Sidebar to maintain layout flow */}
+      <div className={`hidden lg:block shrink-0 transition-all duration-300 ${isExpanded ? 'w-72' : 'w-24'}`} aria-hidden="true" />
+
       {/* --- DESKTOP SIDEBAR --- */}
-      <div className={`hidden lg:flex flex-col shrink-0 sticky top-20 h-[calc(100vh-5rem)] bg-white border-r-2 border-slate-100 transition-all duration-300 ${isExpanded ? 'w-72' : 'w-24'}`}>
+      <div className={`hidden lg:flex flex-col fixed top-20 left-0 z-30 h-[calc(100vh-5rem)] bg-white border-r-2 border-slate-100 transition-all duration-300 ${isExpanded ? 'w-72' : 'w-24'}`}>
         
         {/* Toggle Button */}
         <div className="px-6 pt-6 pb-2">

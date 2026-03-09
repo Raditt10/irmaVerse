@@ -172,7 +172,7 @@ const OurPrograms = () => {
                 {isPrivileged && (
                   <div className="flex flex-wrap gap-3 text-xs font-bold">
                     <div className="flex items-center gap-2 px-3 py-2 bg-emerald-50 text-emerald-700 rounded-lg border border-emerald-200 shadow-sm">
-                      <BookOpen className="h-3.5 w-3.5" />
+                      <GraduationCap className="h-3.5 w-3.5" />
                       <span>{programs.length} Program</span>
                     </div>
                   </div>

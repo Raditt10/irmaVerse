@@ -224,7 +224,7 @@ const Profile = () => {
   const getInstrukturActivityIcon = (type: string) => {
     switch (type) {
       case "kajian": return <BookOpen className="h-5 w-5 text-emerald-600" />;
-      case "sesi": return <GraduationCap className="h-5 w-5 text-emerald-600" />;
+        case "sesi": return <GraduationCap className="h-5 w-5 text-emerald-600" />;
       case "materi": return <FileText className="h-5 w-5 text-emerald-600" />;
       case "siswa": return <Users className="h-5 w-5 text-emerald-600" />;
       case "jadwal": return <Calendar className="h-5 w-5 text-teal-600" />;

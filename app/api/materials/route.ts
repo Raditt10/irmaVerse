@@ -87,6 +87,7 @@ export async function GET(req: NextRequest) {
         users: {
           select: {
             name: true,
+            avatar: true,
           },
         },
         courseenrollment: {
@@ -104,8 +105,14 @@ export async function GET(req: NextRequest) {
       orderBy: { date: "desc" },
     });
 
+    // Get attendance and total invite counts manually
+    const [attendanceCounts, inviteCounts] = await Promise.all([
+      Promise.all(materials.map(m => prisma.attendance.count({ where: { materialId: m.id } }))),
+      Promise.all(materials.map(m => prisma.materialinvite.count({ where: { materialId: m.id } })))
+    ]);
+
     // normalize ke format frontend
-    const result = materials.map((m: any) => {
+    const result = materials.map((m: any, index: number) => {
       const hasEnrollment = (m.courseenrollment || []).length > 0;
       // Only treat as joined if invite is accepted (not pending/rejected)
       const hasAcceptedInvite = (m.materialinvite || []).some(
@@ -113,12 +120,19 @@ export async function GET(req: NextRequest) {
       );
       const isJoined = hasEnrollment || hasAcceptedInvite;
 
+      // Completion Status calculation
+      // We use the separate inviteCounts query because m.materialinvite is filtered by the logged in user
+      const inviteCount = inviteCounts[index] || 0;
+      const attendanceCount = attendanceCounts[index] || 0;
+      const isCompleted = inviteCount > 0 && attendanceCount >= inviteCount;
+
       return {
         id: m.id,
         title: m.title,
         description: m.description,
         date: m.date,
         instructor: m.users?.name || "TBA",
+        instructorAvatar: m.users?.avatar || null,
         category: CATEGORY_LABEL[m.category] || m.category,
         grade: GRADE_LABEL[m.grade as keyof typeof GRADE_LABEL] || m.grade,
         startedAt: m.startedAt,
@@ -127,6 +141,7 @@ export async function GET(req: NextRequest) {
         createdAt: m.createdAt,
         isAttendanceOpen: m.isAttendanceOpen,
         isJoined: isJoined,
+        isCompleted: isCompleted,
         program: m.program
           ? { id: m.program.id, title: m.program.title }
           : null,

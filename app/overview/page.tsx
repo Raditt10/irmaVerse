@@ -21,7 +21,6 @@ import {
   CheckCircle,
   Lightbulb,
   Users,
-  Play,
   BookMarked,
   HelpCircle,
   Heart,
@@ -444,8 +443,7 @@ const Dashboard = () => {
                         </div>
                         <div className="shrink-0 relative z-10">
                           <button className="flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-emerald-400 text-white font-black border-2 border-emerald-500 border-b-4 hover:bg-emerald-500 active:border-b-2 active:translate-y-0.5 transition-all text-sm shadow-[0_4px_0_0_#047857]">
-                            <Play className="h-4 w-4 fill-white" />
-                            Ikuti
+                            Lihat Kajian
                           </button>
                         </div>
                       </div>

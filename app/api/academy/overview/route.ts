@@ -16,12 +16,7 @@ export async function GET() {
     where: { role: "user" } 
   });
 
-  // 2. Kajian Aktif: Count of materials created by the instructor
-  const activeCourses = await prisma.material.count({
-    where: { instructorId }
-  });
-
-  // 3. Sesi Selesai: Materials where all invited participants have recorded attendance
+  // 2. Sesi Selesai & Kajian Aktif
   const instructorMaterials = await prisma.material.findMany({
     where: { instructorId },
     include: {
@@ -33,10 +28,10 @@ export async function GET() {
 
   let completedSessions = 0;
   
-  // We need to check attendance for each material
+  // Sesi selesai dihitung HANYA JIKA semua user yang diundang sudah absen (tidak boleh 0 yang diundang)
   for (const material of instructorMaterials) {
     const inviteCount = material.materialinvite.length;
-    if (inviteCount === 0) continue;
+    if (inviteCount === 0) continue; 
 
     const attendanceCount = await prisma.attendance.count({
       where: {
@@ -47,10 +42,13 @@ export async function GET() {
       }
     });
 
-    if (attendanceCount >= inviteCount) {
+    if (attendanceCount >= inviteCount && inviteCount > 0) {
       completedSessions++;
     }
   }
+
+  // Kajian aktif = Total kajian - Sesi Selesai
+  const activeCourses = instructorMaterials.length - completedSessions;
 
   // 4. Rating Rata-rata Profesional (dari rata-rata per kajian)
   const materialRatings = await Promise.all(instructorMaterials.map(async (mat) => {
@@ -95,23 +93,44 @@ export async function GET() {
 
   const currentTimeStr = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
 
-  const upcomingClasses = rawTodayMaterials
-    .map(m => {
-      const startTime = m.startedAt || "00:00";
-      // If it's the exact same minute or in the past, consider it ongoing/passed
-      const isOngoingOrPast = currentTimeStr >= startTime;
-      
-      return {
+  const upcomingClasses: any[] = [];
+
+  for (const m of rawTodayMaterials) {
+    const inviteCount = m.materialinvite.length;
+    let isCompleted = false;
+
+    // Cek apakah semua undangan sudah diabsen (dihitung Selesai)
+    if (inviteCount > 0) {
+      const attendanceCount = await prisma.attendance.count({
+        where: {
+          materialId: m.id,
+          userId: {
+            in: m.materialinvite.map(i => i.userId)
+          }
+        }
+      });
+      if (attendanceCount >= inviteCount) {
+        isCompleted = true;
+      }
+    }
+
+    const startTime = m.startedAt || "00:00";
+    const isOngoingOrPast = currentTimeStr >= startTime;
+    
+    // Jangan tampilkan jika statusnya sudah "sedang berlangsung" ke atas, KECUALI dia sudah tuntas (supaya bisa ditag Tuntas di tampilan depan)
+    // Tampilkan jika belum lewat waktu, ATAU dia tuntas hari ini.
+    if (!isOngoingOrPast || isCompleted) {
+      upcomingClasses.push({
         id: m.id,
         title: m.title,
-        time: m.startedAt || "Belum diatur",
-        students: m.materialinvite.length,
+        time: startTime,
+        students: inviteCount,
         room: m.location || "TBA",
-        // status is "ongoing" if exactly matching or past, otherwise "upcoming"
-        status: isOngoingOrPast ? "ongoing" : "upcoming"
-      };
-    })
-    .filter(kls => kls.status !== "ongoing"); // hide if ongoing or past
+        status: "upcoming",
+        isCompleted: isCompleted
+      });
+    }
+  }
 
   // 6. Recent Activities (Heuristic from multiple models)
   const [latestMaterials, latestSchedules, latestCompetitions, latestNews] = await Promise.all([
@@ -204,23 +223,21 @@ export async function GET() {
     };
   }));
 
-  // 8. Weekly Achievement (Pencapaian Minggu Ini)
-  const sevenDaysAgo = new Date(now);
-  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-
-  const weeklyMaterials = await prisma.material.findMany({
+  // 8. Daily Achievement (Pencapaian Hari Ini)
+  const dailyMaterials = await prisma.material.findMany({
     where: { 
       instructorId,
       date: {
-        gte: sevenDaysAgo,
-        lte: now
+        gte: today, // this is `now` set to 00:00:00 locally
+        lt: tomorrow
       }
     }
   });
+  
+  // But wait! We only want to count courses that were TAUGHT today, meaning they have to have at least 1 attendance by someone, or simply matching the schedule date is enough as requested: "kajian kajian yang di hari itu dihadiri oleh instrukttur dicatat". So length is fine: 
+  const dailySessions = dailyMaterials.length;
 
-  const weeklySessions = weeklyMaterials.length;
-
-  const weeklyMaterialRatings = await Promise.all(weeklyMaterials.map(async (mat) => {
+  const dailyMaterialRatings = await Promise.all(dailyMaterials.map(async (mat) => {
     const ratings = await prisma.attendance.findMany({
       where: { materialId: mat.id, rating: { not: null } },
       select: { rating: true }
@@ -229,9 +246,9 @@ export async function GET() {
     return ratings.reduce((acc, curr) => acc + (curr.rating || 0), 0) / ratings.length;
   }));
 
-  const validWeeklyRatings = weeklyMaterialRatings.filter((r): r is number => r !== null);
-  const weeklyRating = validWeeklyRatings.length > 0
-    ? Number((validWeeklyRatings.reduce((acc, curr) => acc + curr, 0) / validWeeklyRatings.length).toFixed(1))
+  const validDailyRatings = dailyMaterialRatings.filter((r): r is number => r !== null);
+  const dailyRating = validDailyRatings.length > 0
+    ? Number((validDailyRatings.reduce((acc, curr) => acc + curr, 0) / validDailyRatings.length).toFixed(1))
     : 0;
 
   return NextResponse.json({
@@ -245,8 +262,8 @@ export async function GET() {
     recentActivities,
     coursesOverview,
     achievement: {
-      weeklySessions,
-      weeklyRating
+      dailySessions,
+      dailyRating
     }
   });
 }

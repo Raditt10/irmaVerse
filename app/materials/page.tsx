@@ -13,7 +13,7 @@ import MaterialInstructorActions from "@/components/ui/AbsensiButton";
 import MaterialUserActions from "@/app/materials/_components/ButtonUserAbsenMaterial";
 import Loading from "@/components/ui/Loading"; // Import Loading baru
 import SuccessDataFound from "@/components/ui/SuccessDataFound";
-import { Calendar, Clock, Plus, Sparkles, BookOpen, CheckCheck } from "lucide-react";
+import { Calendar, Clock, Plus, BookOpen, CheckCheck, User as UserIcon } from "lucide-react";
 import AddButton from "@/components/ui/AddButton";
 import DeleteButton from "@/components/ui/DeleteButton";
 import DetailButton from "@/components/ui/DetailButton";
@@ -23,6 +23,7 @@ interface Material {
   title: string;
   description: string;
   instructor: string;
+  instructorAvatar?: string | null;
   category?: string;
   grade?: string;
   startedAt?: string;
@@ -32,6 +33,7 @@ interface Material {
   isJoined: boolean;
   attendedAt?: string;
   createdAt?: string;
+  isCompleted?: boolean;
 }
 
 const Materials = () => {
@@ -110,8 +112,8 @@ const Materials = () => {
           materialDate.setHours(0, 0, 0, 0);
           matchesFilter = materialDate.getTime() === today.getTime();
         } else {
-          // Regular users: show enrolled/joined materials
-          matchesFilter = material.isJoined && !material.attendedAt;
+          // Regular users: show materials where they have ALREADY filled attendance
+          matchesFilter = material.isJoined && !!material.attendedAt;
         }
       }
 
@@ -256,7 +258,7 @@ const Materials = () => {
                 <div className="relative z-10">
                   <div className="flex items-center gap-2 mb-4 lg:mb-5">
                     <div className="p-1.5 lg:p-2 bg-white rounded-lg lg:rounded-xl border border-teal-100 shadow-sm">
-                      <Sparkles className="h-4 w-4 lg:h-5 lg:w-5 text-teal-500" strokeWidth={2.5} />
+                      <BookOpen className="h-4 w-4 lg:h-5 lg:w-5 text-teal-500" strokeWidth={2.5} />
                     </div>
                     <h2 className="text-sm lg:text-lg font-black text-slate-800 tracking-tight">Jadwal Kajianmu Hari Ini</h2>
                     {todayMaterials.length > 1 && (
@@ -403,9 +405,15 @@ const Materials = () => {
                         )}
 
                         <div className="absolute top-4 left-4 flex flex-wrap gap-2">
-                          <span className="px-3 py-1 rounded-lg bg-emerald-400 text-white text-[10px] md:text-xs font-bold border-2 border-emerald-600 shadow-[0_2px_0_0_#065f46]">
-                            {material.category}
-                          </span>
+                          {isPrivileged && material.isCompleted !== undefined && (
+                            <span className={`px-2 py-1 rounded-lg text-white text-[10px] md:text-xs font-bold border-2 shadow-[0_2px_0_0_rgba(0,0,0,0.15)] ${
+                              material.isCompleted
+                                ? "bg-emerald-500 border-emerald-700 shadow-[#047857]"
+                                : "bg-amber-500 border-amber-700 shadow-[#b45309]"
+                            }`}>
+                              {material.isCompleted ? "Tuntas" : "Belum Tuntas"}
+                            </span>
+                          )}
                         </div>
                       </div>
 
@@ -422,11 +430,19 @@ const Materials = () => {
                             {material.title}
                           </h3>
 
-                          <div className="flex items-center gap-2 mb-4">
-                            <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center border border-slate-200">
-                              <span className="text-xs">👤</span>
-                            </div>
-                            <p className="text-slate-500 font-bold text-sm">
+                          <div className="flex items-center gap-2.5 mb-4">
+                            {material.instructorAvatar ? (
+                              <img
+                                src={material.instructorAvatar}
+                                alt={material.instructor || "Instructor"}
+                                className="w-7 h-7 rounded-full object-cover border-2 border-white shadow-md"
+                              />
+                            ) : (
+                              <div className="w-7 h-7 rounded-full bg-indigo-50 flex items-center justify-center border border-indigo-100 shadow-xs">
+                                <UserIcon className="w-3.5 h-3.5 text-indigo-500" fill="currentColor" />
+                              </div>
+                            )}
+                            <p className="text-slate-600 font-bold text-sm">
                               {material.instructor || "TBA"}
                             </p>
                           </div>
