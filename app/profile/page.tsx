@@ -568,7 +568,6 @@ const Profile = () => {
                         </span>
                       </div>
                     </div>
-                    )
                   )}
                 </div>
 
@@ -587,11 +586,6 @@ const Profile = () => {
                           Program yang sedang kamu ikuti
                         </p>
                       </div>
-                      {friends.length > 0 && (
-                        <span className="text-xs font-black text-teal-600 bg-teal-50 px-3 py-1 rounded-full border border-teal-200">
-                          {friends.length}
-                        </span>
-                      )}
                     </div>
 
                     <div className="flex flex-col gap-4">
@@ -624,13 +618,7 @@ const Profile = () => {
                                 <span className="bg-teal-50 px-2 py-1 rounded-lg border border-teal-100 text-[10px] font-bold text-teal-600 uppercase">
                                   Aktif
                                 </span>
-                              )}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-bold text-slate-800 truncate group-hover:text-teal-600 transition-colors">
-                                {friend.name}
-                              </p>
-                              <p className="text-[10px] font-bold text-slate-400 capitalize">{friend.role || "Anggota"}</p>
+                              </div>
                             </div>
                           </Link>
                         ))
