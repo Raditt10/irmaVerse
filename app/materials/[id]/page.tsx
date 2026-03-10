@@ -168,13 +168,6 @@ const MaterialDetail = () => {
       };
 
       setMaterial(mapped);
-
-      // Track material read for XP (fire-and-forget, non-blocking)
-      if (!isPrivileged) {
-        fetch(`/api/materials/${materialId}/read`, { method: "POST" }).catch(
-          () => {},
-        );
-      }
     } catch (error: any) {
       console.error("Error loading material:", error);
       showToast(error.message || "Gagal memuat detail kajian", "error");

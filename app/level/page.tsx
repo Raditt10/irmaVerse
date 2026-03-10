@@ -82,11 +82,7 @@ const LEVEL_MILESTONES = [
 const XP_GUIDE = [
   { icon: "🧠", label: "Selesaikan Quiz", xp: 50, bonus: "+25 jika skor ≥80%" },
   { icon: "📚", label: "Ikut Program", xp: 40 },
-  { icon: "🔥", label: "Streak Harian", xp: 35 },
   { icon: "✅", label: "Absensi", xp: 25 },
-  { icon: "📖", label: "Baca Materi", xp: 20 },
-  { icon: "🤝", label: "Tambah Teman", xp: 15 },
-  { icon: "💬", label: "Forum Post", xp: 10 },
   { icon: "🏅", label: "Dapat Badge", xp: 100 },
 ];
 
@@ -182,6 +178,9 @@ function formatDateLabel(date: Date): string {
 export default async function LevelPage() {
   const session = await auth();
   if (!session?.user?.id) redirect("/auth");
+
+  // Hanya role "user" yang bisa mengakses halaman Level & XP
+  if ((session.user as any).role !== "user") redirect("/overview");
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
