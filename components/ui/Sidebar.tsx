@@ -21,6 +21,7 @@ import {
   ChevronDown,
   Contact,
   Shield,
+  Settings,
 } from "lucide-react";
 
 // Custom scrollbar styles - Cartoon Style
@@ -324,6 +325,11 @@ const Sidebar = () => {
           },
         ]
       : []),
+    {
+      icon: Settings,
+      label: "Pengaturan",
+      path: "/settings",
+    },
   ];
 
   return (
