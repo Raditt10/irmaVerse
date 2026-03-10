@@ -5,28 +5,52 @@ import { useRouter } from "next/navigation";
 import { 
   Search, 
   X, 
-  User, 
   Newspaper, 
   GraduationCap, 
   ArrowRight, 
-  SearchX 
+  SearchX,
+  BookOpen,
+  Trophy,
+  CalendarDays,
+  HelpCircle,
+  Layers,
+  MapPin,
+  Clock,
+  Sparkles,
 } from "lucide-react";
 import debounce from "lodash/debounce";
 
 interface SearchResult {
   id: string;
-  type: "news" | "user" | "instructor";
+  type: "news" | "material" | "instructor" | "program" | "competition" | "schedule" | "quiz";
   title: string;
   slug?: string;
   description?: string;
   image?: string;
   category?: string;
-  email?: string;
-  role?: string;
-  bio?: string;
+  grade?: string;
+  date?: string;
+  location?: string;
+  time?: string;
+  pemateri?: string;
+  status?: string;
+  prize?: string;
+  instructorName?: string;
   bidangKeahlian?: string;
   pengalaman?: string;
+  materialId?: string;
+  materialTitle?: string;
 }
+
+const TYPE_CONFIG: Record<string, { label: string; icon: React.ElementType; color: string; bgColor: string; borderColor: string; hoverBg: string; hoverBorder: string; badgeBg: string; badgeText: string }> = {
+  news:        { label: "Berita & Artikel", icon: Newspaper,    color: "text-emerald-600", bgColor: "bg-emerald-50", borderColor: "border-emerald-200", hoverBg: "hover:bg-emerald-50/60", hoverBorder: "hover:border-emerald-400", badgeBg: "bg-emerald-100", badgeText: "text-emerald-700" },
+  material:    { label: "Kajian",           icon: BookOpen,     color: "text-emerald-600", bgColor: "bg-emerald-50", borderColor: "border-emerald-200", hoverBg: "hover:bg-emerald-50/60", hoverBorder: "hover:border-emerald-400", badgeBg: "bg-emerald-100", badgeText: "text-emerald-700" },
+  instructor:  { label: "Instruktur",       icon: GraduationCap, color: "text-emerald-600", bgColor: "bg-emerald-50", borderColor: "border-emerald-200", hoverBg: "hover:bg-emerald-50/60", hoverBorder: "hover:border-emerald-400", badgeBg: "bg-emerald-100", badgeText: "text-emerald-700" },
+  program:     { label: "Program",          icon: Layers,       color: "text-emerald-600", bgColor: "bg-emerald-50", borderColor: "border-emerald-200", hoverBg: "hover:bg-emerald-50/60", hoverBorder: "hover:border-emerald-400", badgeBg: "bg-emerald-100", badgeText: "text-emerald-700" },
+  competition: { label: "Kompetisi",        icon: Trophy,       color: "text-emerald-600", bgColor: "bg-emerald-50", borderColor: "border-emerald-200", hoverBg: "hover:bg-emerald-50/60", hoverBorder: "hover:border-emerald-400", badgeBg: "bg-emerald-100", badgeText: "text-emerald-700" },
+  schedule:    { label: "Jadwal",           icon: CalendarDays, color: "text-emerald-600", bgColor: "bg-emerald-50", borderColor: "border-emerald-200", hoverBg: "hover:bg-emerald-50/60", hoverBorder: "hover:border-emerald-400", badgeBg: "bg-emerald-100", badgeText: "text-emerald-700" },
+  quiz:        { label: "Kuis",             icon: HelpCircle,   color: "text-emerald-600", bgColor: "bg-emerald-50", borderColor: "border-emerald-200", hoverBg: "hover:bg-emerald-50/60", hoverBorder: "hover:border-emerald-400", badgeBg: "bg-emerald-100", badgeText: "text-emerald-700" },
+};
 
 export default function SearchBar() {
   const router = useRouter();
@@ -81,11 +105,27 @@ export default function SearchBar() {
       case "news":
         router.push(`/news/${result.slug}`);
         break;
-      case "user":
-        router.push(`/members/${result.id}`);
+      case "material":
+        router.push(`/materials/${result.id}`);
         break;
       case "instructor":
         router.push(`/instructors`);
+        break;
+      case "program":
+        router.push(`/programs/${result.id}`);
+        break;
+      case "competition":
+        router.push(`/competitions/${result.id}`);
+        break;
+      case "schedule":
+        router.push(`/schedule/${result.id}`);
+        break;
+      case "quiz":
+        if (result.materialId) {
+          router.push(`/quiz/${result.materialId}`);
+        } else {
+          router.push(`/quiz/standalone`);
+        }
         break;
     }
     handleClear();
@@ -102,175 +142,185 @@ export default function SearchBar() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const groupedResults = {
-    berita: results.filter((r) => r.type === "news"),
-    pengguna: results.filter((r) => r.type === "user"),
-    instruktur: results.filter((r) => r.type === "instructor"),
+  // Group results by type, maintaining order
+  const typeOrder: SearchResult["type"][] = ["material", "news", "instructor", "program", "competition", "schedule", "quiz"];
+  const groupedResults = typeOrder
+    .map((type) => ({
+      type,
+      items: results.filter((r) => r.type === type),
+    }))
+    .filter((group) => group.items.length > 0);
+
+  const totalResults = results.length;
+
+  const getSubtext = (result: SearchResult) => {
+    switch (result.type) {
+      case "news":
+        return result.category || "Berita";
+      case "material":
+        return [result.instructorName, result.category, result.location].filter(Boolean).join(" · ");
+      case "instructor":
+        return result.bidangKeahlian || "Instruktur";
+      case "program":
+        return [result.instructorName, result.category].filter(Boolean).join(" · ");
+      case "competition":
+        return [result.location, result.prize].filter(Boolean).join(" · ");
+      case "schedule":
+        return [result.pemateri, result.time, result.location].filter(Boolean).join(" · ");
+      case "quiz":
+        return result.materialTitle ? `Kajian: ${result.materialTitle}` : "Kuis Mandiri";
+      default:
+        return "";
+    }
   };
 
   return (
     <div ref={searchRef} className="relative w-full">
       <div className="relative group">
-        {/* ICON SEARCH: Digeser ke kanan (left-5) dan ukurannya diperbesar sedikit (h-5 w-5) */}
-        <Search 
-          className="absolute left-5 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-emerald-500 transition-colors" 
-          strokeWidth={2.5} 
-        />
+        <div className="absolute left-4 top-1/2 -translate-y-1/2 h-8 w-8 rounded-xl bg-emerald-100 border border-emerald-200 flex items-center justify-center group-focus-within:bg-emerald-500 group-focus-within:border-emerald-600 transition-all duration-300">
+          <Search 
+            className="h-4 w-4 text-emerald-500 group-focus-within:text-white transition-colors duration-300" 
+            strokeWidth={2.5} 
+          />
+        </div>
         
-        {/* INPUT: Padding kiri diperlebar (pl-14) dan tinggi ditambah (py-3) */}
         <input
           type="text"
           value={query}
           onChange={handleInputChange}
-          placeholder="Cari kajian, event, atau teman..."
-          className="w-full pl-14 pr-12 py-3 rounded-2xl border-2 border-slate-200 bg-slate-50 text-slate-800 placeholder-slate-400 focus:outline-none focus:border-emerald-500 focus:bg-white focus:shadow-[3px_3px_0_0_#34d399] transition-all font-bold text-sm"
+          placeholder="Cari kajian, berita, instruktur, program..."
+          className="w-full pl-15 pr-12 py-3.5 rounded-2xl border-2 border-slate-200 bg-white text-slate-800 placeholder-slate-400 focus:outline-none focus:border-emerald-400 focus:bg-white focus:shadow-[0_4px_12px_rgba(52,211,153,0.15)] transition-all font-bold text-sm"
         />
         
         {query && (
           <button
             onClick={handleClear}
-            className="absolute right-4 top-1/2 transform -translate-y-1/2 p-1 rounded-full text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-colors"
+            className="absolute right-4 top-1/2 -translate-y-1/2 h-7 w-7 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400 hover:text-rose-500 hover:bg-rose-50 hover:border-rose-200 transition-all"
           >
-            <X className="h-5 w-5" strokeWidth={3} />
+            <X className="h-3.5 w-3.5" strokeWidth={3} />
           </button>
         )}
       </div>
 
       {isOpen && query.length >= 2 && (
-        <div className="absolute top-full left-0 right-0 mt-3 bg-white rounded-2xl border-2 border-slate-200 shadow-[4px_4px_0_0_#cbd5e1] z-50 max-h-[450px] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200 animate-in fade-in zoom-in-95 duration-200">
+        <div className="absolute top-full left-0 right-0 mt-3 bg-white rounded-3xl border-2 border-slate-200 shadow-[0_8px_0_0_#e2e8f0] z-50 max-h-[500px] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+          
           {isLoading ? (
-            <div className="p-8 text-center text-slate-500 text-sm">
-              <div className="inline-flex items-center gap-3">
-                <div className="h-6 w-6 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
-                <span className="font-bold text-slate-600">Sedang mencari...</span>
+            <div className="p-10 text-center">
+              <div className="inline-flex flex-col items-center gap-3">
+                <div className="relative h-12 w-12">
+                  <div className="absolute inset-0 rounded-full border-4 border-emerald-100"></div>
+                  <div className="absolute inset-0 rounded-full border-4 border-emerald-500 border-t-transparent animate-spin"></div>
+                  <Sparkles className="absolute inset-0 m-auto h-5 w-5 text-emerald-500 animate-pulse" />
+                </div>
+                <span className="font-black text-slate-600 text-sm">Mencari...</span>
               </div>
             </div>
           ) : results.length === 0 ? (
             <div className="p-10 text-center flex flex-col items-center">
-               <div className="h-16 w-16 bg-slate-50 rounded-2xl border-2 border-slate-200 flex items-center justify-center mb-4">
-                  <SearchX className="h-8 w-8 text-slate-400" strokeWidth={2.5} />
-               </div>
-               <p className="text-slate-700 font-black text-base">Tidak ditemukan</p>
-               <p className="text-slate-500 text-xs mt-1 font-medium">Coba kata kunci lain ya!</p>
+              <div className="h-20 w-20 bg-slate-50 rounded-3xl border-2 border-slate-200 border-b-4 flex items-center justify-center mb-4">
+                <SearchX className="h-10 w-10 text-slate-300" strokeWidth={2} />
+              </div>
+              <p className="text-slate-700 font-black text-lg">Ups, tidak ditemukan!</p>
+              <p className="text-slate-400 text-xs mt-1 font-medium max-w-[200px]">Coba kata kunci lain atau periksa ejaan ya</p>
             </div>
           ) : (
-            <div className="py-2">
-              
-              {/* Berita Section */}
-              {groupedResults.berita.length > 0 && (
-                <div className="mb-2">
-                  <div className="px-5 py-2 text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                    <Newspaper className="h-3 w-3" /> Berita & Artikel
+            <div className="overflow-y-auto max-h-[480px] scrollbar-thin scrollbar-thumb-slate-200">
+              {/* Results Header */}
+              <div className="sticky top-0 z-10 px-5 py-3 bg-white/95 backdrop-blur-sm border-b-2 border-slate-100 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="h-6 w-6 rounded-lg bg-emerald-100 flex items-center justify-center">
+                    <Search className="h-3 w-3 text-emerald-600" strokeWidth={3} />
                   </div>
-                  {groupedResults.berita.map((result) => (
-                    <button
-                      key={result.id}
-                      onClick={() => handleResultClick(result)}
-                      className="w-full px-5 py-3 hover:bg-emerald-50/50 text-left transition-colors flex items-start gap-4 group border-l-4 border-transparent hover:border-emerald-400"
-                    >
-                      {result.image ? (
-                        <img
-                          src={result.image}
-                          alt={result.title}
-                          className="h-12 w-12 rounded-xl object-cover border-2 border-slate-100 shadow-sm shrink-0"
-                        />
-                      ) : (
-                        <div className="h-12 w-12 rounded-xl bg-slate-100 border-2 border-slate-200 flex items-center justify-center shrink-0">
-                            <Newspaper className="h-6 w-6 text-slate-400" />
-                        </div>
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-bold text-slate-800 leading-tight line-clamp-1 group-hover:text-emerald-700 transition-colors">
-                          {result.title}
-                        </div>
-                        <div className="flex items-center gap-2 mt-1.5">
-                            <span className="text-[10px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-md font-bold uppercase tracking-wide border border-emerald-200">
-                                {result.category || "Berita"}
-                            </span>
-                        </div>
-                      </div>
-                    </button>
-                  ))}
+                  <span className="text-xs font-black text-slate-500">
+                    {totalResults} hasil ditemukan
+                  </span>
                 </div>
-              )}
-
-              {/* Instruktur Section */}
-              {groupedResults.instruktur.length > 0 && (
-                <div className="mb-2">
-                  <div className="px-5 py-2 text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 border-t border-slate-100 mt-2 pt-3">
-                    <GraduationCap className="h-3 w-3" /> Instruktur
-                  </div>
-                  {groupedResults.instruktur.map((result) => (
-                    <button
-                      key={result.id}
-                      onClick={() => handleResultClick(result)}
-                      className="w-full px-5 py-3 hover:bg-amber-50/50 text-left transition-colors flex items-center gap-4 group border-l-4 border-transparent hover:border-amber-400"
-                    >
-                      {result.image ? (
-                        <img 
-                          src={result.image} 
-                          alt={result.title} 
-                          className="h-10 w-10 rounded-full border-2 border-amber-200 object-cover shrink-0 shadow-sm"
-                        />
-                      ) : (
-                        <div className="h-10 w-10 rounded-full bg-amber-100 border-2 border-amber-200 flex items-center justify-center shrink-0 text-amber-600 shadow-sm">
-                           <GraduationCap className="h-5 w-5" />
-                        </div>
-                      )}
-                      
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-bold text-slate-800 group-hover:text-amber-700 transition-colors">
-                          {result.title}
-                        </div>
-                        {result.bidangKeahlian && (
-                          <div className="text-xs text-slate-500 font-medium truncate mt-0.5">
-                            Spesialis: {result.bidangKeahlian}
-                          </div>
-                        )}
+                <div className="flex gap-1">
+                  {groupedResults.map(({ type }) => {
+                    const cfg = TYPE_CONFIG[type];
+                    const Icon = cfg.icon;
+                    return (
+                      <div key={type} className={`h-6 w-6 rounded-lg ${cfg.bgColor} flex items-center justify-center`} title={cfg.label}>
+                        <Icon className={`h-3 w-3 ${cfg.color}`} strokeWidth={2.5} />
                       </div>
-                      <ArrowRight className="h-4 w-4 text-slate-300 group-hover:text-amber-400 -translate-x-2 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-300" />
-                    </button>
-                  ))}
+                    );
+                  })}
                 </div>
-              )}
+              </div>
 
-              {/* Pengguna Section */}
-              {groupedResults.pengguna.length > 0 && (
-                <div>
-                  <div className="px-5 py-2 text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 border-t border-slate-100 mt-2 pt-3">
-                    <User className="h-3 w-3" /> Pengguna
-                  </div>
-                  {groupedResults.pengguna.map((result) => (
-                    <button
-                      key={result.id}
-                      onClick={() => handleResultClick(result)}
-                      className="w-full px-5 py-3 hover:bg-blue-50/50 text-left transition-colors flex items-center gap-4 group border-l-4 border-transparent hover:border-blue-400"
-                    >
-                      {result.image ? (
-                        <img 
-                          src={result.image} 
-                          alt={result.title} 
-                          className="h-10 w-10 rounded-full border-2 border-blue-200 object-cover shrink-0 shadow-sm"
-                        />
-                      ) : (
-                        <div className="h-10 w-10 rounded-full bg-blue-100 border-2 border-blue-200 flex items-center justify-center shrink-0 text-blue-600 shadow-sm">
-                           <User className="h-5 w-5" />
+              {/* Grouped Results */}
+              <div className="py-2">
+                {groupedResults.map(({ type, items }, groupIdx) => {
+                  const cfg = TYPE_CONFIG[type];
+                  const Icon = cfg.icon;
+                  return (
+                    <div key={type} className={groupIdx > 0 ? "mt-1" : ""}>
+                      {/* Section Header */}
+                      <div className="px-5 py-2 flex items-center gap-2">
+                        <div className={`h-5 w-5 rounded-md ${cfg.bgColor} ${cfg.borderColor} border flex items-center justify-center`}>
+                          <Icon className={`h-2.5 w-2.5 ${cfg.color}`} strokeWidth={3} />
                         </div>
-                      )}
-
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-bold text-slate-800 group-hover:text-blue-700 transition-colors">
-                          {result.title}
-                        </div>
-                        <div className="text-xs text-slate-500 font-medium truncate mt-0.5">
-                          {result.email}
-                        </div>
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{cfg.label}</span>
+                        <span className={`text-[9px] font-bold ${cfg.badgeText} ${cfg.badgeBg} px-1.5 py-0.5 rounded-md`}>{items.length}</span>
+                        <div className="flex-1 h-px bg-slate-100 ml-2"></div>
                       </div>
-                    </button>
-                  ))}
-                </div>
-              )}
 
+                      {/* Items */}
+                      {items.map((result) => {
+                        const subtext = getSubtext(result);
+                        return (
+                          <button
+                            key={result.id}
+                            onClick={() => handleResultClick(result)}
+                            className={`w-full px-5 py-3 ${cfg.hoverBg} text-left transition-all flex items-center gap-3 group/item border-l-4 border-transparent ${cfg.hoverBorder}`}
+                          >
+                            {/* Thumbnail / Icon */}
+                            {result.image ? (
+                              <img
+                                src={result.image}
+                                alt={result.title}
+                                className={`h-10 w-10 rounded-xl object-cover border-2 ${cfg.borderColor} shadow-sm shrink-0`}
+                              />
+                            ) : (
+                              <div className={`h-10 w-10 rounded-xl ${cfg.bgColor} border-2 ${cfg.borderColor} flex items-center justify-center shrink-0`}>
+                                <Icon className={`h-5 w-5 ${cfg.color}`} strokeWidth={2} />
+                              </div>
+                            )}
+
+                            {/* Content */}
+                            <div className="flex-1 min-w-0">
+                              <div className="text-sm font-bold text-slate-800 leading-tight line-clamp-1 group-hover/item:text-slate-900 transition-colors">
+                                {result.title}
+                              </div>
+                              {subtext && (
+                                <div className="flex items-center gap-1.5 mt-1">
+                                  {result.type === "material" && result.location && (
+                                    <MapPin className="h-2.5 w-2.5 text-slate-400 shrink-0" />
+                                  )}
+                                  {result.type === "schedule" && result.time && (
+                                    <Clock className="h-2.5 w-2.5 text-slate-400 shrink-0" />
+                                  )}
+                                  <span className="text-[11px] text-slate-500 font-medium truncate">{subtext}</span>
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Category badge */}
+                            {result.category && (
+                              <span className={`hidden sm:inline-block text-[9px] font-bold ${cfg.badgeText} ${cfg.badgeBg} px-2 py-0.5 rounded-md border ${cfg.borderColor} uppercase tracking-wide shrink-0`}>
+                                {result.category}
+                              </span>
+                            )}
+
+                            <ArrowRight className={`h-4 w-4 text-slate-200 group-hover/item:${cfg.color} shrink-0 -translate-x-2 opacity-0 group-hover/item:translate-x-0 group-hover/item:opacity-100 transition-all duration-300`} />
+                          </button>
+                        );
+                      })}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           )}
         </div>

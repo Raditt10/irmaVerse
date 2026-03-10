@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ results: [] });
     }
 
-    // Gunakan CONCAT dan LOWER untuk case-insensitive search yang reliable
+    // Berita & Artikel
     const newsResults: any[] = await prisma.$queryRaw`
       SELECT id, title, slug, deskripsi, image, category
       FROM news
@@ -17,23 +17,25 @@ export async function GET(request: NextRequest) {
         CONCAT(LOWER(title), ' ', LOWER(deskripsi), ' ', LOWER(COALESCE(content, ''))) 
         LIKE CONCAT('%', LOWER(${query}), '%')
       ORDER BY createdAt DESC
-      LIMIT 8
-    `;
-
-    // Search untuk Pengguna (Users)
-    const userResults: any[] = await prisma.$queryRaw`
-      SELECT id, name, email, role, bio
-      FROM users
-      WHERE 
-        CONCAT(LOWER(COALESCE(name, '')), ' ', LOWER(COALESCE(email, '')), ' ', LOWER(COALESCE(bio, '')))
-        LIKE CONCAT('%', LOWER(${query}), '%')
-        AND role != 'instruktur'
       LIMIT 5
     `;
 
-    // Instruktur (filtered from Users)
+    // Kajian (Materials)
+    const materialResults: any[] = await prisma.$queryRaw`
+      SELECT m.id, m.title, m.description, m.category, m.grade, m.date, m.location, m.thumbnailUrl,
+             u.name AS instructorName
+      FROM material m
+      LEFT JOIN users u ON m.instructorId = u.id
+      WHERE 
+        CONCAT(LOWER(m.title), ' ', LOWER(COALESCE(m.description, '')), ' ', LOWER(COALESCE(m.location, '')))
+        LIKE CONCAT('%', LOWER(${query}), '%')
+      ORDER BY m.date DESC
+      LIMIT 5
+    `;
+
+    // Instruktur
     const instructorResults: any[] = await prisma.$queryRaw`
-      SELECT id, name, bidangKeahlian, pengalaman, role
+      SELECT id, name, avatar, bidangKeahlian, pengalaman
       FROM users
       WHERE 
         role = 'instruktur' AND
@@ -42,30 +44,123 @@ export async function GET(request: NextRequest) {
       LIMIT 5
     `;
 
+    // Program
+    const programResults: any[] = await prisma.$queryRaw`
+      SELECT p.id, p.title, p.description, p.category, p.grade, p.thumbnailUrl,
+             u.name AS instructorName
+      FROM programs p
+      LEFT JOIN users u ON p.instructorId = u.id
+      WHERE 
+        CONCAT(LOWER(p.title), ' ', LOWER(COALESCE(p.description, '')))
+        LIKE CONCAT('%', LOWER(${query}), '%')
+      ORDER BY p.createdAt DESC
+      LIMIT 5
+    `;
+
+    // Kompetisi
+    const competitionResults: any[] = await prisma.$queryRaw`
+      SELECT id, title, description, category, date, location, thumbnailUrl, prize
+      FROM competitions
+      WHERE 
+        CONCAT(LOWER(title), ' ', LOWER(COALESCE(description, '')), ' ', LOWER(COALESCE(location, '')))
+        LIKE CONCAT('%', LOWER(${query}), '%')
+      ORDER BY date DESC
+      LIMIT 5
+    `;
+
+    // Jadwal / Schedule
+    const scheduleResults: any[] = await prisma.$queryRaw`
+      SELECT s.id, s.title, s.description, s.date, s.time, s.location, s.pemateri, s.status, s.thumbnailUrl
+      FROM schedules s
+      WHERE 
+        CONCAT(LOWER(s.title), ' ', LOWER(COALESCE(s.description, '')), ' ', LOWER(COALESCE(s.location, '')), ' ', LOWER(COALESCE(s.pemateri, '')))
+        LIKE CONCAT('%', LOWER(${query}), '%')
+      ORDER BY s.date DESC
+      LIMIT 5
+    `;
+
+    // Kuis
+    const quizResults: any[] = await prisma.$queryRaw`
+      SELECT q.id, q.title, q.description, q.materialId,
+             m.title AS materialTitle
+      FROM material_quizzes q
+      LEFT JOIN material m ON q.materialId = m.id
+      WHERE 
+        CONCAT(LOWER(q.title), ' ', LOWER(COALESCE(q.description, '')))
+        LIKE CONCAT('%', LOWER(${query}), '%')
+      ORDER BY q.createdAt DESC
+      LIMIT 5
+    `;
+
     const results = [
-      ...newsResults.map((news: any) => ({
-        id: news.id,
-        type: 'news',
-        title: news.title,
-        slug: news.slug,
-        description: news.deskripsi,
-        image: news.image,
-        category: news.category,
+      ...newsResults.map((n: any) => ({
+        id: n.id,
+        type: 'news' as const,
+        title: n.title,
+        slug: n.slug,
+        description: n.deskripsi,
+        image: n.image,
+        category: n.category,
       })),
-      ...userResults.map((user: any) => ({
-        id: user.id,
-        type: 'user',
-        title: user.name || user.email,
-        email: user.email,
-        role: user.role,
-        bio: user.bio,
+      ...materialResults.map((m: any) => ({
+        id: m.id,
+        type: 'material' as const,
+        title: m.title,
+        description: m.description,
+        image: m.thumbnailUrl,
+        category: m.category,
+        grade: m.grade,
+        date: m.date,
+        location: m.location,
+        instructorName: m.instructorName,
       })),
-      ...instructorResults.map((instructor: any) => ({
-        id: instructor.id,
-        type: 'instructor',
-        title: instructor.name,
-        bidangKeahlian: instructor.bidangKeahlian,
-        pengalaman: instructor.pengalaman,
+      ...instructorResults.map((i: any) => ({
+        id: i.id,
+        type: 'instructor' as const,
+        title: i.name,
+        image: i.avatar,
+        bidangKeahlian: i.bidangKeahlian,
+        pengalaman: i.pengalaman,
+      })),
+      ...programResults.map((p: any) => ({
+        id: p.id,
+        type: 'program' as const,
+        title: p.title,
+        description: p.description,
+        image: p.thumbnailUrl,
+        category: p.category,
+        grade: p.grade,
+        instructorName: p.instructorName,
+      })),
+      ...competitionResults.map((c: any) => ({
+        id: c.id,
+        type: 'competition' as const,
+        title: c.title,
+        description: c.description,
+        image: c.thumbnailUrl,
+        category: c.category,
+        date: c.date,
+        location: c.location,
+        prize: c.prize,
+      })),
+      ...scheduleResults.map((s: any) => ({
+        id: s.id,
+        type: 'schedule' as const,
+        title: s.title,
+        description: s.description,
+        date: s.date,
+        time: s.time,
+        location: s.location,
+        pemateri: s.pemateri,
+        status: s.status,
+      })),
+      ...quizResults.map((q: any) => ({
+        id: q.id,
+        type: 'quiz' as const,
+        title: q.title,
+        description: q.description,
+        materialId: q.materialId,
+        materialTitle: q.materialTitle,
       })),
     ];
 

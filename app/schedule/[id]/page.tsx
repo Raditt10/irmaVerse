@@ -16,7 +16,7 @@ import {
   ArrowLeft,
   Phone, 
   Mail, 
-  Sparkles,
+  Info,
   SearchX,
   Share2,
   User,
@@ -90,7 +90,7 @@ const ScheduleDetail = () => {
           ? "Segera hadir" 
           : data.status === "ongoing" 
           ? "Sedang berlangsung" 
-          : "Acara telah dilaksanakan",
+          : "Kegiatan telah selesai",
         pemateriAvatar: data.instructor?.name 
           ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${data.instructor.name}`
           : null,
@@ -128,8 +128,8 @@ const ScheduleDetail = () => {
   const getStatusBadge = (status: string) => {
     const statusConfig: Record<string, string> = {
       "Segera hadir": "bg-emerald-400 text-white border-emerald-600 shadow-[2px_2px_0_0_#065f46] md:shadow-[4px_4px_0_0_#065f46]",
-      "Sedang berlangsung": "bg-blue-400 text-white border-blue-600 shadow-[2px_2px_0_0_#1e40af] md:shadow-[4px_4px_0_0_#1e40af]",
-      "Acara telah dilaksanakan": "bg-slate-400 text-white border-slate-600 shadow-[2px_2px_0_0_#475569] md:shadow-[4px_4px_0_0_#475569]"
+      "Sedang berlangsung": "bg-emerald-500 text-white border-emerald-700 shadow-[2px_2px_0_0_#064e3b] md:shadow-[4px_4px_0_0_#064e3b]",
+      "Kegiatan telah selesai": "bg-emerald-300 text-emerald-900 border-emerald-500 shadow-[2px_2px_0_0_#065f46] md:shadow-[4px_4px_0_0_#065f46]"
     };
 
     const style = statusConfig[status] || statusConfig["Segera hadir"];
@@ -256,8 +256,8 @@ const ScheduleDetail = () => {
                 {/* Info Cards Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="bg-white p-4 rounded-3xl border-2 border-slate-200 shadow-sm flex items-center gap-4 hover:-translate-y-1 transition-transform">
-                        <div className="w-12 h-12 shrink-0 rounded-full bg-rose-50 flex items-center justify-center border-2 border-rose-100">
-                            <Calendar className="h-6 w-6 text-rose-500" strokeWidth={2.5} />
+                        <div className="w-12 h-12 shrink-0 rounded-full bg-emerald-50 flex items-center justify-center border-2 border-emerald-100">
+                            <Calendar className="h-6 w-6 text-emerald-500" strokeWidth={2.5} />
                         </div>
                         <div className="flex flex-col flex-1 overflow-hidden">
                            <span className="text-[10px] sm:text-xs text-slate-400 font-bold uppercase tracking-wider mb-0.5">Tanggal</span>
@@ -269,8 +269,8 @@ const ScheduleDetail = () => {
 
                     {schedule.time && (
                         <div className="bg-white p-4 rounded-3xl border-2 border-slate-200 shadow-sm flex items-center gap-4 hover:-translate-y-1 transition-transform">
-                            <div className="w-12 h-12 shrink-0 rounded-full bg-amber-50 flex items-center justify-center border-2 border-amber-100">
-                                <Clock className="h-6 w-6 text-amber-500" strokeWidth={2.5} />
+                            <div className="w-12 h-12 shrink-0 rounded-full bg-emerald-50 flex items-center justify-center border-2 border-emerald-100">
+                                <Clock className="h-6 w-6 text-emerald-500" strokeWidth={2.5} />
                             </div>
                             <div className="flex flex-col flex-1 overflow-hidden">
                                 <span className="text-[10px] sm:text-xs text-slate-400 font-bold uppercase tracking-wider mb-0.5">Waktu</span>
@@ -281,8 +281,8 @@ const ScheduleDetail = () => {
 
                     {schedule.location && (
                         <div className="bg-white p-4 rounded-3xl border-2 border-slate-200 shadow-sm flex items-center gap-4 hover:-translate-y-1 transition-transform">
-                            <div className="w-12 h-12 shrink-0 rounded-full bg-teal-50 flex items-center justify-center border-2 border-teal-100">
-                                <MapPin className="h-6 w-6 text-teal-500" strokeWidth={2.5} />
+                            <div className="w-12 h-12 shrink-0 rounded-full bg-emerald-50 flex items-center justify-center border-2 border-emerald-100">
+                                <MapPin className="h-6 w-6 text-emerald-500" strokeWidth={2.5} />
                             </div>
                             <div className="flex flex-col flex-1 overflow-hidden">
                                 <span className="text-[10px] sm:text-xs text-slate-400 font-bold uppercase tracking-wider mb-0.5">Lokasi</span>
@@ -296,10 +296,10 @@ const ScheduleDetail = () => {
                 {schedule.fullDescription && (
                   <div className="bg-white p-5 md:p-8 rounded-3xl md:rounded-[2.5rem] border-2 border-slate-200 shadow-[4px_4px_0_0_#cbd5e1] md:shadow-[6px_6px_0_0_#cbd5e1]">
                     <div className="flex items-center gap-3 mb-4 md:mb-6">
-                        <div className="w-8 h-8 md:w-10 md:h-10 bg-indigo-100 rounded-full flex items-center justify-center border-2 border-indigo-200">
-                            <Sparkles className="h-4 w-4 md:h-5 md:w-5 text-indigo-500" />
+                        <div className="w-10 h-10 md:w-14 md:h-14 bg-emerald-100 rounded-2xl flex items-center justify-center border-4 border-emerald-200">
+                            <Info className="h-5 w-5 md:h-7 md:w-7 text-emerald-600" strokeWidth={3} />
                         </div>
-                        <h3 className="text-lg md:text-2xl font-black text-slate-800">Detail Lengkap</h3>
+                        <h3 className="text-lg md:text-2xl font-black text-slate-800">Deskripsi Kegiatan</h3>
                     </div>
                     <div className="prose prose-slate max-w-none">
                         <p className="text-slate-600 font-medium leading-relaxed text-sm md:text-lg whitespace-pre-line text-justify md:text-left">
@@ -378,21 +378,6 @@ const ScheduleDetail = () => {
                         <span className="font-bold text-slate-600">Kirim Pesan</span>
                       </button>
                     )}
-                  </div>
-                </div>
-
-                {/* Important Note */}
-                <div className="p-4 md:p-5 bg-amber-50 border-2 border-amber-200 rounded-2xl md:rounded-4xl shadow-sm">
-                  <div className="flex items-start gap-3">
-                    <div className="mt-1">
-                        <div className="w-1.5 h-1.5 md:w-2 md:h-2 bg-amber-500 rounded-full animate-ping"></div>
-                    </div>
-                    <div>
-                        <p className="text-xs md:text-sm font-black text-amber-800 mb-1">Penting!</p>
-                        <p className="text-[10px] md:text-xs font-bold text-amber-700/80 leading-relaxed">
-                            Pastikan Anda hadir 15 menit sebelum acara dimulai untuk registrasi ulang.
-                        </p>
-                    </div>
                   </div>
                 </div>
 

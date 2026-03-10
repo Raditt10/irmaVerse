@@ -62,7 +62,7 @@ const Schedule = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("Semua");
 
-  const statusOptions = ["Semua", "Segera hadir", "Sedang berlangsung", "Kegiatan telah selesai "];
+  const statusOptions = ["Semua", "Segera hadir", "Sedang berlangsung", "Kegiatan telah selesai"];
 
   useEffect(() => {
     fetchSchedules();
@@ -86,7 +86,7 @@ const Schedule = () => {
           ? "Segera hadir" 
           : schedule.status === "ongoing" 
           ? "Sedang berlangsung" 
-          : "Acara telah dilaksanakan",
+          : "Kegiatan telah selesai",
         thumbnail: schedule.thumbnailUrl || `https://picsum.photos/seed/event${schedule.id}/200/200`,
       }));
       
@@ -314,7 +314,6 @@ const Schedule = () => {
                         {/* Instructor info on the left to balance the icon-only buttons as requested */}
                         {schedule.instructor && (
                           <div className="flex items-center gap-2 px-3 py-1.5 bg-teal-50 text-teal-700 rounded-xl border border-teal-100">
-                            <Users className="h-4 w-4" />
                             <span className="text-[10px] font-black uppercase tracking-wider">
                                Di Upload oleh {schedule.instructor.name}
                             </span>

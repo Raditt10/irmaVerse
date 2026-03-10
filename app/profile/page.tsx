@@ -16,6 +16,7 @@ import {
   Sparkles,
   Users,
   Calendar,
+  HelpCircle,
   PenSquare,
   FileText,
   GraduationCap,
@@ -23,6 +24,8 @@ import {
   Zap,
   Shield,
   ArrowUpRight,
+  AlertCircle,
+  UserCheck,
 } from "lucide-react";
 import DashboardHeader from "@/components/ui/Header";
 import Sidebar from "@/components/ui/Sidebar";
@@ -434,8 +437,8 @@ const Profile = () => {
                 {/* Stats Card */}
                 <div className="bg-white rounded-[2.5rem] border-2 border-slate-200 shadow-[4px_4px_0_0_#cbd5e1] p-6 lg:p-8">
                   <div className="flex items-center gap-3 mb-6">
-                    <div className="p-2 bg-amber-50 rounded-xl border border-amber-100">
-                      <BarChart3 className="h-6 w-6 text-amber-500" />
+                    <div className="p-2 bg-emerald-50 rounded-xl border border-emerald-100">
+                      <BarChart3 className="h-6 w-6 text-emerald-500" />
                     </div>
                     <h2 className="text-xl lg:text-2xl font-black text-slate-800">
                       Statistik
@@ -446,8 +449,8 @@ const Profile = () => {
                     <div className="grid grid-cols-1 gap-4">
                       <div className="flex items-center justify-between p-4 rounded-3xl border-2 border-amber-100 bg-gradient-to-r from-amber-50 to-orange-50">
                         <div className="flex items-center gap-3">
-                          <div className="bg-white p-2 rounded-xl border border-amber-200 shadow-xs">
-                            <Star className="h-5 w-5 text-amber-500 fill-amber-400" />
+                          <div className="bg-white p-2 rounded-xl border border-emerald-200 shadow-xs">
+                            <Star className="h-5 w-5 text-emerald-500 fill-emerald-400" />
                           </div>
                           <span className="text-sm font-bold text-amber-800">
                             Level
@@ -472,8 +475,8 @@ const Profile = () => {
                       </div>
                       <div className="flex items-center justify-between p-4 rounded-3xl border-2 border-blue-100 bg-gradient-to-r from-blue-50 to-sky-50">
                         <div className="flex items-center gap-3">
-                          <div className="bg-white p-2 rounded-xl border border-blue-200 shadow-xs">
-                            <Users className="h-5 w-5 text-blue-500" />
+                          <div className="bg-white p-2 rounded-xl border border-emerald-200 shadow-xs">
+                            <Users className="h-5 w-5 text-emerald-500" />
                           </div>
                           <span className="text-sm font-bold text-blue-800">
                             Badge
@@ -485,8 +488,8 @@ const Profile = () => {
                       </div>
                       <div className="flex items-center justify-between p-4 rounded-3xl border-2 border-purple-100 bg-gradient-to-r from-purple-50 to-fuchsia-50">
                         <div className="flex items-center gap-3">
-                          <div className="bg-white p-2 rounded-xl border border-purple-200 shadow-xs">
-                            <GraduationCap className="h-5 w-5 text-purple-500" />
+                          <div className="bg-white p-2 rounded-xl border border-emerald-200 shadow-xs">
+                            <GraduationCap className="h-5 w-5 text-emerald-500" />
                           </div>
                           <span className="text-sm font-bold text-purple-800">
                             Streak
@@ -501,8 +504,8 @@ const Profile = () => {
                     <div className="grid grid-cols-1 gap-4">
                       <div className="flex items-center justify-between p-4 rounded-3xl border-2 border-amber-100 bg-gradient-to-r from-amber-50 to-orange-50">
                         <div className="flex items-center gap-3">
-                          <div className="bg-white p-2 rounded-xl border border-amber-200 shadow-xs">
-                            <Trophy className="h-5 w-5 text-amber-500" />
+                          <div className="bg-white p-2 rounded-xl border border-emerald-200 shadow-xs">
+                            <CheckCircle2 className="h-5 w-5 text-emerald-500" />
                           </div>
                           <span className="text-sm font-bold text-amber-800">
                             Total Poin
@@ -514,8 +517,8 @@ const Profile = () => {
                       </div>
                       <div className="flex items-center justify-between p-4 rounded-3xl border-2 border-sky-100 bg-gradient-to-r from-sky-50 to-blue-50">
                         <div className="flex items-center gap-3">
-                          <div className="bg-white p-2 rounded-xl border border-sky-200 shadow-xs">
-                            <Award className="h-5 w-5 text-sky-500" />
+                          <div className="bg-white p-2 rounded-xl border border-emerald-200 shadow-xs">
+                            <Award className="h-5 w-5 text-emerald-500" />
                           </div>
                           <span className="text-sm font-bold text-sky-800">
                             Badge
@@ -527,8 +530,8 @@ const Profile = () => {
                       </div>
                       <div className="flex items-center justify-between p-4 rounded-3xl border-2 border-purple-100 bg-gradient-to-r from-purple-50 to-fuchsia-50">
                         <div className="flex items-center gap-3">
-                          <div className="bg-white p-2 rounded-xl border border-purple-200 shadow-xs">
-                            <BookOpen className="h-5 w-5 text-purple-500" />
+                          <div className="bg-white p-2 rounded-xl border border-emerald-200 shadow-xs">
+                            <BookOpen className="h-5 w-5 text-emerald-500" />
                           </div>
                           <span className="text-sm font-bold text-purple-800">
                             Quiz
@@ -540,8 +543,8 @@ const Profile = () => {
                       </div>
                       <div className="flex items-center justify-between p-4 rounded-3xl border-2 border-rose-100 bg-gradient-to-r from-rose-50 to-red-50">
                         <div className="flex items-center gap-3">
-                          <div className="bg-white p-2 rounded-xl border border-rose-200 shadow-xs">
-                            <Flame className="h-5 w-5 text-rose-500" />
+                          <div className="bg-white p-2 rounded-xl border border-emerald-200 shadow-xs">
+                            <AlertCircle className="h-5 w-5 text-emerald-500" />
                           </div>
                           <span className="text-sm font-bold text-rose-800">
                             Streak
@@ -565,6 +568,7 @@ const Profile = () => {
                         </span>
                       </div>
                     </div>
+                    )
                   )}
                 </div>
 
@@ -583,6 +587,11 @@ const Profile = () => {
                           Program yang sedang kamu ikuti
                         </p>
                       </div>
+                      {friends.length > 0 && (
+                        <span className="text-xs font-black text-teal-600 bg-teal-50 px-3 py-1 rounded-full border border-teal-200">
+                          {friends.length}
+                        </span>
+                      )}
                     </div>
 
                     <div className="flex flex-col gap-4">
@@ -615,7 +624,13 @@ const Profile = () => {
                                 <span className="bg-teal-50 px-2 py-1 rounded-lg border border-teal-100 text-[10px] font-bold text-teal-600 uppercase">
                                   Aktif
                                 </span>
-                              </div>
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-bold text-slate-800 truncate group-hover:text-teal-600 transition-colors">
+                                {friend.name}
+                              </p>
+                              <p className="text-[10px] font-bold text-slate-400 capitalize">{friend.role || "Anggota"}</p>
                             </div>
                           </Link>
                         ))

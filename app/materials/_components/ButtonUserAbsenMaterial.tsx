@@ -7,6 +7,7 @@ interface MaterialUserActionsProps {
   isJoined: boolean;
   attendedAt?: string;
   materialDate: string;
+  onNoRekapan?: () => void;
 }
 
 export default function MaterialUserActions({
@@ -14,12 +15,12 @@ export default function MaterialUserActions({
   isJoined,
   attendedAt,
   materialDate,
+  onNoRekapan,
 }: MaterialUserActionsProps) {
   const router = useRouter();
 
   if (attendedAt) {
-    // Sudah absen, tombol utama recap
-    return <MaterialRecapButton materialId={materialId} />;
+    return <MaterialRecapButton materialId={materialId} onNoRekapan={onNoRekapan} />;
   }
 
   return (

@@ -21,12 +21,13 @@ import {
   CheckCircle,
   Lightbulb,
   Users,
-  Play,
   BookMarked,
   HelpCircle,
   Heart,
   Eye,
   User,
+  AlertCircle,
+  MapPin,
 } from "lucide-react";
 import Sidebar from "@/components/ui/Sidebar";
 import DashboardHeader from "@/components/ui/Header";
@@ -49,7 +50,7 @@ const LevelCardContent = () => (
       </div>
 
       {/* --- BADGE MASHAALLAH SESUAI GAMBAR --- */}
-      <div className="bg-amber-500 text-white px-5 py-1.5 rounded-full text-sm font-black shadow-[0_4px_0_0_#d97706] border-2 border-white transform rotate-3 flex items-center justify-center">
+      <div className="bg-red-500 text-white px-5 py-1.5 rounded-full text-sm font-black shadow-[0_4px_0_0_#b91c1c] border-2 border-white transform rotate-3 flex items-center justify-center">
         Mashaallah
       </div>
     </div>
@@ -61,7 +62,7 @@ const LevelCardContent = () => (
         <span>3000 XP</span>
       </div>
       <div className="h-5 bg-black/20 rounded-full overflow-hidden border-2 border-emerald-600/30 p-[2px]">
-        <div className="h-full bg-emerald-400 w-3/4 rounded-full shadow-[0_2px_0_0_#059669] relative">
+        <div className="h-full bg-yellow-400 w-3/4 rounded-full shadow-[0_2px_0_0_#ca8a04] relative">
             {/* Kilau pada progress bar */}
             <div className="absolute top-0 right-2 w-2 h-full bg-white/40 rounded-full skew-x-[-20deg]" />
             <div className="absolute top-0 right-5 w-1 h-full bg-white/30 rounded-full skew-x-[-20deg]" />
@@ -91,6 +92,14 @@ const Dashboard = () => {
   const [loadingFinished, setLoadingFinished] = useState(true);
   const [latestNews, setLatestNews] = useState<any[]>([]);
   const [loadingNews, setLoadingNews] = useState(true);
+  const [todayMaterials, setTodayMaterials] = useState<any[]>([]);
+  const [loadingToday, setLoadingToday] = useState(true);
+  const [dynamicStats, setDynamicStats] = useState({
+    totalAttended: 0,
+    quizCompleted: 0,
+    quizPending: 0,
+    avgScore: 0,
+  });
 
   // Redirect non-user roles away from overview
   React.useEffect(() => {
@@ -136,6 +145,20 @@ const Dashboard = () => {
         if (materialsRes.ok) {
           allMaterialsData = await materialsRes.json();
           setMaterials(allMaterialsData.slice(0, 5));
+
+          // Find today's kajian (materials scheduled for today that user has joined)
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          const todayEnd = new Date(today);
+          todayEnd.setHours(23, 59, 59, 999);
+          const todayKajian = allMaterialsData.filter((m: any) => {
+            const mDate = new Date(m.date);
+            return mDate >= today && mDate <= todayEnd && m.isJoined;
+          });
+          setTodayMaterials(todayKajian);
+          setLoadingToday(false);
+        } else {
+          setLoadingToday(false);
         }
 
         if (attendanceRes.ok) {
@@ -184,16 +207,34 @@ const Dashboard = () => {
           
           if (quizRes.ok) {
             const quizData = await quizRes.json();
-            // Cek kuis yang (1) user sudah attend material nya, (2) belum kerjakan kuisnya (tidak ada lastAttempt)
             const attendedMaterialIds = finished.map((att: any) => att.materialId);
             
-            const pendingQuizzes = Array.isArray(quizData) 
-              ? quizData.filter((q: any) => 
-                  !q.lastAttempt && // Belum punya percobaan/skor
-                  !q.isStandalone && // Bukan kuis mandiri
-                  attendedMaterialIds.includes(q.materialId) // Sudah hadir kajiannya
-                )
-              : [];
+            const allQuizzes = Array.isArray(quizData) ? quizData : [];
+            const completedQuizzes = allQuizzes.filter((q: any) => q.lastAttempt);
+            const pendingQuizzes = allQuizzes.filter((q: any) => 
+              !q.lastAttempt &&
+              !q.isStandalone &&
+              attendedMaterialIds.includes(q.materialId)
+            );
+
+            // Compute average score from completed quizzes
+            let avgScore = 0;
+            if (completedQuizzes.length > 0) {
+              const totalPct = completedQuizzes.reduce((sum: number, q: any) => {
+                const pct = q.lastAttempt.totalScore > 0
+                  ? Math.round((q.lastAttempt.score / q.lastAttempt.totalScore) * 100)
+                  : 0;
+                return sum + pct;
+              }, 0);
+              avgScore = Math.round(totalPct / completedQuizzes.length);
+            }
+
+            setDynamicStats({
+              totalAttended: finished.length,
+              quizCompleted: completedQuizzes.length,
+              quizPending: pendingQuizzes.length,
+              avgScore,
+            });
               
             setUpcomingQuizzes(pendingQuizzes.slice(0, 3));
           }
@@ -228,25 +269,19 @@ const Dashboard = () => {
   const quizButtonColors = [
     { bg: "bg-emerald-400", border: "border-emerald-600", shadow: "shadow-[0_4px_0_0_#10b981]", hover: "hover:bg-emerald-500" },
     { bg: "bg-teal-400", border: "border-teal-600", shadow: "shadow-[0_4px_0_0_#14b8a6]", hover: "hover:bg-teal-500" },
-    { bg: "bg-cyan-400", border: "border-cyan-600", shadow: "shadow-[0_4px_0_0_#0891b2]", hover: "hover:bg-cyan-500" },
-    { bg: "bg-blue-400", border: "border-blue-600", shadow: "shadow-[0_4px_0_0_#2563eb]", hover: "hover:bg-blue-500" },
-    { bg: "bg-indigo-400", border: "border-indigo-600", shadow: "shadow-[0_4px_0_0_#4f46e5]", hover: "hover:bg-indigo-500" },
-    { bg: "bg-purple-400", border: "border-purple-600", shadow: "shadow-[0_4px_0_0_#7c3aed]", hover: "hover:bg-purple-500" },
-    { bg: "bg-pink-400", border: "border-pink-600", shadow: "shadow-[0_4px_0_0_#db2777]", hover: "hover:bg-pink-500" },
-    { bg: "bg-rose-400", border: "border-rose-600", shadow: "shadow-[0_4px_0_0_#e11d48]", hover: "hover:bg-rose-500" },
+    { bg: "bg-emerald-500", border: "border-emerald-700", shadow: "shadow-[0_4px_0_0_#047857]", hover: "hover:bg-emerald-600" },
+    { bg: "bg-teal-500", border: "border-teal-700", shadow: "shadow-[0_4px_0_0_#0f766e]", hover: "hover:bg-teal-600" },
+    { bg: "bg-green-400", border: "border-green-600", shadow: "shadow-[0_4px_0_0_#16a34a]", hover: "hover:bg-green-500" },
+    { bg: "bg-emerald-400", border: "border-emerald-600", shadow: "shadow-[0_4px_0_0_#10b981]", hover: "hover:bg-emerald-500" },
+    { bg: "bg-teal-400", border: "border-teal-600", shadow: "shadow-[0_4px_0_0_#14b8a6]", hover: "hover:bg-teal-500" },
+    { bg: "bg-emerald-500", border: "border-emerald-700", shadow: "shadow-[0_4px_0_0_#047857]", hover: "hover:bg-emerald-600" },
   ];
 
   const getRandomButtonColor = (index: number) => {
     return quizButtonColors[index % quizButtonColors.length];
   };
     
-  const stats = {
-    totalPoints: 2450,
-    totalBadges: 8,
-    totalQuizzes: 24,
-    averageScore: 87,
-    streak: 7,
-  };
+
 
   const quickActions = [
     { title: "Pengumuman", icon: Bell, link: "/announcements" },
@@ -272,9 +307,12 @@ const Dashboard = () => {
   if (status === "loading") return null;
   if (session?.user?.role !== "user") return null;
 
+  const isLoading = loadingInstructors || loadingFinished || loadingNews || loadingToday || loadingQuizzes || loadingMaterials;
+
   return (
     // Background hangat (Warm White)
     <div className="min-h-screen bg-[#FDFBF7]">
+      {isLoading && <Loading fullScreen text="Memuat halaman..." size="lg" />}
       <DashboardHeader />
       <div className="flex">
         <Sidebar />
@@ -307,53 +345,112 @@ const Dashboard = () => {
             {/* LEFT COLUMN */}
             <div className="xl:col-span-8 space-y-8">
               
-              {/* Stats Row */}
+              {/* Stats Row - Dynamic from user progress */}
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                {/* Stat 1 */}
-                {/* Stat 1 - Badges (Amber) */}
-                <div className="bg-white p-5 md:p-6 rounded-[2.5rem] border-2 border-amber-100 shadow-[0_6px_0_0_#fef3c7] sm:shadow-[0_8px_0_0_#fef3c7] hover:shadow-[0_4px_0_0_#fef3c7] hover:translate-y-1 hover:border-amber-200 transition-all duration-300 group max-md:aspect-square flex flex-col justify-between">
+                {/* Stat 1 - Kajian Dihadiri */}
+                <div className="bg-white p-5 md:p-6 rounded-[2.5rem] border-2 border-emerald-100 shadow-[0_6px_0_0_#d1fae5] sm:shadow-[0_8px_0_0_#d1fae5] hover:shadow-[0_4px_0_0_#d1fae5] hover:translate-y-1 hover:border-emerald-200 transition-all duration-300 group max-md:aspect-square flex flex-col justify-between">
                   <div className="flex justify-between items-start md:mb-4">
-                    <div className="p-2.5 md:p-3 bg-amber-50 border-2 border-amber-100 rounded-2xl group-hover:scale-110 transition-transform">
-                      <Award className="w-6 h-6 md:w-7 md:h-7 text-amber-500" strokeWidth={2.5} />
+                    <div className="p-2.5 md:p-3 bg-emerald-50 border-2 border-emerald-100 rounded-2xl group-hover:scale-110 transition-transform">
+                      <CheckCircle className="w-6 h-6 md:w-7 md:h-7 text-emerald-500" strokeWidth={2.5} />
                     </div>
-                    <span className="text-[10px] font-black px-2.5 py-1 md:px-3 bg-amber-100 text-amber-600 rounded-full border border-amber-200">Total</span>
+                    <span className="text-[10px] font-black px-2.5 py-1 md:px-3 bg-emerald-100 text-emerald-600 rounded-full border border-emerald-200">Total</span>
                   </div>
                   <div className="flex flex-col gap-1">
-                    <div className="text-2xl md:text-3xl font-black text-slate-800 leading-none">{stats.totalBadges}</div>
-                    <div className="text-[10px] text-slate-400 font-black tracking-wide uppercase">Badges Koleksi</div>
+                    <div className="text-2xl md:text-3xl font-black text-slate-800 leading-none">{dynamicStats.totalAttended}</div>
+                    <div className="text-[10px] text-slate-400 font-black tracking-wide uppercase">Kajian Dihadiri</div>
                   </div>
                 </div>
 
-                {/* Stat 2 */}
-                {/* Stat 2 - Kuis (Emerald) */}
+                {/* Stat 2 - Kuis Selesai */}
                 <div className="bg-white p-5 md:p-6 rounded-[2.5rem] border-2 border-emerald-100 shadow-[0_6px_0_0_#d1fae5] sm:shadow-[0_8px_0_0_#d1fae5] hover:shadow-[0_4px_0_0_#d1fae5] hover:translate-y-1 hover:border-emerald-200 transition-all duration-300 group max-md:aspect-square flex flex-col justify-between">
                   <div className="flex justify-between items-start md:mb-4">
                     <div className="p-2.5 md:p-3 bg-emerald-50 border-2 border-emerald-100 rounded-2xl group-hover:scale-110 transition-transform">
                       <BarChart3 className="w-6 h-6 md:w-7 md:h-7 text-emerald-500" strokeWidth={2.5} />
                     </div>
-                    <span className="text-[10px] font-black px-2.5 py-1 md:px-3 bg-emerald-100 text-emerald-600 rounded-full border border-emerald-200">{stats.averageScore}%</span>
+                    <span className="text-[10px] font-black px-2.5 py-1 md:px-3 bg-emerald-100 text-emerald-600 rounded-full border border-emerald-200">{dynamicStats.avgScore}%</span>
                   </div>
                   <div className="flex flex-col gap-1">
-                    <div className="text-2xl md:text-3xl font-black text-slate-800 leading-none">{stats.totalQuizzes}</div>
+                    <div className="text-2xl md:text-3xl font-black text-slate-800 leading-none">{dynamicStats.quizCompleted}</div>
                     <div className="text-[10px] text-slate-400 font-black tracking-wide uppercase">Kuis Selesai</div>
                   </div>
                 </div>
 
-                {/* Stat 3 */}
-                {/* Stat 3 - Streak (Rose) */}
-                <div className="bg-white p-5 md:p-6 rounded-[2.5rem] border-2 border-rose-100 shadow-[0_6px_0_0_#ffe4e6] sm:shadow-[0_8px_0_0_#ffe4e6] hover:shadow-[0_4px_0_0_#ffe4e6] hover:translate-y-1 hover:border-rose-200 transition-all duration-300 group max-md:aspect-square flex flex-col justify-between">
+                {/* Stat 3 - Kuis Pending */}
+                <div className="bg-white p-5 md:p-6 rounded-[2.5rem] border-2 border-emerald-100 shadow-[0_6px_0_0_#d1fae5] sm:shadow-[0_8px_0_0_#d1fae5] hover:shadow-[0_4px_0_0_#d1fae5] hover:translate-y-1 hover:border-emerald-200 transition-all duration-300 group max-md:aspect-square flex flex-col justify-between">
                   <div className="flex justify-between items-start md:mb-4">
-                    <div className="p-2.5 md:p-3 bg-rose-50 border-2 border-rose-100 rounded-2xl group-hover:scale-110 transition-transform">
-                      <Flame className="w-6 h-6 md:w-7 md:h-7 text-rose-500" strokeWidth={2.5} />
+                    <div className="p-2.5 md:p-3 bg-emerald-50 border-2 border-emerald-100 rounded-2xl group-hover:scale-110 transition-transform">
+                      <AlertCircle className="w-6 h-6 md:w-7 md:h-7 text-emerald-500" strokeWidth={2.5} />
                     </div>
-                    <span className="text-[10px] font-black px-2.5 py-1 md:px-3 bg-rose-100 text-rose-600 rounded-full border border-rose-200">Mantap!</span>
+                    <span className="text-[10px] font-black px-2.5 py-1 md:px-3 bg-emerald-100 text-emerald-600 rounded-full border border-emerald-200">{dynamicStats.quizPending > 0 ? "Segera!" : "Aman"}</span>
                   </div>
                   <div className="flex flex-col gap-1">
-                    <div className="text-2xl md:text-3xl font-black text-slate-800 leading-none">{stats.streak} Hari</div>
-                    <div className="text-[10px] text-slate-400 font-black tracking-wide uppercase">Konsistensi</div>
+                    <div className="text-2xl md:text-3xl font-black text-slate-800 leading-none">{dynamicStats.quizPending}</div>
+                    <div className="text-[10px] text-slate-400 font-black tracking-wide uppercase">Kuis Tertunda</div>
                   </div>
                 </div>
               </div>
+
+              {/* Today's Kajian Section */}
+              {!loadingToday && todayMaterials.length > 0 && (
+                <section>
+                  <div className="flex items-center gap-3 mb-5 px-2">
+                    <div className="p-2 bg-emerald-50 border-2 border-emerald-200 rounded-xl shadow-[0_3px_0_0_#6ee7b7]">
+                      <Calendar className="w-5 h-5 text-emerald-600" />
+                    </div>
+                    <div>
+                      <h2 className="text-xl font-black text-slate-800">Kajian Hari Ini</h2>
+                      <p className="text-[11px] text-slate-400 font-bold">Jangan sampai ketinggalan!</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    {todayMaterials.map((material) => (
+                      <div
+                        key={material.id}
+                        onClick={() => router.push(`/materials/${material.id}`)}
+                        className="bg-linear-to-r from-emerald-50 to-white rounded-3xl border-2 border-emerald-200 p-5 lg:p-6 hover:border-emerald-400 hover:shadow-[0_4px_0_0_#34d399] transition-all duration-300 cursor-pointer group flex flex-col md:flex-row md:items-center justify-between gap-4 relative overflow-hidden"
+                      >
+                        <div className="absolute top-0 right-0 w-20 h-20 bg-emerald-100/50 rounded-full -mr-6 -mt-6" />
+                        <div className="flex-1 min-w-0 relative z-10">
+                          <div className="flex flex-wrap items-center gap-2 mb-2">
+                            <span className="px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-wide border bg-emerald-100 text-emerald-700 border-emerald-300 flex items-center gap-1">
+                              <Clock className="w-3 h-3" />
+                              {material.startedAt || new Date(material.date).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}
+                            </span>
+                            <span className="px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-wide border bg-emerald-50 text-emerald-600 border-emerald-200">
+                              {material.category}
+                            </span>
+                          </div>
+                          <h3 className="text-lg md:text-xl font-black text-slate-800 leading-tight mb-1 group-hover:text-emerald-700 transition-colors">
+                            {material.title}
+                          </h3>
+                          <div className="flex flex-wrap items-center gap-3 text-xs font-semibold text-slate-400 mt-2">
+                            <div className="flex items-center gap-1.5">
+                              <User className="h-3.5 w-3.5" />
+                              {material.instructor}
+                            </div>
+                            {material.location && (
+                              <div className="flex items-center gap-1.5">
+                                <MapPin className="h-3.5 w-3.5" />
+                                {material.location}
+                              </div>
+                            )}
+                            <div className="flex items-center gap-1.5">
+                              <BookOpen className="h-3.5 w-3.5" />
+                              {material.grade}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="shrink-0 relative z-10">
+                          <button className="flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-emerald-400 text-white font-black border-2 border-emerald-500 border-b-4 hover:bg-emerald-500 active:border-b-2 active:translate-y-0.5 transition-all text-sm shadow-[0_4px_0_0_#047857]">
+                            Lihat Kajian
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
 
               {/* News Section */}
               <section>
@@ -365,9 +462,7 @@ const Dashboard = () => {
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  {loadingNews ? (
-                    <Loading text="Memuat kabar IRMA..." />
-                  ) : latestNews.length === 0 ? (
+                  {latestNews.length === 0 ? (
                     <p className="text-center text-xs text-slate-400 font-bold py-10 col-span-1 md:col-span-2">Belum ada kabar terbaru</p>
                   ) : (
                     latestNews.map((news) => (
@@ -407,9 +502,7 @@ const Dashboard = () => {
                 </div>
                 
                 <div className="space-y-3">
-                  {loadingFinished ? (
-                    <Loading text="Memuat kajian..." />
-                  ) : finishedMaterials.length === 0 ? (
+                  {finishedMaterials.length === 0 ? (
                     <p className="text-center text-xs text-slate-400 font-bold py-10">Belum ada kajian yang diselesaikan</p>
                   ) : (
                     finishedMaterials.map((material) => (
@@ -423,7 +516,7 @@ const Dashboard = () => {
                         <div className="flex-1 min-w-0">
                           {/* Category & Grade badges */}
                           <div className="flex flex-wrap items-center gap-2 mb-3">
-                            <span className="px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-wide border bg-rose-100 text-rose-700 border-rose-200">
+                            <span className="px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-wide border bg-emerald-100 text-emerald-700 border-emerald-200">
                               {material.category || "PROGRAM WAJIB"}
                             </span>
                             <span className="px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-wide border bg-slate-50 text-slate-600 border-slate-200">
@@ -485,9 +578,7 @@ const Dashboard = () => {
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {loadingQuizzes ? (
-                     <Loading text="Memuat kuis..." />
-                  ) : upcomingQuizzes.length === 0 ? (
+                  {upcomingQuizzes.length === 0 ? (
                      <p className="text-center text-xs text-slate-400 font-bold py-10 col-span-1 md:col-span-2 lg:col-span-3">Yey! Tidak ada kuis kajian yang tertunda.</p>
                   ) : (
                     upcomingQuizzes.map((quiz, index) => {
@@ -532,71 +623,75 @@ const Dashboard = () => {
               {/* Feature Cards Stack */}
               <div className="space-y-4">
                 
-                {/* Daily Challenge Card */}
-                <div className="bg-white p-5 rounded-[2rem] border-2 border-slate-100 shadow-sm flex items-center gap-4 hover:border-amber-300 hover:shadow-[0_4px_0_0_#fcd34d] transition-all group">
-                  <div className="w-14 h-14 rounded-full bg-amber-50 border-2 border-amber-100 flex items-center justify-center shrink-0 group-hover:rotate-12 transition-transform">
-                    <Zap className="w-7 h-7 text-amber-500 fill-amber-500" />
+                {/* Dynamic Mission Card */}
+                <div className="bg-white p-5 rounded-[2rem] border-2 border-slate-100 shadow-sm hover:border-emerald-300 hover:shadow-[0_4px_0_0_#6ee7b7] transition-all group">
+                  <div className="flex items-center gap-4 mb-3">
+                    <div className="w-14 h-14 rounded-full bg-emerald-50 border-2 border-emerald-100 flex items-center justify-center shrink-0 group-hover:rotate-12 transition-transform">
+                      <Zap className="w-7 h-7 text-emerald-500 fill-emerald-500" />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-black text-slate-800 text-lg">Misi Kamu</h4>
+                      <p className="text-xs text-slate-500 font-bold">Progress hari ini</p>
+                    </div>
                   </div>
-                  <div className="flex-1">
-                    <h4 className="font-black text-slate-800 text-lg">Misi Harian</h4>
-                    <p className="text-xs text-slate-500 font-bold">Selesaikan 2 Kuis</p>
+                  <div className="space-y-2">
+                    {todayMaterials.length > 0 && (
+                      <div className="flex items-center gap-3 p-3 rounded-xl bg-emerald-50 border border-emerald-100">
+                        <Calendar className="w-4 h-4 text-emerald-600 shrink-0" />
+                        <p className="text-xs font-bold text-slate-700 flex-1">
+                          {todayMaterials.length} kajian hari ini
+                        </p>
+                        <Link href="/materials" className="text-[10px] font-black text-emerald-600 hover:text-emerald-700">
+                          Lihat
+                        </Link>
+                      </div>
+                    )}
+                    {dynamicStats.quizPending > 0 && (
+                      <div className="flex items-center gap-3 p-3 rounded-xl bg-emerald-50 border border-emerald-100">
+                        <HelpCircle className="w-4 h-4 text-emerald-500 shrink-0" />
+                        <p className="text-xs font-bold text-slate-700 flex-1">
+                          {dynamicStats.quizPending} kuis belum dikerjakan
+                        </p>
+                        <Link href="/quiz" className="text-[10px] font-black text-emerald-600 hover:text-emerald-700">
+                          Kerjakan
+                        </Link>
+                      </div>
+                    )}
+                    {todayMaterials.length === 0 && dynamicStats.quizPending === 0 && (
+                      <div className="flex items-center gap-3 p-3 rounded-xl bg-emerald-50 border border-emerald-100">
+                        <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" />
+                        <p className="text-xs font-bold text-emerald-700">
+                          Semua misi selesai! Mashaallah 🌟
+                        </p>
+                      </div>
+                    )}
                   </div>
-                  <button className="px-6 py-2.5 bg-emerald-400 text-white text-xs font-black rounded-2xl h-11 border-b-4 border-emerald-600 hover:bg-emerald-500 hover:shadow-[0_4px_0_0_#10b981] active:border-b-0 active:translate-y-1 transition-all shadow-[0_4px_0_0_#059669]">
-                    Mulai
-                  </button>
                 </div>
 
-                {/* Ci Irma Chatbot Promo */}
-                <div className="bg-emerald-50 p-5 rounded-[2rem] border-2 border-emerald-200 relative overflow-hidden group">
-                  {/* Decorative blobs */}
-                  <div className="absolute top-[-20%] right-[-10%] w-24 h-24 bg-cyan-200 rounded-full opacity-20 group-hover:scale-125 transition-transform" />
-                  
-                  <div className="flex items-center gap-3 mb-3 relative z-10">
-                    <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-md">
-                      <img src="/ciirma.webp" alt="AI" className="w-full h-full object-cover" />
-                    </div>
-                    <div>
-                      <h4 className="font-black text-slate-800 text-base">Ci Irma AI</h4>
-                      <span className="text-xs text-emerald-600 flex items-center gap-1.5 font-bold bg-white px-2 py-0.5 rounded-full border border-emerald-100 w-fit">
-                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" /> Online
-                      </span>
-                    </div>
-                  </div>
-                  <p className="text-sm text-slate-600 mb-4 font-bold relative z-10 leading-relaxed">
-                    "Ada PR yang susah? Atau mau curhat? Irma siap bantu kamu!"
-                  </p>
-                  <button className="w-full py-3 bg-white text-slate-800 font-black text-sm rounded-2xl shadow-[0_4px_0_0_#cbd5e1] border-2 border-slate-200 hover:shadow-[0_2px_0_0_#cbd5e1] hover:translate-y-[2px] active:translate-y-[4px] active:shadow-none transition-all flex items-center justify-center gap-2 relative z-10">
-                    <MessageSquare className="w-5 h-5 text-cyan-500" strokeWidth={3} /> Chat Sekarang
-                  </button>
-                </div>
 
                 {/* Instruktur Favoritmu */}
-                <div className="bg-white p-5 rounded-[2rem] border-2 border-rose-100 shadow-[0_6px_0_0_#ffe4e6] hover:shadow-[0_4px_0_0_#ffe4e6] hover:translate-y-1 transition-all duration-300 group">
+                <div className="bg-white p-5 rounded-[2rem] border-2 border-emerald-100 shadow-[0_6px_0_0_#d1fae5] hover:shadow-[0_4px_0_0_#d1fae5] hover:translate-y-1 transition-all duration-300 group">
                   <div className="flex items-center gap-3 mb-4">
-                    <div className="p-2 bg-rose-50 border-2 border-rose-100 rounded-xl shadow-sm group-hover:rotate-12 transition-transform duration-300">
-                      <Heart className="w-5 h-5 fill-rose-500 text-rose-500" />
+                    <div className="p-2 bg-emerald-50 border-2 border-emerald-100 rounded-xl shadow-sm group-hover:rotate-12 transition-transform duration-300">
+                      <Heart className="w-5 h-5 fill-emerald-500 text-emerald-500" />
                     </div>
                     <h4 className="font-black text-slate-800 text-lg">Instruktur Favorit</h4>
                   </div>
                   
-                  {loadingInstructors ? (
-                    <div className="text-center py-6">
-                      <Loading text="Memuat..." />
-                    </div>
-                  ) : favoriteInstructors.length === 0 ? (
-                    <div className="text-center py-8 bg-rose-50/50 rounded-3xl border-2 border-dashed border-rose-200">
-                      <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mx-auto mb-3 border-2 border-rose-100 shadow-sm">
-                        <Heart className="w-6 h-6 text-rose-300" />
+                  {favoriteInstructors.length === 0 ? (
+                    <div className="text-center py-8 bg-emerald-50/50 rounded-3xl border-2 border-dashed border-emerald-200">
+                      <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mx-auto mb-3 border-2 border-emerald-100 shadow-sm">
+                        <Heart className="w-6 h-6 text-emerald-300" />
                       </div>
                       <p className="text-xs text-slate-400 font-bold mb-4 px-4">Kamu belum menambahkan instruktur favorit.</p>
-                      <Link href="/instructors" className="px-6 py-2.5 bg-rose-400 text-white text-xs font-black rounded-2xl border-b-4 border-rose-600 hover:bg-rose-500 active:border-b-0 active:translate-y-1 transition-all inline-block shadow-lg shadow-rose-200">
+                      <Link href="/instructors" className="px-6 py-2.5 bg-emerald-400 text-white text-xs font-black rounded-2xl border-b-4 border-emerald-600 hover:bg-emerald-500 active:border-b-0 active:translate-y-1 transition-all inline-block shadow-lg shadow-emerald-200">
                         Cari Instruktur
                       </Link>
                     </div>
                   ) : (
                     <div className="space-y-3">
                       {favoriteInstructors.slice(0, 3).map((instructor) => (
-                        <div key={instructor.id} className="flex items-center gap-3 p-3 rounded-2xl bg-white border-2 border-slate-100 hover:border-rose-300 hover:shadow-[0_4px_0_0_#fda4af] hover:-translate-y-1 transition-all group cursor-pointer">
+                        <div key={instructor.id} className="flex items-center gap-3 p-3 rounded-2xl bg-white border-2 border-slate-100 hover:border-emerald-300 hover:shadow-[0_4px_0_0_#6ee7b7] hover:-translate-y-1 transition-all group cursor-pointer">
                           <div className="w-12 h-12 rounded-2xl overflow-hidden shrink-0 border-2 border-slate-100 group-hover:border-rose-200 transition-colors">
                             <img 
                               src={instructor.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${instructor.name}`}
@@ -605,18 +700,18 @@ const Dashboard = () => {
                             />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-black text-slate-800 truncate group-hover:text-rose-600 transition-colors">{instructor.name}</p>
-                            <p className="text-[10px] text-slate-400 font-bold truncate bg-slate-100 w-fit px-2 py-0.5 rounded-md mt-1 group-hover:bg-rose-50 group-hover:text-rose-500 transition-colors">
+                            <p className="text-sm font-black text-slate-800 truncate group-hover:text-emerald-600 transition-colors">{instructor.name}</p>
+                            <p className="text-[10px] text-slate-400 font-bold truncate bg-slate-100 w-fit px-2 py-0.5 rounded-md mt-1 group-hover:bg-emerald-50 group-hover:text-emerald-500 transition-colors">
                               {instructor.bidangKeahlian || instructor.specialization || 'Umum'}
                             </p>
                           </div>
-                          <div className="w-8 h-8 rounded-full bg-rose-50 flex items-center justify-center text-rose-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <div className="w-8 h-8 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity">
                              <ArrowRight className="w-4 h-4" strokeWidth={3} />
                           </div>
                         </div>
                       ))}
                       {favoriteInstructors.length > 3 && (
-                        <Link href="/instructors" className="w-full py-3 bg-rose-50 text-rose-600 text-xs font-black rounded-2xl border-2 border-rose-100 hover:bg-rose-100 hover:border-rose-200 transition-all text-center block mt-2">
+                        <Link href="/instructors" className="w-full py-3 bg-emerald-50 text-emerald-600 text-xs font-black rounded-2xl border-2 border-emerald-100 hover:bg-emerald-100 hover:border-emerald-200 transition-all text-center block mt-2">
                           Lihat Semua ({favoriteInstructors.length})
                         </Link>
                       )}
@@ -632,9 +727,7 @@ const Dashboard = () => {
                   </h4>
                   
                   <div className="space-y-4">
-                    {loadingFinished ? (
-                      <Loading text="Memuat data..." />
-                    ) : finishedMaterials.length === 0 ? (
+                    {finishedMaterials.length === 0 ? (
                       <div className="text-center py-8">
                         <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto mb-3 border-2 border-slate-100">
                           <BookOpen className="w-6 h-6 text-slate-200" />

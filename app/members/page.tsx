@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import DashboardHeader from "@/components/ui/Header";
 import Sidebar from "@/components/ui/Sidebar";
 import ChatbotButton from "@/components/ui/Chatbot";
@@ -29,6 +30,7 @@ interface Member {
 }
 
 const Members = () => {
+  const { data: session } = useSession();
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -86,9 +88,10 @@ const Members = () => {
     }
   };
 
+  const visibleMembers = members.filter((m) => m.id !== session?.user?.id);
   const filteredMembers = search
-    ? members.filter((m) => m.name.toLowerCase().includes(search.toLowerCase()))
-    : members;
+    ? visibleMembers.filter((m) => m.name.toLowerCase().includes(search.toLowerCase()))
+    : visibleMembers;
 
   const handleAddFriend = (name: string) => {
     setToast({ show: true, message: `Permintaan pertemanan dikirim ke ${name}`, type: 'success' });

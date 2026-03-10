@@ -17,7 +17,7 @@ import {
   ArrowLeft,
   Mail,
   CheckCircle2,
-  Sparkles,
+  Info,
   BookOpen,
   Target,
   MessageCircle,
@@ -425,9 +425,9 @@ const MaterialDetail = () => {
                 {/* Rekapan & Quiz Section */}
                 <div className="bg-white p-6 lg:p-8 rounded-4xl border-2 border-slate-200 shadow-[0_6px_0_0_#cbd5e1]">
                   <div className="flex items-center gap-4 mb-6">
-                    <div className="p-2.5 bg-indigo-100 rounded-2xl border-2 border-indigo-200">
+                    <div className="p-2.5 bg-emerald-100 rounded-2xl border-2 border-emerald-200">
                       <ListChecks
-                        className="h-6 w-6 text-indigo-600"
+                        className="h-6 w-6 text-emerald-600"
                         strokeWidth={3}
                       />
                     </div>
@@ -449,16 +449,16 @@ const MaterialDetail = () => {
                           );
                         }
                       }}
-                      className="flex items-center gap-4 p-5 rounded-2xl border-2 border-amber-200 bg-amber-50 hover:bg-amber-100 hover:border-amber-300 transition-all text-left group shadow-[0_3px_0_0_#fcd34d] hover:shadow-[0_3px_0_0_#f59e0b] active:translate-y-0.5 active:shadow-none"
+                      className="flex items-center gap-4 p-5 rounded-2xl border-2 border-emerald-200 bg-emerald-50 hover:bg-emerald-100 hover:border-emerald-300 transition-all text-left group shadow-[0_3px_0_0_#6ee7b7] hover:shadow-[0_3px_0_0_#34d399] active:translate-y-0.5 active:shadow-none"
                     >
-                      <div className="w-12 h-12 rounded-2xl bg-amber-200 border-2 border-amber-300 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
-                        <FileText className="h-6 w-6 text-amber-700" />
+                      <div className="w-12 h-12 rounded-2xl bg-emerald-200 border-2 border-emerald-300 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+                        <FileText className="h-6 w-6 text-emerald-700" />
                       </div>
                       <div>
-                        <p className="font-black text-amber-800 text-sm">
+                        <p className="font-black text-emerald-800 text-sm">
                           Rekapan Materi
                         </p>
-                        <p className="text-xs text-amber-600 font-medium">
+                        <p className="text-xs text-emerald-600 font-medium">
                           Baca ringkasan kajian
                         </p>
                       </div>
@@ -483,7 +483,7 @@ const MaterialDetail = () => {
                         quizLoading
                           ? "border-slate-200 bg-slate-50 cursor-wait"
                           : materialQuizzes && materialQuizzes.length > 0
-                            ? "border-indigo-200 bg-indigo-50 hover:bg-indigo-100 hover:border-indigo-300 shadow-[0_3px_0_0_#a5b4fc] hover:shadow-[0_3px_0_0_#818cf8]"
+                            ? "border-amber-200 bg-amber-50 hover:bg-amber-100 hover:border-amber-300 shadow-[0_3px_0_0_#fcd34d] hover:shadow-[0_3px_0_0_#f59e0b]"
                             : "border-slate-200 bg-slate-50 cursor-not-allowed opacity-70"
                       }`}
                     >
@@ -492,14 +492,14 @@ const MaterialDetail = () => {
                           quizLoading
                             ? "bg-slate-200 border-slate-300"
                             : materialQuizzes && materialQuizzes.length > 0
-                              ? "bg-indigo-200 border-indigo-300"
+                              ? "bg-amber-200 border-amber-300"
                               : "bg-slate-200 border-slate-300"
                         }`}
                       >
                         {quizLoading ? (
                           <Loader2 className="h-6 w-6 text-slate-400 animate-spin" />
                         ) : materialQuizzes && materialQuizzes.length > 0 ? (
-                          <ListChecks className="h-6 w-6 text-indigo-700" />
+                          <ListChecks className="h-6 w-6 text-amber-700" />
                         ) : (
                           <AlertCircle className="h-6 w-6 text-slate-400" />
                         )}
@@ -508,7 +508,7 @@ const MaterialDetail = () => {
                         <p
                           className={`font-black text-sm ${
                             materialQuizzes && materialQuizzes.length > 0
-                              ? "text-indigo-800"
+                              ? "text-amber-800"
                               : "text-slate-500"
                           }`}
                         >
@@ -521,7 +521,7 @@ const MaterialDetail = () => {
                         <p
                           className={`text-xs font-medium ${
                             materialQuizzes && materialQuizzes.length > 0
-                              ? "text-indigo-600"
+                              ? "text-amber-600"
                               : "text-slate-400"
                           }`}
                         >
@@ -541,7 +541,7 @@ const MaterialDetail = () => {
                       onClick={() =>
                         router.push(`/materials/${material.id}/quiz/create`)
                       }
-                      className="mt-4 w-full flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-dashed border-indigo-300 text-indigo-500 font-bold text-sm hover:bg-indigo-50 hover:border-indigo-400 transition-all"
+                      className="mt-4 w-full flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-dashed border-amber-300 text-amber-500 font-bold text-sm hover:bg-amber-50 hover:border-amber-400 transition-all"
                     >
                       <Plus className="h-4 w-4" /> Buat Quiz Baru
                     </button>
