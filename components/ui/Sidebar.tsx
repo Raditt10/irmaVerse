@@ -325,11 +325,6 @@ const Sidebar = () => {
           },
         ]
       : []),
-    {
-      icon: Settings,
-      label: "Pengaturan",
-      path: "/settings",
-    },
   ];
 
   return (
