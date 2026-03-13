@@ -114,7 +114,7 @@ export async function GET(req: NextRequest) {
     // Get attendance and total invite counts manually
     const [attendanceCounts, inviteCounts] = await Promise.all([
       Promise.all(materials.map(m => prisma.attendance.count({ where: { materialId: m.id } }))),
-      Promise.all(materials.map(m => prisma.materialinvite.count({ where: { materialId: m.id } })))
+      Promise.all(materials.map(m => prisma.materialinvite.count({ where: { materialId: m.id, status: { not: "rejected" } } })))
     ]);
 
     // normalize ke format frontend

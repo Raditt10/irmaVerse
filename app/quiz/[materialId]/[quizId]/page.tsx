@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useRouter, useParams, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import {
   X,
@@ -18,6 +18,7 @@ import {
   ChevronUp,
   Eye,
   BookOpen,
+  Zap,
 } from "lucide-react";
 import Loading from "@/components/ui/Loading";
 import DashboardHeader from "@/components/ui/Header";
@@ -72,6 +73,7 @@ interface QuizData {
     score: number;
     totalScore: number;
     completedAt: string;
+    answers?: any;
   }[];
 }
 
@@ -91,6 +93,7 @@ interface FinalResult {
   totalScore: number;
   percentage: number;
   results: ReviewResult[];
+  xpAwarded?: boolean;
   cooldownMinutes: number;
   retryAt: string;
 }
@@ -98,8 +101,10 @@ interface FinalResult {
 export default function QuizSessionPage() {
   const router = useRouter();
   const params = useParams();
+  const searchParams = useSearchParams();
   const materialId = params.materialId as string;
   const quizId = params.quizId as string;
+  const isReviewMode = searchParams.get("review") === "true";
 
   const { status: authStatus } = useSession({
     required: true,
@@ -135,20 +140,29 @@ export default function QuizSessionPage() {
     }
   }, [authStatus, quizId]);
 
-  // Cooldown timer
   useEffect(() => {
-    if (cooldownRemaining <= 0) return;
-    const timer = setInterval(() => {
-      setCooldownRemaining((prev) => {
-        if (prev <= 1) {
-          clearInterval(timer);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-    return () => clearInterval(timer);
-  }, [cooldownRemaining]);
+    if (quizData && isReviewMode && quizData.attempts.length > 0) {
+      const latest = quizData.attempts[0];
+      if (latest.answers) {
+        const results = Array.isArray(latest.answers)
+          ? latest.answers
+          : JSON.parse(latest.answers as any);
+        
+        setFinalResult({
+          score: latest.score,
+          totalScore: latest.totalScore,
+          percentage: Math.round((latest.score / latest.totalScore) * 100),
+          results: results,
+          xpAwarded: false, // Review doesn't award XP
+          cooldownMinutes: 0,
+          retryAt: new Date().toISOString()
+        });
+        setIsFinished(true);
+      }
+    }
+  }, [quizData, isReviewMode]);
+
+  // Cooldown timer
 
   const fetchQuiz = async () => {
     try {
@@ -372,6 +386,20 @@ export default function QuizSessionPage() {
               </p>
             </div>
 
+            {/* XP Badge */}
+            <div className="mb-6">
+              {finalResult?.xpAwarded ? (
+                <div className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-100 text-emerald-700 rounded-full text-sm font-black border-2 border-emerald-200 animate-bounce">
+                  <Zap className="h-4 w-4 fill-current" />
+                  XP Berhasil Didapatkan!
+                </div>
+              ) : (
+                <p className="text-xs font-bold text-slate-400 italic">
+                  *XP sudah pernah didapatkan sebelumnya
+                </p>
+              )}
+            </div>
+
             {/* Cooldown timer */}
             {cooldownRemaining > 0 && (
               <div className="bg-emerald-50 rounded-2xl p-4 border-2 border-emerald-200 mb-6 flex items-center justify-center gap-3">
@@ -548,7 +576,7 @@ export default function QuizSessionPage() {
         message="Pastikan semua jawaban sudah benar. Kamu tidak bisa mengubahnya setelah ini."
         confirmText="Ya, Selesai"
         cancelText="Belum"
-        type="info"
+        type="warning"
         onConfirm={() => {
           setShowSubmitConfirm(false);
           handleFinishQuiz();

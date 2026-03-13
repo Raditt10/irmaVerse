@@ -21,7 +21,7 @@ export async function GET() {
     where: { instructorId },
     include: {
       materialinvite: {
-        where: { status: "accepted" }
+        where: { status: { not: "rejected" } }
       }
     }
   });
@@ -85,7 +85,7 @@ export async function GET() {
     },
     include: {
       materialinvite: {
-        where: { status: "accepted" }
+        where: { status: { not: "rejected" } }
       }
     },
     orderBy: { date: 'asc' }

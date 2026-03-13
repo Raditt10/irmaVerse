@@ -33,6 +33,7 @@ export async function GET(
             score: true,
             totalScore: true,
             completedAt: true,
+            answers: true,
           },
         },
       },

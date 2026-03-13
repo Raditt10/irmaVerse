@@ -20,6 +20,7 @@ import {
   Settings,
   Trash2,
   XCircle,
+  HelpCircle,
 } from "lucide-react";
 
 interface Quiz {
@@ -35,6 +36,7 @@ interface Quiz {
   score?: number;
   totalScore?: number;
   coverColor: string;
+  materialThumbnail?: string | null;
 }
 
 const COVER_COLORS = [
@@ -97,6 +99,7 @@ const QuizHome = () => {
           score: q.lastAttempt?.score,
           totalScore: q.lastAttempt?.totalScore,
           coverColor: COVER_COLORS[colorIdx % COVER_COLORS.length],
+          materialThumbnail: q.materialThumbnail,
         };
         colorIdx++;
         return quiz;
@@ -132,12 +135,13 @@ const QuizHome = () => {
     return quizzes.reduce((acc, quiz) => acc + (quiz.score || 0), 0);
   }, [quizzes]);
 
-  const handleQuizClick = (quiz: Quiz) => {
-    if (quiz.materialId) {
-      router.push(`/quiz/${quiz.materialId}/${quiz.id}`);
-    } else {
-      router.push(`/quiz/standalone/${quiz.id}`);
-    }
+  const handleQuizClick = (quiz: Quiz, mode?: "review" | "retake") => {
+    const baseUrl = quiz.materialId
+      ? `/quiz/${quiz.materialId}/${quiz.id}`
+      : `/quiz/standalone/${quiz.id}`;
+    
+    const url = mode === "review" ? `${baseUrl}?review=true` : baseUrl;
+    router.push(url);
   };
 
   if (authStatus === "loading" || loading) {
@@ -166,12 +170,12 @@ const QuizHome = () => {
             <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
               <div className="text-center md:text-left flex-1 w-full relative z-10">
                 <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 text-xs font-black uppercase tracking-wider mb-4">
-                  <Sparkles className="h-4 w-4 text-yellow-300" />
+                  <HelpCircle className="h-4 w-4 text-white" />
                   Quiz Arena
                 </div>
                 {/* Moved specific quiz header into Hero Banner for better alignment and display */}
                 <h1 className="text-3xl lg:text-4xl font-black text-white tracking-tight mb-2 flex items-center gap-3 justify-center md:justify-start">
-                  Kelola Kuis Kajian
+                  {isPrivileged ? "Kelola Kuis Kajian" : "Kerjakan Kuis"}
                 </h1>
                 <p className="text-teal-50 font-medium text-sm lg:text-base max-w-xl mx-auto md:mx-0">
                   Kerjakan kuis dari kajian atau quiz mandiri buatan instruktur.
@@ -199,7 +203,7 @@ const QuizHome = () => {
             </div>
             
             <div className="absolute right-0 top-1/2 -translate-y-1/2 hidden md:flex w-32 h-32 lg:w-40 lg:h-40 bg-white/10 rounded-full border-4 border-white/20 backdrop-blur-md items-center justify-center shadow-inner transform rotate-12 group-hover:rotate-0 transition-all duration-500 opacity-60">
-              <Trophy className="h-16 w-16 lg:h-20 lg:w-20 text-yellow-300 drop-shadow-md" />
+              <Zap className="h-16 w-16 lg:h-20 lg:w-20 text-white drop-shadow-md" fill="currentColor" />
             </div>
           </div>
 
@@ -245,11 +249,11 @@ const QuizHome = () => {
 
           {/* --- BANNER TOTAL POIN --- */}
           {!isInstructor && (
-            <div className="mb-8 flex flex-col sm:flex-row items-center justify-between bg-white border-2 border-slate-200 rounded-[1.5rem] p-4 lg:p-5 shadow-[0_4px_0_0_#cbd5e1] hover:border-yellow-400 hover:shadow-[0_4px_0_0_#facc15] transition-all duration-300 group cursor-default">
+            <div className="mb-8 flex flex-col sm:flex-row items-center justify-between bg-white border-2 border-slate-200 rounded-[1.5rem] p-4 lg:p-5 shadow-[0_4px_0_0_#cbd5e1] hover:border-emerald-400 hover:shadow-[0_4px_0_0_#10b981] transition-all duration-300 group cursor-default">
               <div className="flex items-center gap-4 w-full sm:w-auto">
-                <div className="w-14 h-14 bg-yellow-50 rounded-full border-2 border-yellow-200 flex items-center justify-center transform group-hover:rotate-12 transition-transform duration-300 shrink-0 shadow-sm">
-                  <Trophy
-                    className="h-7 w-7 text-yellow-500 drop-shadow-sm"
+                <div className="w-14 h-14 bg-emerald-50 rounded-full border-2 border-emerald-200 flex items-center justify-center transform group-hover:rotate-12 transition-transform duration-300 shrink-0 shadow-sm">
+                  <Zap
+                    className="h-7 w-7 text-emerald-500 drop-shadow-sm"
                     fill="currentColor"
                   />
                 </div>
@@ -258,10 +262,10 @@ const QuizHome = () => {
                     Total Poin Kuis-mu
                   </span>
                   <div className="flex items-baseline gap-1.5">
-                    <span className="text-2xl lg:text-3xl font-black text-slate-800 group-hover:text-yellow-500 transition-colors duration-300">
+                    <span className="text-2xl lg:text-3xl font-black text-slate-800 group-hover:text-emerald-500 transition-colors duration-300">
                       {totalPoints}
                     </span>
-                    <span className="text-sm font-bold text-yellow-500">XP</span>
+                    <span className="text-sm font-bold text-emerald-500">XP</span>
                   </div>
                 </div>
               </div>
@@ -296,37 +300,52 @@ const QuizHome = () => {
                   onClick={() => handleQuizClick(quiz)}
                 >
                   {/* Card Header */}
-                  <div
-                    className={`h-32 bg-gradient-to-br ${quiz.coverColor} relative p-5 flex items-end justify-between overflow-hidden`}
-                  >
-                    <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-20 mix-blend-overlay" />
-                    <div className="absolute top-4 right-4 w-12 h-12 bg-white/20 rounded-full blur-md" />
+                  <div className="h-40 relative flex items-end justify-between overflow-hidden">
+                    {/* Background Layer */}
+                    {quiz.materialThumbnail ? (
+                      <div className="absolute inset-0">
+                        <img 
+                          src={quiz.materialThumbnail} 
+                          alt={quiz.title} 
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                      </div>
+                    ) : (
+                      <div className={`absolute inset-0 bg-gradient-to-br ${quiz.coverColor}`}>
+                        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 mix-blend-overlay" />
+                      </div>
+                    )}
+
+                    {/* Decorative 3D Elements */}
+                    <div className="absolute top-4 right-4 w-12 h-12 bg-white/10 rounded-full blur-md" />
                     <div className="absolute -bottom-4 -left-4 w-20 h-20 bg-black/10 rounded-full blur-xl" />
 
-                    <div className="relative z-10 flex flex-col gap-2">
-                      <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/90 backdrop-blur-sm rounded-lg text-[10px] font-black text-slate-700 shadow-sm w-max">
-                        <BookOpen className="h-3 w-3 text-teal-500" />
+                    {/* Meta Info */}
+                    <div className="relative z-10 p-5 flex flex-col gap-2">
+                       <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/90 backdrop-blur-sm rounded-lg text-[10px] font-black text-slate-700 shadow-[0_2px_0_0_#e2e8f0] w-max">
+                        <BookOpen className="h-3 w-3 text-emerald-500" />
                         {quiz.questionCount} Soal
                       </div>
                       {quiz.isStandalone && (
-                        <div className="inline-flex items-center gap-1 px-2 py-0.5 bg-indigo-500/90 backdrop-blur-sm rounded-md text-[10px] font-black text-white w-max">
+                        <div className="inline-flex items-center gap-1 px-2 py-0.5 bg-indigo-500/90 backdrop-blur-sm rounded-md text-[10px] font-black text-white w-max shadow-[0_2px_0_0_#312e81]">
                           <Zap className="h-3 w-3" /> Mandiri
                         </div>
                       )}
                     </div>
 
-                    <div className="relative z-10">
+                    <div className="relative z-10 p-5">
                       {quiz.status === "completed" ? (
-                        <div className="w-12 h-12 bg-yellow-400 rounded-full flex items-center justify-center border-4 border-white shadow-md transform group-hover:rotate-12 transition-transform">
+                        <div className="w-12 h-12 bg-yellow-400 rounded-full flex items-center justify-center border-2 border-white shadow-[0_4px_0_0_#d97706] transform group-hover:rotate-12 transition-transform">
                           <Medal
                             className="h-6 w-6 text-white"
                             fill="currentColor"
                           />
                         </div>
                       ) : (
-                        <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center border-4 border-transparent shadow-md transform group-hover:scale-110 transition-transform">
+                        <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center border-2 border-slate-100 shadow-[0_4px_0_0_#e2e8f0] transform group-hover:scale-110 transition-transform">
                           <Play
-                            className="h-5 w-5 text-teal-500 ml-1"
+                            className="h-6 w-6 text-emerald-500 ml-1"
                             fill="currentColor"
                           />
                         </div>
@@ -347,8 +366,8 @@ const QuizHome = () => {
                       {quiz.title}
                     </h3>
 
-                    <div className="mt-auto pt-4 border-t-2 border-slate-100 flex items-center justify-between">
-                      <div className="flex items-center gap-2">
+                    <div className="mt-auto pt-4 border-t-2 border-slate-100 flex items-center justify-between gap-2 overflow-x-auto no-scrollbar">
+                      <div className="flex items-center gap-2 shrink-0">
                         {quiz.status === "not_started" && (
                           <>
                             <span className="w-2.5 h-2.5 rounded-full bg-slate-300" />
@@ -367,18 +386,40 @@ const QuizHome = () => {
                         )}
                       </div>
 
-                      <button
-                        className={`
-                        px-4 py-2 rounded-xl text-xs font-black transition-all border-b-4 active:border-b-0 active:translate-y-1
-                        ${
-                          quiz.status === "completed"
-                            ? "bg-slate-100 text-slate-600 border-slate-300 group-hover:bg-slate-200"
-                            : "bg-teal-400 text-white border-teal-600 group-hover:bg-teal-500 shadow-[0_2px_0_0_#0f766e] group-hover:shadow-none"
-                        }
-                      `}
-                      >
-                        {quiz.status === "completed" ? "Lihat Hasil" : "Mulai"}
-                      </button>
+                      <div className="flex items-center gap-2">
+                        {quiz.status === "completed" ? (
+                          <>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleQuizClick(quiz, "review");
+                              }}
+                              className="px-3 py-2 rounded-xl text-[10px] font-black bg-slate-100 text-slate-600 border-b-4 border-slate-300 hover:bg-slate-200 active:border-b-0 active:translate-y-1 transition-all whitespace-nowrap"
+                            >
+                              Lihat Hasil
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleQuizClick(quiz, "retake");
+                              }}
+                              className="px-3 py-2 rounded-xl text-[10px] font-black bg-emerald-400 text-white border-b-4 border-emerald-600 hover:bg-emerald-500 active:border-b-0 active:translate-y-1 transition-all shadow-sm whitespace-nowrap"
+                            >
+                              Kerjakan Ulang
+                            </button>
+                          </>
+                        ) : (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleQuizClick(quiz);
+                            }}
+                            className="px-4 py-2 rounded-xl text-xs font-black bg-teal-400 text-white border-b-4 border-teal-600 hover:bg-teal-500 shadow-[0_2px_0_0_#0f766e] active:border-b-0 active:translate-y-1 transition-all whitespace-nowrap"
+                          >
+                            Mulai
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>

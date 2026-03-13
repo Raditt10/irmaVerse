@@ -2,6 +2,8 @@ import prisma from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 import { auth } from "@/lib/auth";
 import { NextResponse, NextRequest } from "next/server";
+import { createBulkNotifications } from "@/lib/notifications";
+import { emitNotificationsToUsers } from "@/lib/socket-emit";
 
 export async function GET(
   req: NextRequest,
@@ -327,6 +329,74 @@ export async function PUT(
         },
       },
     });
+
+    // --- Process New Invites ---
+    if (invites && Array.isArray(invites) && invites.length > 0) {
+      // 1. Find users by emails
+      const usersToInvite = await prisma.user.findMany({
+        where: { email: { in: invites } },
+        select: { id: true, email: true },
+      });
+
+      if (usersToInvite.length > 0) {
+        const userIds = usersToInvite.map(u => u.id);
+
+        // 2. Check which users already have invitations
+        const existingInvites = await (prisma as any).materialinvite.findMany({
+          where: {
+            materialId: id,
+            userId: { in: userIds },
+          },
+          select: { userId: true },
+        });
+
+        const alreadyInvitedIds = existingInvites.map((inv: any) => inv.userId);
+        const newUserIds = userIds.filter(uid => !alreadyInvitedIds.includes(uid));
+
+        if (newUserIds.length > 0) {
+          const generateToken = () =>
+            Math.random().toString(36).substring(2, 15) +
+            Math.random().toString(36).substring(2, 15);
+
+          const inviteData = newUserIds.map((userId: string) => ({
+            id: `inv-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+            materialId: id,
+            instructorId: session.user.id,
+            userId,
+            token: generateToken(),
+            status: "pending" as const,
+            updatedAt: new Date(),
+          }));
+
+          await (prisma as any).materialinvite.createMany({
+            data: inviteData,
+          });
+
+          // 3. Trigger Notifications
+          const notifications = await createBulkNotifications(
+            inviteData.map((inv: any) => ({
+              userId: inv.userId,
+              type: "invitation" as const,
+              title: title || "Undangan Kajian",
+              message: `${session.user.name || "Instruktur"} mengundang Anda untuk bergabung ke kajian "${title}"`,
+              icon: "book",
+              resourceType: "material",
+              resourceId: id,
+              actionUrl: `/materials/${id}`,
+              inviteToken: inv.token,
+              senderId: session.user.id,
+            })),
+          );
+
+          await emitNotificationsToUsers(
+            notifications.map((n) => ({
+              userId: n.userId,
+              notification: n,
+            })),
+          );
+        }
+      }
+    }
 
     return NextResponse.json(updatedMaterial, { status: 200 });
   } catch (error) {

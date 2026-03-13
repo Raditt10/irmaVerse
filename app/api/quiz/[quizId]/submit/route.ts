@@ -126,26 +126,30 @@ export async function POST(
       },
     });
 
-    // Grant XP for quiz completion
-    try {
-      const percentage = Math.round((score / totalScore) * 100);
-      const bonusXp = percentage >= 80 ? 25 : 0; // Bonus XP untuk skor tinggi
-      await grantXp({
-        userId: session.user.id,
-        type: "quiz_completed",
-        title: `Menyelesaikan Quiz: ${quiz.title || "Quiz"}`,
-        description: `Skor: ${score}/${totalScore} (${percentage}%)`,
-        xpOverride: 50 + bonusXp,
-        metadata: {
-          quizId,
-          score,
-          totalScore,
-          percentage,
-          attemptId: attempt.id,
-        },
-      });
-    } catch (e) {
-      console.error("Gagal grant XP quiz:", e);
+    // Grant XP only on the first attempt
+    let xpAwarded = false;
+    if (!lastAttempt) {
+      try {
+        const percentage = Math.round((score / totalScore) * 100);
+        const bonusXp = percentage >= 80 ? 25 : 0;
+        await grantXp({
+          userId: session.user.id,
+          type: "quiz_completed",
+          title: `Menyelesaikan Quiz: ${quiz.title || "Quiz"}`,
+          description: `Skor: ${score}/${totalScore} (${percentage}%)`,
+          xpOverride: 50 + bonusXp,
+          metadata: {
+            quizId,
+            score,
+            totalScore,
+            percentage,
+            attemptId: attempt.id,
+          },
+        });
+        xpAwarded = true;
+      } catch (e) {
+        console.error("Gagal grant XP quiz:", e);
+      }
     }
 
     // Calculate cooldown for the response
@@ -159,6 +163,7 @@ export async function POST(
       totalScore,
       percentage: Math.round((score / totalScore) * 100),
       results: detailedResults,
+      xpAwarded,
       cooldownMinutes,
       retryAt: new Date(Date.now() + cooldownMinutes * 60 * 1000).toISOString(),
     });

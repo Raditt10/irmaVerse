@@ -43,7 +43,7 @@ export async function GET(req: NextRequest) {
       materialQuizzes = await prisma.material_quiz.findMany({
         where: { materialId: { not: null } },
         include: {
-          material: { select: { id: true, title: true } },
+          material: { select: { id: true, title: true, thumbnailUrl: true } },
           questions: { select: { id: true } },
           attempts: {
             where: { userId: session.user.id },
@@ -66,7 +66,7 @@ export async function GET(req: NextRequest) {
         materialQuizzes = await prisma.material_quiz.findMany({
           where: { materialId: { in: materialIds } },
           include: {
-            material: { select: { id: true, title: true } },
+            material: { select: { id: true, title: true, thumbnailUrl: true } },
             questions: { select: { id: true } },
             attempts: {
               where: { userId: session.user.id },
@@ -99,6 +99,7 @@ export async function GET(req: NextRequest) {
         id: q.id,
         materialId: q.materialId,
         materialTitle: q.material?.title || "Materi",
+        materialThumbnail: q.material?.thumbnailUrl || null,
         title: q.title,
         description: q.description,
         questionCount: q.questions.length,
