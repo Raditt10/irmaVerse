@@ -122,7 +122,7 @@ export default function AdminDashboard() {
                 <div className="p-2.5 md:p-3 bg-emerald-50 border-2 border-emerald-100 rounded-2xl group-hover:scale-110 transition-transform">
                   <Users className="w-6 h-6 md:w-8 md:h-8 text-emerald-500" strokeWidth={2.5} />
                 </div>
-                <span className="text-[10px] md:text-xs font-black px-2.5 py-1 md:px-3 bg-emerald-100 text-emerald-600 rounded-full border-2 border-emerald-200">User</span>
+                <span className="text-[10px] md:text-xs font-black px-2.5 py-1 md:px-3 bg-emerald-100 text-emerald-600 rounded-full border-2 border-emerald-200">Anggota</span>
               </div>
               <div className="flex flex-col gap-1">
                 <div className="text-3xl md:text-4xl font-black text-slate-800 leading-none">
@@ -148,13 +148,29 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            {/* Stat 3 - Active Materials (Amber) */}
-            <div className="bg-white p-5 md:p-6 rounded-[2.5rem] border-2 border-amber-100 shadow-[0_8px_0_0_#fef3c7] hover:shadow-[0_4px_0_0_#fef3c7] hover:translate-y-1 hover:border-amber-200 transition-all duration-300 group flex flex-col justify-between aspect-square md:aspect-auto md:min-h-40">
+            {/* Stat 3 - Active Materials (Amber if > 0, Emerald if 0) */}
+            <div className={`bg-white p-5 md:p-6 rounded-[2.5rem] border-2 ${
+              (stats.totalActiveMaterials ?? 0) > 0 
+                ? 'border-amber-100 shadow-[0_8px_0_0_#fef3c7] hover:shadow-[0_4px_0_0_#fef3c7] hover:border-amber-200' 
+                : 'border-emerald-100 shadow-[0_8px_0_0_#d1fae5] hover:shadow-[0_4px_0_0_#d1fae5] hover:border-emerald-200'
+            } hover:translate-y-1 transition-all duration-300 group flex flex-col justify-between aspect-square md:aspect-auto md:min-h-40`}>
               <div className="flex justify-between items-start mb-2 md:mb-5">
-                <div className="p-2.5 md:p-3 bg-amber-50 border-2 border-amber-100 rounded-2xl group-hover:scale-110 transition-transform">
-                  <BookOpen className="w-6 h-6 md:w-8 md:h-8 text-amber-500" strokeWidth={2.5} />
+                <div className={`p-2.5 md:p-3 border-2 rounded-2xl group-hover:scale-110 transition-transform ${
+                  (stats.totalActiveMaterials ?? 0) > 0 
+                    ? 'bg-amber-50 border-amber-100' 
+                    : 'bg-emerald-50 border-emerald-100'
+                }`}>
+                  <BookOpen className={`w-6 h-6 md:w-8 md:h-8 ${
+                    (stats.totalActiveMaterials ?? 0) > 0 ? 'text-amber-500' : 'text-emerald-500'
+                  }`} strokeWidth={2.5} />
                 </div>
-                <span className="text-[10px] md:text-xs font-black px-2.5 py-1 md:px-3 bg-amber-100 text-amber-600 rounded-full border-2 border-amber-200">Ongoing</span>
+                <span className={`text-[10px] md:text-xs font-black px-2.5 py-1 md:px-3 rounded-full border-2 ${
+                  (stats.totalActiveMaterials ?? 0) > 0 
+                    ? 'bg-amber-100 text-amber-600 border-amber-200' 
+                    : 'bg-emerald-100 text-emerald-600 border-emerald-200'
+                }`}>
+                  Ongoing
+                </span>
               </div>
               <div className="flex flex-col gap-1">
                 <div className="text-3xl md:text-4xl font-black text-slate-800 leading-none">
