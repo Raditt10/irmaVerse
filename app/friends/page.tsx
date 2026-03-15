@@ -169,18 +169,16 @@ export default function FriendsPage() {
       <DashboardHeader />
 
       <div className="flex flex-1">
-        <div className="hidden lg:block h-[calc(100vh-80px)] sticky top-20">
-          <Sidebar />
-        </div>
+        <Sidebar />
 
         <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-10">
           {/* ─── HEADER ─── */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
-            <div>
-              <h1 className="text-3xl lg:text-4xl font-black text-slate-800 leading-tight">
+            <div className="text-center md:text-left">
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-800 leading-tight">
                 Teman Belajar
               </h1>
-              <p className="text-slate-500 font-medium mt-1">
+              <p className="text-sm sm:text-base text-slate-500 font-medium mt-1 max-w-lg mx-auto md:mx-0">
                 Temukan dan berinteraksi dengan teman sesama pejuang ilmu.
               </p>
             </div>
@@ -192,7 +190,7 @@ export default function FriendsPage() {
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
-                className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-bold text-sm border-2 transition-all whitespace-nowrap ${
+                className={`flex items-center gap-2 px-3 sm:px-5 py-2.5 sm:py-3 rounded-2xl font-bold text-xs sm:text-sm border-2 transition-all whitespace-nowrap ${
                   activeTab === tab.key
                     ? "bg-emerald-500 text-white border-emerald-600 shadow-lg shadow-emerald-100"
                     : "bg-white text-slate-600 border-slate-200 hover:border-emerald-300 hover:text-emerald-600"
@@ -216,7 +214,7 @@ export default function FriendsPage() {
           </div>
 
           {/* ─── SEARCH ─── */}
-          <div className="bg-white border-2 border-slate-200 rounded-[2rem] p-4 lg:p-6 mb-8 shadow-[0_6px_0_0_#cbd5e1]">
+          <div className="bg-white border-2 border-slate-200 rounded-4xl p-4 lg:p-6 mb-8 shadow-[0_6px_0_0_#cbd5e1]">
             <div className="relative group">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-emerald-500 transition-colors" />
               <input
@@ -247,13 +245,13 @@ export default function FriendsPage() {
                   <Users className="h-10 w-10 text-slate-300" />
                 )}
               </div>
-              <h3 className="text-xl font-black text-slate-700">
+              <h3 className="text-lg sm:text-xl font-black text-slate-700 text-center px-4">
                 {activeTab === "friends" && "Belum ada teman"}
                 {activeTab === "followers" && "Belum ada pengikut"}
                 {activeTab === "following" && "Belum mengikuti siapapun"}
                 {activeTab === "suggestions" && "Tidak ada saran saat ini"}
               </h3>
-              <p className="text-slate-400 font-medium mt-1">
+              <p className="text-slate-400 font-medium mt-1 text-center px-6 text-xs sm:text-sm">
                 {activeTab === "suggestions"
                   ? "Kamu sudah mengikuti semua pengguna!"
                   : "Mulai ikuti pengguna lain untuk membangun koneksi."}
@@ -273,7 +271,7 @@ export default function FriendsPage() {
               {users.map((user) => (
                 <div
                   key={user.id}
-                  className="bg-white border-2 border-slate-200 rounded-[2rem] p-6 shadow-[0_6px_0_0_#cbd5e1] hover:border-emerald-400 hover:shadow-[0_6px_0_0_#34d399] transition-all duration-300 group relative overflow-hidden"
+                  className="bg-white border-2 border-slate-200 rounded-4xl p-6 shadow-[0_6px_0_0_#cbd5e1] hover:border-emerald-400 hover:shadow-[0_6px_0_0_#34d399] transition-all duration-300 group relative overflow-hidden"
                 >
                   {/* Status Indicator */}
                   <div className="absolute top-6 right-6 flex items-center gap-1.5">

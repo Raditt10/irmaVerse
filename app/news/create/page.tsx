@@ -10,6 +10,7 @@ import Link from "next/link";
 import dynamic from "next/dynamic";
 import CustomDropdown from "@/components/ui/CustomDropdown";
 import Toast from "@/components/ui/Toast";
+import { useConfirm } from "@/lib/confirm-provider";
 
 const MDEditor = dynamic(() => import("@uiw/react-md-editor"), { ssr: false });
 
@@ -21,6 +22,7 @@ export default function CreateNewsPage() {
   const [loading, setLoading] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+  const { alert: customAlert } = useConfirm();
   const [toastData, setToastData] = useState({
     show: false,
     message: "",
@@ -83,7 +85,11 @@ export default function CreateNewsPage() {
 
       if (!response.ok) {
         const error = await response.json();
-        alert(`Error: ${error.error}`);
+        customAlert({
+          title: "Gagal Upload",
+          message: error.error || "Gagal mengupload gambar.",
+          confirmText: "Oke"
+        });
         return;
       }
 

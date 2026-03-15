@@ -15,11 +15,14 @@ export async function DELETE(
 
     const { conversationId } = await params;
 
-    // Verify user is the instructor of this conversation
+    // Verify user is a participant of this conversation
     const conversation = await prisma.chatConversation.findFirst({
       where: {
         id: conversationId,
-        instructorId: session.user.id, // Only instructor can delete
+        OR: [
+          { userId: session.user.id },
+          { instructorId: session.user.id },
+        ],
       },
     });
 

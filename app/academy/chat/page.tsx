@@ -6,9 +6,11 @@ import Sidebar from "@/components/ui/Sidebar";
 import SearchInput from "@/components/ui/SearchInput";
 import SuccessDataFound from "@/components/ui/SuccessDataFound";
 import { Textarea } from "@/components/ui/textarea";
+import Toast from "@/components/ui/Toast";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useSocket } from "@/lib/socket";
+import { useConfirm } from "@/lib/confirm-provider";
 import {
   formatRelativeTime,
   formatMessageDate,
@@ -33,9 +35,17 @@ import {
   Check,
   CheckCheck,
   ImageIcon,
-  File,
+  File as FileIcon,
   Shield,
+  Maximize2,
+  Minimize2,
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/DropDown";
 
 interface Conversation {
   id: string;
@@ -107,8 +117,18 @@ const InstructorChatDashboard = () => {
   const [showFilePreview, setShowFilePreview] = useState(false);
   const [filePreviewUrl, setFilePreviewUrl] = useState<string | null>(null);
   const [fileCaption, setFileCaption] = useState("");
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deletingConversation, setDeletingConversation] = useState(false);
+  const [isDesktopChatFullscreen, setIsDesktopChatFullscreen] = useState(false);
+  const [toast, setToast] = useState<{ show: boolean; message: string; type: 'success' | 'error' } | null>(null);
+
+  useEffect(() => {
+    if (toast?.show) {
+      const timer = setTimeout(() => setToast(null), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast]);
+
+  const { confirm, alert: customAlert } = useConfirm();
   
   const messagesRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -359,7 +379,7 @@ const InstructorChatDashboard = () => {
 
     // Validate file size (max 10MB)
     if (file.size > 10 * 1024 * 1024) {
-      alert("File terlalu besar! Maksimal 10MB");
+      setToast({ show: true, message: "Ukuran file maksimal adalah 10MB.", type: 'error' });
       if (fileInputRef.current) fileInputRef.current.value = "";
       return;
     }
@@ -429,7 +449,7 @@ const InstructorChatDashboard = () => {
       }
     } catch (error) {
       console.error("Error uploading file:", error);
-      alert("Gagal mengupload file");
+      setToast({ show: true, message: "Gagal mengunggah file. Silakan coba lagi.", type: 'error' });
     } finally {
       setUploadingFile(false);
     }
@@ -471,26 +491,32 @@ const InstructorChatDashboard = () => {
         setEditingContent("");
       } else {
         const error = await res.json();
-        alert(error.error || "Gagal mengedit pesan");
+        setToast({ show: true, message: error.error || "Gagal mengedit pesan.", type: 'error' });
       }
     } catch (error) {
       console.error("Error editing message:", error);
-      alert("Gagal mengedit pesan");
+      setToast({ show: true, message: "Gagal mengedit pesan.", type: 'error' });
     }
   };
 
   // Delete message handler
   const handleDeleteMessage = async (messageId: string) => {
-    if (!confirm("Hapus pesan ini?")) return;
+    const isConfirmed = await confirm({
+      type: "warning",
+      title: "Hapus Pesan",
+      message: "Apakah Anda yakin ingin menghapus pesan ini?",
+      confirmText: "Hapus",
+      cancelText: "Batal",
+    });
+
+    if (!isConfirmed) return;
 
     try {
       const res = await fetch(`/api/chat/messages/${messageId}`, {
         method: "DELETE",
       });
-
       if (res.ok) {
         const deletedMessage = await res.json();
-
         socket?.emit("message:delete", {
           messageId,
           conversationId: selectedConversationId,
@@ -498,11 +524,11 @@ const InstructorChatDashboard = () => {
         });
       } else {
         const error = await res.json();
-        alert(error.error || "Gagal menghapus pesan");
+        setToast({ show: true, message: error.error || "Gagal menghapus pesan.", type: 'error' });
       }
     } catch (error) {
       console.error("Error deleting message:", error);
-      alert("Gagal menghapus pesan");
+      setToast({ show: true, message: "Terjadi kesalahan saat menghapus pesan.", type: 'error' });
     }
   };
 
@@ -510,33 +536,38 @@ const InstructorChatDashboard = () => {
   const handleDeleteConversation = async () => {
     if (!selectedConversationId) return;
 
+    const isConfirmed = await confirm({
+      type: "warning",
+      title: "Hapus Percakapan",
+      message: "Apakah Anda yakin ingin menghapus semua pesan dalam percakapan ini? Tindakan ini tidak dapat dibatalkan.",
+      confirmText: "Ya, Hapus",
+      cancelText: "Batal",
+    });
+
+    if (!isConfirmed) return;
+
     setDeletingConversation(true);
     try {
       const res = await fetch(`/api/chat/conversations/${selectedConversationId}`, {
         method: "DELETE",
       });
-
       if (res.ok) {
-        // Remove from conversations list
         setConversations((prev) =>
           prev.filter((conv) => conv.id !== selectedConversationId)
         );
         setSelectedConversationId(null);
         setMessages([]);
-        setShowDeleteConfirm(false);
         setIsMobileViewingChat(false);
-
-        // Emit socket event
         socket?.emit("conversation:delete", {
           conversationId: selectedConversationId,
         });
       } else {
         const error = await res.json();
-        alert(error.error || "Gagal menghapus percakapan");
+        setToast({ show: true, message: error.error || "Gagal menghapus percakapan.", type: 'error' });
       }
     } catch (error) {
       console.error("Error deleting conversation:", error);
-      alert("Gagal menghapus percakapan");
+      setToast({ show: true, message: "Terjadi kesalahan saat menghapus percakapan.", type: 'error' });
     } finally {
       setDeletingConversation(false);
     }
@@ -800,11 +831,38 @@ const InstructorChatDashboard = () => {
                           </p>
                         </div>
                       </div>
-                      <button 
-                        onClick={() => setShowDeleteConfirm(true)}
-                        className="p-2 hover:bg-slate-100 rounded-lg transition-colors">
-                        <MoreHorizontal className="h-5 w-5 text-slate-500" />
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => setIsDesktopChatFullscreen((v) => !v)}
+                          className="hidden lg:inline-flex p-2 rounded-full hover:bg-slate-100 text-slate-400"
+                          title={isDesktopChatFullscreen ? 'Keluar Fullscreen' : 'Fullscreen'}
+                        >
+                          {isDesktopChatFullscreen ? (
+                            <Minimize2 className="h-6 w-6" strokeWidth={2.5} />
+                          ) : (
+                            <Maximize2 className="h-6 w-6" strokeWidth={2.5} />
+                          )}
+                        </button>
+                        {/* Menu Dropdown - Kartun Profesional */}
+                        <div className="relative">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <button className="p-2 lg:p-2.5 rounded-full hover:bg-slate-100 text-slate-500 transition-all flex items-center justify-center active:scale-95">
+                                <MoreHorizontal className="h-6 w-6 lg:h-7 lg:w-7" />
+                              </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-56">
+                              <DropdownMenuItem 
+                                onClick={handleDeleteConversation}
+                                className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                              >
+                                <Trash2 className="h-4 w-4 mr-3" strokeWidth={3} />
+                                Hapus Pesan
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      </div>
                     </div>
 
                     {/* Messages Area */}
@@ -930,7 +988,7 @@ const InstructorChatDashboard = () => {
                                                   rel="noopener noreferrer"
                                                   className="flex items-center gap-2 p-2 bg-white/10 rounded-lg hover:bg-white/20"
                                                 >
-                                                  <File className="h-4 w-4" />
+                                                  <FileIcon className="h-4 w-4" />
                                                   <span className="text-sm">File attachment</span>
                                                 </a>
                                               )}
@@ -1050,7 +1108,22 @@ const InstructorChatDashboard = () => {
                     </div>
                   </>
                 ) : (
-                  <div className="flex flex-1 flex-col items-center justify-center p-6 text-center">
+                  <div className="flex flex-1 flex-col items-center justify-center p-6 text-center relative">
+                    {/* Fullscreen Toggle for Empty State */}
+                    <div className="absolute top-4 right-4 hidden lg:block">
+                      <button
+                        onClick={() => setIsDesktopChatFullscreen((v) => !v)}
+                        className="p-2 rounded-xl hover:bg-slate-100 text-slate-400 transition-all shadow-sm bg-white border-2 border-slate-100"
+                        title={isDesktopChatFullscreen ? 'Keluar Fullscreen' : 'Fullscreen'}
+                      >
+                        {isDesktopChatFullscreen ? (
+                          <Minimize2 className="h-6 w-6" strokeWidth={2.5} />
+                        ) : (
+                          <Maximize2 className="h-6 w-6" strokeWidth={2.5} />
+                        )}
+                      </button>
+                    </div>
+
                     <div className="w-24 h-24 bg-emerald-50 rounded-4xl flex items-center justify-center mb-6 border-4 border-emerald-100 shadow-lg">
                       <MessageCircle className="h-12 w-12 text-emerald-400" />
                     </div>
@@ -1096,7 +1169,7 @@ const InstructorChatDashboard = () => {
                 </div>
               ) : (
                 <div className="flex flex-col items-center justify-center p-10 bg-white border-4 border-slate-200 border-dashed rounded-3xl">
-                  <File className="h-20 w-20 text-emerald-400 mb-4" />
+                  <FileIcon className="h-20 w-20 text-emerald-400 mb-4" />
                   <p className="text-slate-800 font-bold text-lg">{selectedFile.name}</p>
                   <p className="text-slate-500 font-medium bg-slate-100 px-3 py-1 rounded-full mt-2">
                     {formatFileSize(selectedFile.size)}
@@ -1145,49 +1218,14 @@ const InstructorChatDashboard = () => {
         </div>
       )}
 
-      {/* Delete Conversation Confirmation Dialog */}
-      {showDeleteConfirm && selectedConversation && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-4xl w-full max-w-md shadow-2xl border-4 border-white transform scale-100 animate-in fade-in zoom-in duration-200">
-            <div className="p-6 border-b-2 border-slate-100">
-              <h3 className="text-xl font-black text-slate-800">
-                Hapus Percakapan
-              </h3>
-              <p className="text-slate-500 font-medium text-sm mt-1">
-                Yakin ingin menghapus percakapan dengan {selectedConversation.participant.name}?
-              </p>
-            </div>
-
-            <div className="p-6 bg-slate-50/50">
-              <p className="text-sm text-slate-600 mb-4">
-                Semua pesan dalam percakapan ini akan dihapus secara permanen dan tidak dapat dipulihkan.
-              </p>
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setShowDeleteConfirm(false)}
-                  disabled={deletingConversation}
-                  className="flex-1 px-4 py-3 rounded-xl border-2 border-slate-200 hover:bg-slate-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-bold"
-                >
-                  Batal
-                </button>
-                <button
-                  onClick={handleDeleteConversation}
-                  disabled={deletingConversation}
-                  className="flex-1 bg-red-500 hover:bg-red-600 text-white font-black rounded-xl h-12 border-b-4 border-red-700 active:border-b-0 active:translate-y-1 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                >
-                  {deletingConversation ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      <span>Menghapus...</span>
-                    </>
-                  ) : (
-                    <span>Hapus Percakapan</span>
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+      {/* Toast notification */}
+      {toast && (
+        <Toast
+          show={toast.show}
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
       )}
     </div>
   );

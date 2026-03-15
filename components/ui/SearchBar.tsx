@@ -203,7 +203,7 @@ export default function SearchBar({ limitTypes, placeholder }: SearchBarProps) {
           type="text"
           value={query}
           onChange={handleInputChange}
-          placeholder={placeholder || (limitTypes?.includes("news") ? "Cari berita dan kegiatan IRMA..." : "Cari kajian, berita, instruktur...")}
+          placeholder={placeholder || (limitTypes?.includes("news") ? "Cari berita & kegiatan..." : "Cari di IRMA Verse...")}
           className="w-full pl-15 pr-12 py-3.5 rounded-2xl border-2 border-slate-200 bg-white text-slate-800 placeholder-slate-400 focus:outline-none focus:border-emerald-400 focus:bg-white focus:shadow-[0_4px_12px_rgba(52,211,153,0.15)] transition-all font-bold text-sm"
         />
         

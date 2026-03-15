@@ -8,11 +8,10 @@ import { Input } from "@/components/ui/InputText";
 import { Textarea } from "@/components/ui/textarea";
 import Loading from "@/components/ui/Loading";
 import Toast from "@/components/ui/Toast";
-// Import komponen Confirm Dialog yang baru
-import CartoonConfirmDialog from "@/components/ui/ConfirmDialog"; 
 import { useSearchParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useSocket } from "@/lib/socket";
+import { useConfirm } from "@/lib/confirm-provider";
 import {
   formatRelativeTime,
   formatMessageDate,
@@ -36,10 +35,18 @@ import {
   Heart,
   Check,
   CheckCheck,
-  File,
+  File as FileIcon,
   Loader2,
-  Menu, // Import icon Menu
+  Menu,
+  Maximize2,
+  Minimize2,
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/DropDown";
 
 // ... (INTERFACES tetap sama) ...
 interface Instructor {
@@ -135,10 +142,10 @@ const ChatPage = () => {
   const [showFilePreview, setShowFilePreview] = useState(false);
   const [filePreviewUrl, setFilePreviewUrl] = useState<string | null>(null);
   const [fileCaption, setFileCaption] = useState("");
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deletingConversation, setDeletingConversation] = useState(false);
   const [isDesktopChatFullscreen, setIsDesktopChatFullscreen] = useState(false);
-  const [showMenu, setShowMenu] = useState(false);
+  
+  const { confirm, alert: customAlert } = useConfirm();
   
   const messagesRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -416,7 +423,7 @@ const ChatPage = () => {
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.size > 10 * 1024 * 1024) {
-      alert("File terlalu besar! Maksimal 10MB");
+      setToast({ show: true, message: "Ukuran file maksimal adalah 10MB.", type: 'error' });
       if (fileInputRef.current) fileInputRef.current.value = "";
       return;
     }
@@ -472,7 +479,7 @@ const ChatPage = () => {
       }
     } catch (error) {
       console.error("Error uploading file:", error);
-      alert("Gagal mengupload file");
+      setToast({ show: true, message: "Gagal mengunggah file. Silakan coba lagi.", type: 'error' });
     } finally {
       setUploadingFile(false);
     }
@@ -508,16 +515,25 @@ const ChatPage = () => {
         setEditingContent("");
       } else {
         const error = await res.json();
-        alert(error.error || "Gagal mengedit pesan");
+        setToast({ show: true, message: error.error || "Gagal mengedit pesan.", type: 'error' });
       }
     } catch (error) {
       console.error("Error editing message:", error);
-      alert("Gagal mengedit pesan");
+      setToast({ show: true, message: "Gagal mengedit pesan.", type: 'error' });
     }
   };
 
   const handleDeleteMessage = async (messageId: string) => {
-    if (!confirm("Hapus pesan ini?")) return;
+    const isConfirmed = await confirm({
+      type: "warning",
+      title: "Hapus Pesan",
+      message: "Apakah Anda yakin ingin menghapus pesan ini?",
+      confirmText: "Hapus",
+      cancelText: "Batal",
+    });
+
+    if (!isConfirmed) return;
+
     try {
       const res = await fetch(`/api/chat/messages/${messageId}`, {
         method: "DELETE",
@@ -531,16 +547,27 @@ const ChatPage = () => {
         });
       } else {
         const error = await res.json();
-        alert(error.error || "Gagal menghapus pesan");
+        setToast({ show: true, message: error.error || "Gagal menghapus pesan.", type: 'error' });
       }
     } catch (error) {
       console.error("Error deleting message:", error);
-      alert("Gagal menghapus pesan");
+      setToast({ show: true, message: "Terjadi kesalahan saat menghapus pesan.", type: 'error' });
     }
   };
 
   const handleDeleteConversation = async () => {
     if (!selectedConversationId) return;
+
+    const isConfirmed = await confirm({
+      type: "warning",
+      title: "Hapus Percakapan",
+      message: "Apakah kamu yakin ingin menghapus semua pesan dalam percakapan ini? Tindakan ini tidak dapat dibatalkan.",
+      confirmText: "Ya, Hapus",
+      cancelText: "Batal",
+    });
+
+    if (!isConfirmed) return;
+
     setDeletingConversation(true);
     try {
       const res = await fetch(`/api/chat/conversations/${selectedConversationId}`, {
@@ -552,7 +579,6 @@ const ChatPage = () => {
         );
         setSelectedConversationId(null);
         setMessages([]);
-        setShowDeleteConfirm(false); // Close dialog
         setIsMobileViewingChat(false);
         socket?.emit("conversation:delete", {
           conversationId: selectedConversationId,
@@ -560,11 +586,11 @@ const ChatPage = () => {
         setToast({ show: true, message: 'Percakapan berhasil dihapus', type: 'success' });
       } else {
         const error = await res.json();
-        alert(error.error || "Gagal menghapus percakapan");
+        setToast({ show: true, message: error.error || "Gagal menghapus percakapan.", type: 'error' });
       }
     } catch (error) {
       console.error("Error deleting conversation:", error);
-      alert("Gagal menghapus percakapan");
+      setToast({ show: true, message: "Terjadi kesalahan saat menghapus percakapan.", type: 'error' });
     } finally {
       setDeletingConversation(false);
     }
@@ -628,21 +654,20 @@ const ChatPage = () => {
     <div className="h-dvh bg-[#FDFBF7] flex flex-col overflow-hidden">
       
       {/* Hide header & sidebar on mobile when viewing chat to maximize space */}
-      <div className={`${isMobileViewingChat || isDesktopChatFullscreen ? 'hidden lg:block' : 'block'}`}>
+      <div className={`${isDesktopChatFullscreen ? "hidden" : "block"} shrink-0`}>
         <DashboardHeader />
       </div>
 
       <div className="flex flex-1 overflow-hidden">
         {/* Hide main sidebar on mobile or fullscreen desktop when viewing chat */}
-        {/* PERBAIKAN: Ubah hidden lg:block menjadi block. Sidebar component sendiri yang handle responsiveness */}
-        <div className={`${isMobileViewingChat || isDesktopChatFullscreen ? 'hidden lg:block' : 'block'} h-full shrink-0`}>
+        <div className={`${isDesktopChatFullscreen ? "hidden" : (isMobileViewingChat ? 'hidden lg:block' : 'block')} h-full shrink-0`}>
           <Sidebar />
         </div>
 
-        <main className={`w-full flex-1 flex flex-col ${(isMobileViewingChat || isDesktopChatFullscreen) ? 'p-0' : 'p-4 lg:p-6'} overflow-hidden`}>
+        <main className={`w-full flex-1 flex flex-col transition-all duration-300 ${isDesktopChatFullscreen ? 'p-0' : (isMobileViewingChat ? 'p-0' : 'p-4 lg:p-6')} overflow-hidden relative`}>
           
           {/* Page Title (Only visible on Desktop/Tablet or when List View on Mobile) */}
-          <div className={`${isMobileViewingChat || isDesktopChatFullscreen ? 'hidden' : 'flex'} mb-4 items-center justify-between shrink-0 px-2 lg:px-0`}>
+          <div className={`${isDesktopChatFullscreen || isMobileViewingChat ? 'hidden' : 'flex'} mb-4 items-center justify-between shrink-0 px-2 lg:px-0`}>
             <div className="flex items-center gap-3">
               {/* PERBAIKAN: Tombol Hamburger untuk Mobile */}
               <button 
@@ -673,10 +698,9 @@ const ChatPage = () => {
             </div>
           </div>
 
-          {/* CHAT CONTAINER FRAME */}
           <div className={`
-            flex flex-1 bg-white overflow-hidden shadow-sm
-            ${(isMobileViewingChat || isDesktopChatFullscreen) ? 'fixed inset-0 z-9999 w-screen h-screen rounded-none' : 'rounded-4xl border-4 border-slate-200 shadow-[0_8px_0_0_#cbd5e1]'}
+            flex flex-1 bg-white overflow-hidden transition-all duration-300
+            ${isDesktopChatFullscreen ? 'rounded-none border-0' : (isMobileViewingChat ? 'fixed inset-0 z-9999 w-screen h-screen rounded-none' : 'lg:rounded-4xl lg:border-4 border-slate-200 lg:shadow-[0_8px_0_0_#cbd5e1]')}
           `}>
             
             {/* --- LIST CONVERSATIONS (SIDEBAR CHAT) --- */}
@@ -816,40 +840,39 @@ const ChatPage = () => {
                         title={isDesktopChatFullscreen ? 'Keluar Fullscreen' : 'Fullscreen'}
                       >
                         {isDesktopChatFullscreen ? (
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v2a2 2 0 002 2h2a2 2 0 002-2v-2m0-10V5a2 2 0 00-2-2h-2a2 2 0 00-2 2v2m10 10h-2a2 2 0 00-2 2v-2a2 2 0 002-2h2m-10 0H5a2 2 0 00-2 2v2a2 2 0 002 2h2" /></svg>
+                          <Minimize2 className="h-6 w-6" strokeWidth={2.5} />
                         ) : (
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4h6M4 4v6m0-6l6 6m10 10h-6m6 0v-6m0 6l-6-6" /></svg>
+                          <Maximize2 className="h-6 w-6" strokeWidth={2.5} />
                         )}
                       </button>
                       <div className="relative">
-                        <button
-                          onClick={() => setShowMenu((v) => !v)}
-                          className="p-2 hover:bg-slate-100 rounded-full text-slate-400"
-                        >
-                          <MoreHorizontal className="h-6 w-6" />
-                        </button>
-                        {showMenu && (
-                          <div className="absolute right-0 mt-2 w-60 bg-white border border-slate-200 rounded-xl shadow-lg z-50">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
                             <button
-                              onClick={() => { setShowMenu(false); setShowDeleteConfirm(true); }}
-                              className="w-full flex items-center gap-2 text-left px-4 py-3 hover:bg-slate-50 text-red-600 font-bold rounded-t-xl"
+                              className="p-2 hover:bg-slate-100 rounded-full text-slate-400 transition-all flex items-center justify-center active:scale-95"
                             >
-                              <Trash2 className="h-5 w-5 mr-2" />
-                              Hapus Semua Pesan
+                              <MoreHorizontal className="h-6 w-6" />
                             </button>
-                            
-                            <button
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-60">
+                            <DropdownMenuItem 
+                              onClick={handleDeleteConversation}
+                              className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                            >
+                              <Trash2 className="h-4 w-4 mr-3" strokeWidth={3} />
+                              Hapus Semua Pesan
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
                               onClick={() => {
-                                setShowMenu(false);
                                 setToast({ show: true, message: 'Berhasil ditambahkan ke Favorit!', type: 'success' });
                               }}
-                              className="w-full flex items-center gap-2 text-left px-4 py-3 hover:bg-slate-50 text-emerald-600 font-bold rounded-b-xl"
+                              className="text-emerald-500 hover:text-emerald-600 hover:bg-emerald-50"
                             >
-                              <Heart className="h-5 w-5 mr-2" fill="currentColor" />
+                              <Heart className="h-4 w-4 mr-3" fill="currentColor" />
                               Tambahkan ke Favorit
-                            </button>
-                          </div>
-                        )}
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
                     </div>
                   </div>
@@ -925,7 +948,7 @@ const ChatPage = () => {
                                             <img src={message.attachmentUrl} alt="attachment" className="max-h-60 w-full object-cover" />
                                           ) : (
                                             <a href={message.attachmentUrl} target="_blank" className="flex items-center gap-2 p-3">
-                                              <File className="h-5 w-5" />
+                                              <FileIcon className="h-5 w-5" />
                                               <span className="font-bold underline text-xs">Download File</span>
                                             </a>
                                           )}
@@ -981,7 +1004,22 @@ const ChatPage = () => {
                   </div>
                 </>
               ) : (
-                <div className="flex flex-col items-center justify-center h-full p-8 text-center">
+                <div className="flex flex-col items-center justify-center h-full p-8 text-center relative">
+                  {/* Fullscreen Toggle for Empty State */}
+                  <div className="absolute top-4 right-4 hidden lg:block">
+                    <button
+                      onClick={() => setIsDesktopChatFullscreen((v) => !v)}
+                      className="p-2 rounded-full hover:bg-slate-100 text-slate-400 transition-all shadow-sm bg-white border-2 border-slate-100"
+                      title={isDesktopChatFullscreen ? 'Keluar Fullscreen' : 'Fullscreen'}
+                    >
+                      {isDesktopChatFullscreen ? (
+                        <Minimize2 className="h-6 w-6" strokeWidth={2.5} />
+                      ) : (
+                        <Maximize2 className="h-6 w-6" strokeWidth={2.5} />
+                      )}
+                    </button>
+                  </div>
+
                   <div className="w-28 h-28 bg-emerald-50 rounded-full flex items-center justify-center mb-6 border-4 border-emerald-100 animate-pulse">
                     <MessageCircle className="h-14 w-14 text-emerald-400" />
                   </div>
@@ -1019,7 +1057,7 @@ const ChatPage = () => {
                 <img src={filePreviewUrl} alt="Preview" className="max-w-full h-auto rounded-xl border-2 border-slate-200 shadow-md" />
               ) : (
                 <div className="text-center p-8 bg-white rounded-2xl border-2 border-slate-200">
-                  <File className="h-16 w-16 text-emerald-500 mx-auto mb-2" />
+                  <FileIcon className="h-16 w-16 text-emerald-500 mx-auto mb-2" />
                   <p className="font-bold text-slate-700">{selectedFile.name}</p>
                   <p className="text-xs text-slate-400">{formatFileSize(selectedFile.size)}</p>
                 </div>
@@ -1073,18 +1111,7 @@ const ChatPage = () => {
         </div>
       )}
 
-      {/* --- CARTOON CONFIRM DIALOG --- */}
-      {/* Menggantikan modal delete manual sebelumnya */}
-      <CartoonConfirmDialog
-        isOpen={showDeleteConfirm}
-        onClose={() => setShowDeleteConfirm(false)}
-        onConfirm={handleDeleteConversation}
-        title="Hapus Chat?"
-        message="Apakah kamu yakin ingin menghapus semua pesan dalam percakapan ini? Tindakan ini tidak dapat dibatalkan."
-        type="warning"
-        confirmText="Ya, Hapus"
-        cancelText="Batal"
-      />
+      {/* Toast notification */}
 
       {/* Toast notification */}
       {toast && (

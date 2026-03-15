@@ -15,6 +15,7 @@ interface CartoonConfirmDialogProps {
   onCancel?: () => void;
   isOpen?: boolean;
   onClose?: () => void;
+  showCancel?: boolean;
 }
 
 const CartoonConfirmDialog = ({
@@ -27,6 +28,7 @@ const CartoonConfirmDialog = ({
   onCancel,
   isOpen: externalIsOpen,
   onClose,
+  showCancel = true,
 }: CartoonConfirmDialogProps) => {
   const [internalIsOpen, setInternalIsOpen] = useState(externalIsOpen !== false);
   const isOpen = externalIsOpen !== undefined ? externalIsOpen : internalIsOpen;
@@ -115,22 +117,24 @@ const CartoonConfirmDialog = ({
 
             {/* Actions */}
             <div className="flex items-center gap-3">
-              <button
-                onClick={handleCancel}
-                disabled={isLoading}
-                className="
-                  flex-1 h-12 rounded-xl font-bold text-sm
-                  bg-white text-slate-600
-                  disabled:opacity-50
-                  transition-all
-                  border-2 border-slate-200
-                  shadow-[0_4px_0_0_#e2e8f0]
-                  hover:-translate-y-0.5 hover:shadow-[0_5px_0_0_#e2e8f0]
-                  active:translate-y-0.5 active:shadow-none
-                "
-              >
-                {cancelText}
-              </button>
+              {showCancel && (
+                <button
+                  onClick={handleCancel}
+                  disabled={isLoading}
+                  className="
+                    flex-1 h-12 rounded-xl font-bold text-sm
+                    bg-white text-slate-600
+                    disabled:opacity-50
+                    transition-all
+                    border-2 border-slate-200
+                    shadow-[0_4px_0_0_#e2e8f0]
+                    hover:-translate-y-0.5 hover:shadow-[0_5px_0_0_#e2e8f0]
+                    active:translate-y-0.5 active:shadow-none
+                  "
+                >
+                  {cancelText}
+                </button>
+              )}
               <button
                 onClick={handleConfirm}
                 disabled={isLoading}
