@@ -26,8 +26,12 @@ const LeaderboardPage = async () => {
     }),
   ]);
 
-  const followerIds = new Set(followers.map((f) => f.followerId));
-  const followingIds = new Set(following.map((f) => f.followingId));
+  const followerIds = new Set<string>(
+    followers.map((f: any) => f.followerId as string),
+  );
+  const followingIds = new Set<string>(
+    following.map((f: any) => f.followingId as string),
+  );
 
   // A mutual friend is someone who follows the user AND the user follows them back
   const mutualUserIds = new Set<string>();
@@ -54,14 +58,18 @@ const LeaderboardPage = async () => {
   });
 
   const viewerRole = (session.user as any).role;
-  const isPrivileged = viewerRole === "admin" || viewerRole === "instruktur" || viewerRole === "super_admin";
+  const isPrivileged =
+    viewerRole === "admin" ||
+    viewerRole === "instruktur" ||
+    viewerRole === "super_admin";
 
   const users: LeaderboardUser[] = rawUsers.map((u, i) => {
     const isMe = u.id === currentUserId;
     const isMutual = mutualUserIds.has(u.id);
 
     // Apply privacy rules: Hide name and avatar if not me, not mutual, and not privileged
-    const displayName = isMe || isMutual || isPrivileged ? (u.name ?? "Pengguna") : "Hamba Allah";
+    const displayName =
+      isMe || isMutual || isPrivileged ? (u.name ?? "Pengguna") : "Hamba Allah";
     const displayAvatar = isMe || isMutual || isPrivileged ? u.avatar : null;
 
     return {
@@ -93,9 +101,9 @@ const LeaderboardPage = async () => {
               Pantau pencapaian 10 EXP terbaik disini
             </p>
           </div>
-          <LeaderboardClient 
-            users={users} 
-            currentUserId={session.user.id} 
+          <LeaderboardClient
+            users={users}
+            currentUserId={session.user.id}
             currentUserRole={(session.user as any).role}
           />
         </main>

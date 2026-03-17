@@ -212,7 +212,9 @@ export async function GET(req: NextRequest) {
         where: { id: { in: materialIds } },
         select: { id: true, title: true },
       });
-      const materialMap = new Map(materials.map((m) => [m.id, m]));
+      const materialMap: Map<string, any> = new Map(
+        materials.map((m) => [m.id, m]),
+      );
 
       // Map to expected dynamic format
       const formatted = allAttendance.map((att) => ({

@@ -5,15 +5,20 @@ import { auth } from "@/lib/auth";
 export async function GET() {
   const session = await auth();
 
-  if (!session?.user || (session.user.role !== "instruktur" && session.user.role !== "admin" && session.user.role !== "super_admin")) {
+  if (
+    !session?.user ||
+    (session.user.role !== "instruktur" &&
+      session.user.role !== "admin" &&
+      session.user.role !== "super_admin")
+  ) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const instructorId = session.user.id;
 
   // 1. Total Siswa: Total count of users with role 'user' on the platform
-  const totalStudents = await prisma.users.count({ 
-    where: { role: "user" } 
+  const totalStudents = await (prisma as any).users.count({
+    where: { role: "user" },
   });
 
   // 2. Sesi Selesai & Kajian Aktif
@@ -21,25 +26,25 @@ export async function GET() {
     where: { instructorId },
     include: {
       materialinvite: {
-        where: { status: { not: "rejected" } }
-      }
-    }
+        where: { status: { not: "rejected" } },
+      },
+    },
   });
 
   let completedSessions = 0;
-  
+
   // Sesi selesai dihitung HANYA JIKA semua user yang diundang sudah absen (tidak boleh 0 yang diundang)
   for (const material of instructorMaterials) {
     const inviteCount = material.materialinvite.length;
-    if (inviteCount === 0) continue; 
+    if (inviteCount === 0) continue;
 
     const attendanceCount = await prisma.attendance.count({
       where: {
         materialId: material.id,
         userId: {
-          in: material.materialinvite.map(i => i.userId)
-        }
-      }
+          in: material.materialinvite.map((i: any) => i.userId),
+        },
+      },
     });
 
     if (attendanceCount >= inviteCount && inviteCount > 0) {
@@ -51,22 +56,33 @@ export async function GET() {
   const activeCourses = instructorMaterials.length - completedSessions;
 
   // 4. Rating Rata-rata Profesional (dari rata-rata per kajian)
-  const materialRatings = await Promise.all(instructorMaterials.map(async (mat) => {
-    const ratings = await prisma.attendance.findMany({
-      where: { materialId: mat.id, rating: { not: null } },
-      select: { rating: true }
-    });
-    
-    if (ratings.length === 0) return null;
-    
-    const sum = ratings.reduce((acc, curr) => acc + (curr.rating || 0), 0);
-    return sum / ratings.length;
-  }));
+  const materialRatings = await Promise.all(
+    instructorMaterials.map(async (mat: any) => {
+      const ratings = await prisma.attendance.findMany({
+        where: { materialId: mat.id, rating: { not: null } },
+        select: { rating: true },
+      });
+
+      if (ratings.length === 0) return null;
+
+      const sum = ratings.reduce(
+        (acc: number, curr: any) => acc + (curr.rating || 0),
+        0,
+      );
+      return sum / ratings.length;
+    }),
+  );
 
   const validRatings = materialRatings.filter((r): r is number => r !== null);
-  const averageRating = validRatings.length > 0
-    ? Number((validRatings.reduce((acc, curr) => acc + curr, 0) / validRatings.length).toFixed(1))
-    : 0;
+  const averageRating =
+    validRatings.length > 0
+      ? Number(
+          (
+            validRatings.reduce((acc: number, curr: number) => acc + curr, 0) /
+            validRatings.length
+          ).toFixed(1),
+        )
+      : 0;
 
   // 5. Today's Materials (Jadwal Kajian Mendatang)
   const now = new Date();
@@ -76,22 +92,25 @@ export async function GET() {
   tomorrow.setDate(tomorrow.getDate() + 1);
 
   const rawTodayMaterials = await prisma.material.findMany({
-    where: { 
+    where: {
       instructorId,
       date: {
         gte: today,
-        lt: tomorrow
-      }
+        lt: tomorrow,
+      },
     },
     include: {
       materialinvite: {
-        where: { status: { not: "rejected" } }
-      }
+        where: { status: { not: "rejected" } },
+      },
     },
-    orderBy: { date: 'asc' }
+    orderBy: { date: "asc" },
   });
 
-  const currentTimeStr = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
+  const currentTimeStr =
+    now.getHours().toString().padStart(2, "0") +
+    ":" +
+    now.getMinutes().toString().padStart(2, "0");
 
   const upcomingClasses: any[] = [];
 
@@ -105,9 +124,9 @@ export async function GET() {
         where: {
           materialId: m.id,
           userId: {
-            in: m.materialinvite.map(i => i.userId)
-          }
-        }
+            in: m.materialinvite.map((i: any) => i.userId),
+          },
+        },
       });
       if (attendanceCount >= inviteCount) {
         isCompleted = true;
@@ -116,7 +135,7 @@ export async function GET() {
 
     const startTime = m.startedAt || "00:00";
     const isOngoingOrPast = currentTimeStr >= startTime;
-    
+
     // Jangan tampilkan jika statusnya sudah "sedang berlangsung" ke atas, KECUALI dia sudah tuntas (supaya bisa ditag Tuntas di tampilan depan)
     // Tampilkan jika belum lewat waktu, ATAU dia tuntas hari ini.
     if (!isOngoingOrPast || isCompleted) {
@@ -127,46 +146,64 @@ export async function GET() {
         students: inviteCount,
         room: m.location || "TBA",
         status: "upcoming",
-        isCompleted: isCompleted
+        isCompleted: isCompleted,
       });
     }
   }
 
   // 6. Recent Activities (Heuristic from multiple models)
-  const [latestMaterials, latestSchedules, latestCompetitions, latestNews] = await Promise.all([
-    prisma.material.findMany({ where: { instructorId }, orderBy: { updatedAt: 'desc' }, take: 3 }),
-    prisma.schedules.findMany({ where: { instructorId }, orderBy: { updatedAt: 'desc' }, take: 3 }),
-    prisma.competitions.findMany({ where: { instructorId }, orderBy: { updatedAt: 'desc' }, take: 3 }),
-    prisma.news.findMany({ where: { authorId: instructorId }, orderBy: { updatedAt: 'desc' }, take: 3 })
-  ]);
+  const [latestMaterials, latestSchedules, latestCompetitions, latestNews] =
+    await Promise.all([
+      prisma.material.findMany({
+        where: { instructorId },
+        orderBy: { updatedAt: "desc" },
+        take: 3,
+      }),
+      (prisma as any).schedules.findMany({
+        where: { instructorId },
+        orderBy: { updatedAt: "desc" },
+        take: 3,
+      }),
+      (prisma as any).competitions.findMany({
+        where: { instructorId },
+        orderBy: { updatedAt: "desc" },
+        take: 3,
+      }),
+      prisma.news.findMany({
+        where: { authorId: instructorId },
+        orderBy: { updatedAt: "desc" },
+        take: 3,
+      }),
+    ]);
 
-  const isNew = (created: Date, updated: Date) => Math.abs(updated.getTime() - created.getTime()) < 1000;
+  const isNew = (created: Date, updated: Date) =>
+    Math.abs(updated.getTime() - created.getTime()) < 1000;
 
   const allActivities = [
     ...latestMaterials.map((m: any) => ({
       id: `mat-${m.id}`,
-      type: 'material',
-      title: `${isNew(m.createdAt, m.updatedAt) ? 'Membuat' : 'Mengedit'} Kajian: ${m.title}`,
-      updatedAt: m.updatedAt
+      type: "material",
+      title: `${isNew(m.createdAt, m.updatedAt) ? "Membuat" : "Mengedit"} Kajian: ${m.title}`,
+      updatedAt: m.updatedAt,
     })),
     ...latestSchedules.map((s: any) => ({
       id: `sch-${s.id}`,
-      type: 'schedule',
-      title: `${isNew(s.createdAt, s.updatedAt) ? 'Membuat' : 'Mengedit'} Kegiatan: ${s.title}`,
-      updatedAt: s.updatedAt
+      type: "schedule",
+      title: `${isNew(s.createdAt, s.updatedAt) ? "Membuat" : "Mengedit"} Kegiatan: ${s.title}`,
+      updatedAt: s.updatedAt,
     })),
     ...latestCompetitions.map((c: any) => ({
       id: `comp-${c.id}`,
-      type: 'competition',
-      title: `${isNew(c.createdAt, c.updatedAt) ? 'Membuat' : 'Mengedit'} Lomba: ${c.title}`,
-      updatedAt: c.updatedAt
+      type: "competition",
+      title: `${isNew(c.createdAt, c.updatedAt) ? "Membuat" : "Mengedit"} Lomba: ${c.title}`,
+      updatedAt: c.updatedAt,
     })),
     ...latestNews.map((n: any) => ({
       id: `news-${n.id}`,
-      type: 'news',
-      title: `${isNew(n.createdAt, n.updatedAt) ? 'Menambahkan' : 'Mengedit'} Berita: ${n.title}`,
-      updatedAt: n.updatedAt
-    }))
+      type: "news",
+      title: `${isNew(n.createdAt, n.updatedAt) ? "Menambahkan" : "Mengedit"} Berita: ${n.title}`,
+      updatedAt: n.updatedAt,
+    })),
   ];
 
   // Helper to format relative time
@@ -185,79 +222,105 @@ export async function GET() {
   const recentActivities = allActivities
     .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime())
     .slice(0, 3)
-    .map(act => ({
+    .map((act: any) => ({
       id: act.id,
       title: act.title,
       time: getRelativeTime(act.updatedAt),
-      type: act.type
+      type: act.type,
     }));
 
   // 7. Courses Overview
-  const coursesOverview = await Promise.all(instructorMaterials.map(async (mat) => {
-    const inviteCount = mat.materialinvite.length;
-    const attendanceCount = await prisma.attendance.count({
-      where: {
-        materialId: mat.id,
-        userId: {
-          in: mat.materialinvite.map(i => i.userId)
-        }
-      }
-    });
+  const coursesOverview = await Promise.all(
+    instructorMaterials.map(async (mat: any) => {
+      const inviteCount = mat.materialinvite.length;
+      const attendanceCount = await prisma.attendance.count({
+        where: {
+          materialId: mat.id,
+          userId: {
+            in: mat.materialinvite.map((i: any) => i.userId),
+          },
+        },
+      });
 
-    const progress = inviteCount > 0 ? Math.round((attendanceCount / inviteCount) * 100) : 0;
-    
-    // Average rating for this material
-    const matRatings = await prisma.attendance.findMany({
-      where: { materialId: mat.id, rating: { not: null } },
-      select: { rating: true }
-    });
-    const matRating = matRatings.length > 0
-      ? (matRatings.reduce((acc, curr) => acc + (curr.rating || 0), 0) / matRatings.length).toFixed(1)
-      : "0";
+      const progress =
+        inviteCount > 0 ? Math.round((attendanceCount / inviteCount) * 100) : 0;
 
-    return {
-      id: mat.id,
-      title: mat.title,
-      students: inviteCount,
-      sessions: attendanceCount,
-      rating: matRating,
-      progress: progress
-    };
-  }));
+      // Average rating for this material
+      const matRatings = await prisma.attendance.findMany({
+        where: { materialId: mat.id, rating: { not: null } },
+        select: { rating: true },
+      });
+      const matRating =
+        matRatings.length > 0
+          ? (
+              matRatings.reduce(
+                (acc: number, curr: any) => acc + (curr.rating || 0),
+                0,
+              ) / matRatings.length
+            ).toFixed(1)
+          : "0";
+
+      return {
+        id: mat.id,
+        title: mat.title,
+        students: inviteCount,
+        sessions: attendanceCount,
+        rating: matRating,
+        progress: progress,
+      };
+    }),
+  );
 
   // 8. Daily Achievement (Pencapaian Hari Ini)
   const dailyMaterials = await prisma.material.findMany({
-    where: { 
+    where: {
       instructorId,
       date: {
         gte: today, // this is `now` set to 00:00:00 locally
-        lt: tomorrow
-      }
-    }
+        lt: tomorrow,
+      },
+    },
   });
-  
-  // But wait! We only want to count courses that were TAUGHT today, meaning they have to have at least 1 attendance by someone, or simply matching the schedule date is enough as requested: "kajian kajian yang di hari itu dihadiri oleh instrukttur dicatat". So length is fine: 
+
+  // But wait! We only want to count courses that were TAUGHT today, meaning they have to have at least 1 attendance by someone, or simply matching the schedule date is enough as requested: "kajian kajian yang di hari itu dihadiri oleh instrukttur dicatat". So length is fine:
   const dailySessions = dailyMaterials.length;
 
-  const dailyMaterialRatings = await Promise.all(dailyMaterials.map(async (mat) => {
-    const ratings = await prisma.attendance.findMany({
-      where: { materialId: mat.id, rating: { not: null } },
-      select: { rating: true }
-    });
-    if (ratings.length === 0) return null;
-    return ratings.reduce((acc, curr) => acc + (curr.rating || 0), 0) / ratings.length;
-  }));
+  const dailyMaterialRatings = await Promise.all(
+    dailyMaterials.map(async (mat: any) => {
+      const ratings = await prisma.attendance.findMany({
+        where: { materialId: mat.id, rating: { not: null } },
+        select: { rating: true },
+      });
+      if (ratings.length === 0) return null;
+      return (
+        ratings.reduce(
+          (acc: number, curr: any) => acc + (curr.rating || 0),
+          0,
+        ) / ratings.length
+      );
+    }),
+  );
 
-  const validDailyRatings = dailyMaterialRatings.filter((r): r is number => r !== null);
-  const dailyRating = validDailyRatings.length > 0
-    ? Number((validDailyRatings.reduce((acc, curr) => acc + curr, 0) / validDailyRatings.length).toFixed(1))
-    : 0;
+  const validDailyRatings = dailyMaterialRatings.filter(
+    (r): r is number => r !== null,
+  );
+  const dailyRating =
+    validDailyRatings.length > 0
+      ? Number(
+          (
+            validDailyRatings.reduce(
+              (acc: number, curr: number) => acc + curr,
+              0,
+            ) / validDailyRatings.length
+          ).toFixed(1),
+        )
+      : 0;
 
   // Count total attendance for today's materials
   const dailyAttendance = await prisma.attendance.count({
     where: {
-      materialId: { in: dailyMaterials.map(m => m.id) }
-    }
+      materialId: { in: dailyMaterials.map((m: any) => m.id) },
+    },
   });
 
   return NextResponse.json({
@@ -273,7 +336,7 @@ export async function GET() {
     achievement: {
       dailySessions,
       dailyRating,
-      dailyAttendance
-    }
+      dailyAttendance,
+    },
   });
 }

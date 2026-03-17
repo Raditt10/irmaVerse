@@ -48,7 +48,7 @@ export async function GET(req: NextRequest) {
       });
 
       const userIds = periodRanking.map((r) => r.userId);
-      const usersMap = new Map(
+      const usersMap: Map<string, any> = new Map(
         (
           await prisma.users.findMany({
             where: { id: { in: userIds } },
@@ -83,7 +83,7 @@ export async function GET(req: NextRequest) {
             globalRank: i + 1,
           };
         })
-        .filter(Boolean);
+        .filter((u): u is NonNullable<typeof u> => u !== null);
 
       // Find current user rank in this period
       const myPeriodXp = periodRanking.find(

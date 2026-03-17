@@ -1,9 +1,28 @@
 import prisma from "@/lib/prisma";
-import { activity_logs_type } from "@prisma/client";
+
+type ActivityLogType =
+  | "quiz_completed"
+  | "material_read"
+  | "course_enrolled"
+  | "program_enrolled"
+  | "attendance_marked"
+  | "badge_earned"
+  | "level_up"
+  | "friend_added"
+  | "forum_post"
+  | "streak_maintained"
+  | "profile_completed"
+  | "admin_user_managed"
+  | "admin_program_managed"
+  | "admin_material_managed"
+  | "admin_news_managed"
+  | "admin_schedule_managed"
+  | "admin_competition_managed"
+  | "admin_admin_managed";
 
 interface RecordActivityParams {
   userId: string;
-  type: activity_logs_type;
+  type: ActivityLogType;
   title: string;
   description?: string;
   metadata?: Record<string, any>;

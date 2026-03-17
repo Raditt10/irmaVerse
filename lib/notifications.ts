@@ -1,5 +1,6 @@
 import prisma from "@/lib/prisma";
-import type { notifications_type } from "@prisma/client";
+
+type NotificationType = "basic" | "invitation";
 
 /**
  * Server-side helper to create a notification and return it for WebSocket emission.
@@ -18,7 +19,7 @@ export async function createNotification({
   senderId,
 }: {
   userId: string;
-  type?: notifications_type;
+  type?: NotificationType;
   title: string;
   message: string;
   icon?: string;
@@ -65,7 +66,7 @@ export async function createNotification({
 export async function createBulkNotifications(
   notifications: {
     userId: string;
-    type?: notifications_type;
+    type?: NotificationType;
     title: string;
     message: string;
     icon?: string;

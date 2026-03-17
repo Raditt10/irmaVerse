@@ -1,12 +1,31 @@
 import prisma from "@/lib/prisma";
-import { activity_logs_type } from "@prisma/client";
 import crypto from "crypto";
+
+type ActivityLogType =
+  | "quiz_completed"
+  | "material_read"
+  | "course_enrolled"
+  | "program_enrolled"
+  | "attendance_marked"
+  | "badge_earned"
+  | "level_up"
+  | "friend_added"
+  | "forum_post"
+  | "streak_maintained"
+  | "profile_completed"
+  | "admin_user_managed"
+  | "admin_program_managed"
+  | "admin_material_managed"
+  | "admin_news_managed"
+  | "admin_schedule_managed"
+  | "admin_competition_managed"
+  | "admin_admin_managed";
 
 // ─── XP CONFIG ──────────────────────────────────────────────────────────────────
 // Hanya 4 sumber XP yang aktif:
 //   quiz_completed, program_enrolled, attendance_marked, badge_earned
 // Sumber lain dinonaktifkan (0 XP).
-export const XP_REWARDS: Record<activity_logs_type, number> = {
+export const XP_REWARDS: Record<ActivityLogType, number> = {
   quiz_completed: 50,
   material_read: 0, // dinonaktifkan
   course_enrolled: 0, // dinonaktifkan
@@ -28,7 +47,7 @@ export const XP_REWARDS: Record<activity_logs_type, number> = {
 };
 
 // Tipe aktivitas yang diizinkan mendapatkan XP
-const ALLOWED_XP_TYPES: Set<activity_logs_type> = new Set([
+const ALLOWED_XP_TYPES: Set<ActivityLogType> = new Set([
   "quiz_completed",
   "program_enrolled",
   "attendance_marked",
@@ -96,7 +115,7 @@ export function getLevelTitle(level: number): string {
 // Hanya tipe aktivitas yang ada di ALLOWED_XP_TYPES yang memberikan XP.
 export async function grantXp(params: {
   userId: string;
-  type: activity_logs_type;
+  type: ActivityLogType;
   title: string;
   description?: string;
   xpOverride?: number; // Gunakan jika ingin memberikan XP berbeda dari default

@@ -91,7 +91,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Attempt to find the invitation
-    let invite = null;
+    let invite: any = null;
     if (token) {
       invite = await prisma.materialinvite.findUnique({
         where: { token },

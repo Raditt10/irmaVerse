@@ -5,6 +5,7 @@ import { SocketProvider } from "@/lib/socket";
 import { NotificationProvider } from "@/lib/notification-provider";
 import { ConfirmProvider } from "@/lib/confirm-provider";
 import PageTransitionProvider from "@/components/ui/PageTransitionProvider";
+import InvitationNotifications from "@/components/ui/InvitationNotifications";
 import { Suspense } from "react";
 
 import "./globals.css";
@@ -47,6 +48,7 @@ export default function RootLayout({
                 <Suspense fallback={null}>
                   <PageTransitionProvider />
                 </Suspense>
+                <InvitationNotifications />
                 {children}
               </NotificationProvider>
             </ConfirmProvider>
