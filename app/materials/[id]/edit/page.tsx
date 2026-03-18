@@ -37,6 +37,7 @@ import {
   Link,
   FileText,
   Layers,
+  MapPin,
 } from "lucide-react";
 import { Input } from "@/components/ui/InputText";
 import { Textarea } from "@/components/ui/textarea";
@@ -344,6 +345,26 @@ const EditMaterial = () => {
           errorMessage = errorData.error || errorMessage;
         } catch (e) {}
         throw new Error(errorMessage);
+      }
+
+      const updatedMaterial = await res.json();
+
+      // Sync to separate rekapan table for long-term consistency
+      const finalRekapanContent = formData.materialType === "link"
+        ? formData.materialLink.trim()
+        : formData.materialContent.trim();
+        
+      if (finalRekapanContent && materialId) {
+        try {
+          await fetch(`/api/materials/${materialId}/rekapan`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ content: finalRekapanContent }),
+          });
+        } catch (rekapanErr) {
+          console.error("Error syncing rekapan on edit:", rekapanErr);
+          // Non-blocking
+        }
       }
 
       showToast("Kajian berhasil diperbarui. Mengalihkan...", "success");
@@ -884,14 +905,20 @@ const EditMaterial = () => {
                     <label className="block text-xs lg:text-sm font-bold text-slate-600 ml-1">
                       Lokasi / Platform <span className="text-red-500">*</span>
                     </label>
-                    <Input
-                      type="text"
-                      name="location"
-                      value={formData.location}
-                      onChange={handleInputChange}
-                      placeholder="Contoh: Masjid Irma atau Link Zoom..."
-                      required
-                    />
+                    <div className="relative group">
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <MapPin className="h-5 w-5 text-emerald-500 group-hover:text-emerald-600 transition-colors" />
+                      </div>
+                      <Input
+                        type="text"
+                        name="location"
+                        value={formData.location}
+                        onChange={handleInputChange}
+                        placeholder="Contoh: Masjid Irma atau Link Zoom..."
+                        required
+                        className="pl-12 lg:pl-12 border-2 border-slate-200 focus:border-emerald-400 focus:ring-emerald-100"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>

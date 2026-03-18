@@ -8,6 +8,7 @@ import Sidebar from "@/components/ui/Sidebar";
 import ChatbotButton from "@/components/ui/Chatbot";
 import Loading from "@/components/ui/Loading";
 import BackButton from "@/components/ui/BackButton";
+import FollowButton from "@/components/ui/FollowButton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   ArrowLeft,
@@ -333,6 +334,16 @@ export default function UserPublicProfile() {
                   )}
                   {friendshipStatus && !friendshipStatus.isOwnProfile && (
                     <div className="space-y-3">
+                      <FollowButton
+                        targetUserId={profile.id}
+                        initialIsFollowing={friendshipStatus.isFollowing}
+                        initialIsMutual={friendshipStatus.isMutual}
+                        className="w-full py-3"
+                        onStatusChange={() => {
+                          fetchFriendshipStatus();
+                          fetchProfile();
+                        }}
+                      />
                       {friendshipStatus.isMutual && (
                         <button
                           onClick={handleStartChat}
@@ -688,7 +699,6 @@ export default function UserPublicProfile() {
                       </span> {" "}
                       untuk mendapatkan akses penuh ke total XP, statistik belajar, and aktivitas harian mereka.
                     </p>
-                    
                     {!session?.user ? (
                       <button
                         onClick={() => router.push("/auth")}
@@ -697,18 +707,24 @@ export default function UserPublicProfile() {
                         <Users className="h-5 w-5" />
                         MULAI BERTEMAN SEKARANG
                       </button>
-                    ) : friendshipStatus?.isFollowing &&
-                      !friendshipStatus?.isMutual ? (
-                      <div className="inline-flex items-center gap-3 px-6 py-4 bg-emerald-50 border-2 border-emerald-200 rounded-2xl text-emerald-700 font-black text-sm shadow-inner">
-                        <Star className="h-5 w-5 animate-spin-slow text-emerald-500" fill="currentColor" />
-                        MENUNGGU KONFIRMASI DARI {profile.name?.split(" ")[0].toUpperCase()}
-                      </div>
                     ) : (
-                      friendshipStatus?.isFollowedBy && (
-                        <div className="bg-emerald-50 px-6 py-4 rounded-2xl border-2 border-emerald-100 text-emerald-700 font-black text-sm animate-bounce shadow-md">
-                          ✨ {profile.name?.split(" ")[0].toUpperCase()} MENUNGGU KAMU FOLLOW BACK!
-                        </div>
-                      )
+                      <div className="flex flex-col items-center gap-4">
+                        {friendshipStatus?.isFollowedBy && !friendshipStatus.isMutual && (
+                          <div className="text-emerald-600 font-black text-xs uppercase animate-bounce">
+                            ✨ {profile.name?.split(" ")[0]} Menunggu Kamu Follow Back!
+                          </div>
+                        )}
+                        <FollowButton
+                          targetUserId={profile.id}
+                          initialIsFollowing={friendshipStatus?.isFollowing ?? false}
+                          initialIsMutual={friendshipStatus?.isMutual ?? false}
+                          size="lg"
+                          onStatusChange={() => {
+                            fetchFriendshipStatus();
+                            fetchProfile();
+                          }}
+                        />
+                      </div>
                     )}
                   </div>
                 </div>

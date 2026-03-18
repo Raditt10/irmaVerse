@@ -322,17 +322,23 @@ const CreateCompetition = () => {
                     </div>
 
                     <div className="space-y-2">
-                       <label className="flex text-xs lg:text-sm font-bold text-slate-600 ml-1 items-center gap-1">
-                         <MapPin className="h-4 w-4 text-emerald-500" /> Lokasi <span className="text-red-500">*</span>
+                       <label className="block text-xs lg:text-sm font-bold text-slate-600 ml-1">
+                         Lokasi <span className="text-red-500">*</span>
                        </label>
-                       <Input
-                         type="text"
-                         name="location"
-                         required
-                         value={formData.location}
-                         onChange={handleChange}
-                         placeholder="Contoh: Aula Utama IRMA / Online"
-                       />
+                       <div className="relative group">
+                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                          <MapPin className="h-5 w-5 text-emerald-500 group-hover:text-emerald-600 transition-colors" />
+                        </div>
+                        <Input
+                          type="text"
+                          name="location"
+                          required
+                          value={formData.location}
+                          onChange={handleChange}
+                          placeholder="Contoh: Aula Utama IRMA / Online"
+                          className="pl-12 lg:pl-12 border-2 border-slate-200 focus:border-emerald-400 focus:ring-emerald-100"
+                        />
+                      </div>
                     </div>
 
                     {/* HAPUS INPUT HADIAH DISINI AGAR TIDAK BINGUNG */}
@@ -588,43 +594,61 @@ const CreateCompetition = () => {
                   </h2>
                   <div className="space-y-4 lg:space-y-6">
                     <div className="space-y-2">
-                      <label className="text-xs lg:text-sm font-bold text-slate-600 ml-1 flex items-center gap-1.5 justify-start">
-                        <Headset className="w-4 h-4 text-emerald-600" strokeWidth={2.5}/> Narahubung
+                      <label className="text-xs lg:text-sm font-bold text-slate-600 ml-1">
+                        Narahubung
                       </label>
-                      <Input
-                        type="text"
-                        name="contactPerson"
-                        value={formData.contactPerson}
-                        onChange={handleChange}
-                        placeholder="Contoh: Ahmad Fauzi"
-                      />
+                      <div className="relative group">
+                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                          <Headset className="h-5 w-5 text-emerald-500 group-hover:text-emerald-600 transition-colors" />
+                        </div>
+                        <Input
+                          type="text"
+                          name="contactPerson"
+                          value={formData.contactPerson}
+                          onChange={handleChange}
+                          placeholder="Contoh: Ahmad Fauzi"
+                          className="pl-12 lg:pl-12 border-2 border-slate-200 focus:border-emerald-400 focus:ring-emerald-100"
+                        />
+                      </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
                       <div className="space-y-2">
-                        <label className="text-xs lg:text-sm font-bold text-slate-600 ml-1 flex items-center gap-1.5 justify-start">
-                          <Phone className="w-4 h-4 text-emerald-600" strokeWidth={2.5}/> Nomor Telepon
+                        <label className="text-xs lg:text-sm font-bold text-slate-600 ml-1">
+                          Nomor Telepon
                         </label>
-                        <Input
-                          type="tel"
-                          name="contactNumber"
-                          value={formData.contactNumber}
-                          onChange={handleChange}
-                          placeholder="Contoh: 08123456789"
-                        />
+                        <div className="relative group">
+                          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                            <Phone className="h-5 w-5 text-emerald-500 group-hover:text-emerald-600 transition-colors" />
+                          </div>
+                          <Input
+                            type="tel"
+                            name="contactNumber"
+                            value={formData.contactNumber}
+                            onChange={handleChange}
+                            placeholder="Contoh: 08123456789"
+                            className="pl-12 lg:pl-12 border-2 border-slate-200 focus:border-emerald-400 focus:ring-emerald-100"
+                          />
+                        </div>
                       </div>
 
                       <div className="space-y-2">
-                        <label className="text-xs lg:text-sm font-bold text-slate-600 ml-1 flex items-center gap-1.5 justify-start">
-                          <Mail className="w-4 h-4 text-emerald-600" strokeWidth={2.5}/> Email
+                        <label className="text-xs lg:text-sm font-bold text-slate-600 ml-1">
+                          Email
                         </label>
-                        <Input
-                          type="email"
-                          name="contactEmail"
-                          value={formData.contactEmail}
-                          onChange={handleChange}
-                          placeholder="email@example.com"
-                        />
+                        <div className="relative group">
+                          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                            <Mail className="h-5 w-5 text-emerald-500 group-hover:text-emerald-600 transition-colors" />
+                          </div>
+                          <Input
+                            type="email"
+                            name="contactEmail"
+                            value={formData.contactEmail}
+                            onChange={handleChange}
+                            placeholder="email@example.com"
+                            className="pl-12 lg:pl-12 border-2 border-slate-200 focus:border-emerald-400 focus:ring-emerald-100"
+                          />
+                        </div>
                       </div>
                     </div>
                   </div>

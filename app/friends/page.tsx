@@ -16,7 +16,7 @@ import {
   Zap,
   User as UserIcon,
   UserCheck,
-  Heart,
+  Handshake,
   Sparkles,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -141,7 +141,7 @@ export default function FriendsPage() {
     {
       key: "friends",
       label: "Teman",
-      icon: <Heart className="h-4 w-4" />,
+      icon: <Handshake className="h-4 w-4" />,
       count: counts.friends,
     },
     {
@@ -330,13 +330,32 @@ export default function FriendsPage() {
                   )}
 
                   {/* Action Buttons */}
-                  <div className="flex flex-col gap-3">
+                  <div className="flex items-center gap-2 mt-2">
                     <button
                       onClick={() => router.push(`/u/${user.id}`)}
-                      className="w-full flex items-center justify-center gap-2 py-2 bg-slate-50 text-slate-600 font-black rounded-xl border-2 border-slate-100 hover:bg-slate-100 transition-colors text-xs"
+                      className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-slate-50 text-slate-600 font-bold rounded-xl border-2 border-slate-100 hover:bg-slate-200 transition-colors text-xs"
                     >
                       <UserIcon className="h-4 w-4" /> Profil
                     </button>
+                    {session?.user?.id !== user.id && ( // Hide if it's ourself (rare but good check)
+                        <FollowButton
+                          targetUserId={user.id}
+                          initialIsFollowing={
+                            activeTab === "friends" ||
+                            activeTab === "following" ||
+                            !!user.iFollowBack
+                          }
+                          initialIsMutual={
+                            activeTab === "friends" ||
+                            (activeTab === "followers" && !!user.iFollowBack)
+                          }
+                          size="sm"
+                          className="flex-1 py-1.5"
+                          onStatusChange={() => {
+                            fetchCounts();
+                          }}
+                        />
+                    )}
                   </div>
                 </div>
               ))}

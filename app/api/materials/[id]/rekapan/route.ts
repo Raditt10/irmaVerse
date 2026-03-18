@@ -34,10 +34,40 @@ export async function GET(
     });
 
     if (!rekapan) {
-      return NextResponse.json(
-        { error: "Rekapan belum tersedia untuk materi ini" },
-        { status: 404 },
-      );
+      // Fallback: check if the MATERIAL itself has content or link
+      const material = await prisma.material.findUnique({
+        where: { id: materialId },
+        include: {
+          users: {
+            select: { name: true },
+          },
+        },
+      });
+
+      if (!material || (!material.content && !material.link)) {
+        return NextResponse.json(
+          { error: "Rekapan belum tersedia untuk materi ini" },
+          { status: 404 },
+        );
+      }
+
+      // Return a virtual rekapan object from material data
+      return NextResponse.json({
+        id: `fallback-${material.id}`,
+        materialId: material.id,
+        content: material.content || material.link || "",
+        createdAt: material.createdAt,
+        updatedAt: material.updatedAt,
+        material: {
+          id: material.id,
+          title: material.title,
+          description: material.description,
+          date: material.date,
+          category: material.category,
+          grade: material.grade,
+          instructor: material.users?.name || "TBA",
+        },
+      });
     }
 
     return NextResponse.json({
@@ -47,13 +77,13 @@ export async function GET(
       createdAt: rekapan.createdAt,
       updatedAt: rekapan.updatedAt,
       material: {
-        id: rekapan.material.id,
-        title: rekapan.material.title,
-        description: rekapan.material.description,
-        date: rekapan.material.date,
-        category: rekapan.material.category,
-        grade: rekapan.material.grade,
-        instructor: rekapan.material.users?.name || "TBA",
+        id: rekapan.material?.id || materialId,
+        title: rekapan.material?.title || "Untitled",
+        description: rekapan.material?.description || "",
+        date: rekapan.material?.date || new Date(),
+        category: rekapan.material?.category || "Wajib",
+        grade: rekapan.material?.grade || "Semua",
+        instructor: rekapan.material?.users?.name || "TBA",
       },
     });
   } catch (error) {
@@ -114,11 +144,14 @@ export async function POST(
     const rekapan = await prisma.rekapan.upsert({
       where: { materialId },
       create: {
+        id: `rek-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
         materialId,
         content: content.trim(),
+        updatedAt: new Date(),
       },
       update: {
         content: content.trim(),
+        updatedAt: new Date(),
       },
     });
 

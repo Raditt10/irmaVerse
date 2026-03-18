@@ -19,6 +19,7 @@ import {
   Pencil,
   BookOpen,
   AlertCircle,
+  Clock,
 } from "lucide-react";
 
 interface Participant {
@@ -56,6 +57,7 @@ interface QuizDetail {
   questionCount: number;
   questions: QuizQuestion[];
   attempts: Participant[];
+  isActive: boolean;
 }
 
 export default function QuizStatsPage() {
@@ -90,6 +92,35 @@ export default function QuizStatsPage() {
       console.error(error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const [togglingStatus, setTogglingStatus] = useState(false);
+
+  const handleToggleStatus = async () => {
+    if (!quiz || togglingStatus) return;
+    
+    setTogglingStatus(true);
+    try {
+      const newStatus = !quiz.isActive;
+      const res = await fetch(`/api/quiz/${quiz.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isActive: newStatus }),
+      });
+      
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.details || "Gagal mengubah status");
+      }
+      
+      const data = await res.json();
+      setQuiz({ ...quiz, isActive: data.isActive });
+    } catch (error: any) {
+      console.error(error);
+      alert(`Gagal memperbarui status kuis: ${error.message}`);
+    } finally {
+      setTogglingStatus(false);
     }
   };
 
@@ -137,17 +168,24 @@ export default function QuizStatsPage() {
                   onClick={() => router.push("/quiz")} 
                 />
                 <div>
-                  <div className="flex items-center gap-3 mb-2">
+                  <div className="flex items-center flex-wrap gap-3 mb-2">
                     <h1 className="text-2xl lg:text-3xl font-black text-slate-800 tracking-tight">
                       {quiz.title}
                     </h1>
-                    <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase border-2 ${
-                      quiz.materialId 
-                        ? "bg-emerald-50 border-emerald-100 text-emerald-600" 
-                        : "bg-blue-50 border-blue-100 text-blue-600"
-                    }`}>
-                      {quiz.materialId ? "Kajian" : "Mandiri"}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase border-2 ${
+                        quiz.materialId 
+                          ? "bg-emerald-50 border-emerald-100 text-emerald-600" 
+                          : "bg-blue-50 border-blue-100 text-blue-600"
+                      }`}>
+                        {quiz.materialId ? "Kajian" : "Mandiri"}
+                      </span>
+                      {!quiz.isActive && (
+                        <span className="text-[10px] bg-rose-100 text-rose-600 px-2.5 py-1 rounded-lg border border-rose-200 uppercase font-black">
+                          Ditutup
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <p className="text-slate-500 font-medium max-w-2xl">
                     {quiz.description || "Tidak ada deskripsi."}
@@ -161,16 +199,40 @@ export default function QuizStatsPage() {
                 </div>
               </div>
 
-              <button
-                onClick={() => router.push(`/quiz/manage/${quiz.id}`)}
-                className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-white border-2 border-slate-200 text-slate-700 font-black border-b-4 shadow-sm hover:border-emerald-300 hover:text-emerald-600 transition-all"
-              >
-                <Pencil className="h-4 w-4" /> Edit Quiz
-              </button>
+              <div className="flex flex-wrap gap-3 mt-4 sm:mt-0">
+                <button 
+                  onClick={handleToggleStatus}
+                  disabled={togglingStatus}
+                  className={`flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-black transition-all shadow-sm ${
+                    quiz.isActive 
+                      ? "bg-rose-50 border-2 border-rose-200 text-rose-600 hover:bg-rose-100 hover:border-rose-300" 
+                      : "bg-emerald-50 border-2 border-emerald-200 text-emerald-600 hover:bg-emerald-100 hover:border-emerald-300"
+                  }`}
+                >
+                  {quiz.isActive ? (
+                    <>
+                      <Clock className="h-5 w-5" />
+                      Tutup Kuis
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 className="h-5 w-5" />
+                      Buka Kuis
+                    </>
+                  )}
+                </button>
+                <button
+                  onClick={() => router.push(`/quiz/manage/${quiz.id}`)}
+                  className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-white border-2 border-slate-200 text-slate-700 font-bold hover:border-teal-400 hover:text-teal-600 transition-all shadow-sm"
+                >
+                  <Pencil className="h-5 w-5" />
+                  Edit Quiz
+                </button>
+              </div>
             </div>
 
             {/* Stats Summary */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
               <div className="bg-white p-4 rounded-3xl border-2 border-slate-200 shadow-[0_4px_0_0_#e2e8f0]">
                 <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center mb-3">
                   <HelpCircle className="h-5 w-5 text-emerald-600" />
@@ -195,13 +257,6 @@ export default function QuizStatsPage() {
                     : 0}%
                 </p>
                 <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Rata-rata Skor</p>
-              </div>
-              <div className="bg-white p-4 rounded-3xl border-2 border-slate-200 shadow-[0_4px_0_0_#e2e8f0]">
-                <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center mb-3">
-                  <AlertCircle className="h-5 w-5 text-emerald-600" />
-                </div>
-                <p className="text-2xl font-black text-slate-800">Aktif</p>
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Status Kuis</p>
               </div>
             </div>
 

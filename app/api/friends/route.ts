@@ -29,10 +29,10 @@ export async function GET(req: Request) {
       const followers = await prisma.friendships.findMany({
         where: {
           followingId: userId,
-          ...(search ? { follower: { name: { contains: search } } } : {}),
+          ...(search ? { users_friendships_followerIdTousers: { name: { contains: search } } } : {}),
         },
         include: {
-          follower: {
+          users_friendships_followerIdTousers: {
             select: {
               id: true,
               name: true,
@@ -63,7 +63,7 @@ export async function GET(req: Request) {
 
       return NextResponse.json(
         followers.map((f) => ({
-          ...f.follower,
+          ...f.users_friendships_followerIdTousers,
           friendshipId: f.id,
           friendshipStatus: f.status,
           iFollowBack: followingMap.has(f.followerId),
@@ -76,10 +76,10 @@ export async function GET(req: Request) {
       const following = await prisma.friendships.findMany({
         where: {
           followerId: userId,
-          ...(search ? { following: { name: { contains: search } } } : {}),
+          ...(search ? { users_friendships_followingIdTousers: { name: { contains: search } } } : {}),
         },
         include: {
-          following: {
+          users_friendships_followingIdTousers: {
             select: {
               id: true,
               name: true,
@@ -98,7 +98,7 @@ export async function GET(req: Request) {
 
       return NextResponse.json(
         following.map((f) => ({
-          ...f.following,
+          ...f.users_friendships_followingIdTousers,
           friendshipId: f.id,
           friendshipStatus: f.status,
         })),
@@ -151,7 +151,7 @@ export async function GET(req: Request) {
         status: "accepted",
       },
       include: {
-        follower: {
+        users_friendships_followerIdTousers: {
           select: {
             id: true,
             name: true,
@@ -168,7 +168,7 @@ export async function GET(req: Request) {
     });
 
     const friends = mutualFriends
-      .map((f) => f.follower)
+      .map((f) => f.users_friendships_followerIdTousers)
       .filter((f) =>
         search ? f.name?.toLowerCase().includes(search.toLowerCase()) : true,
       );

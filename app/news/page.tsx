@@ -364,11 +364,11 @@ const News = () => {
                 {filteredNews.map((item) => (
                   <div
                     key={item.id}
-                    className="bg-white rounded-[2.5rem] border-2 border-slate-200 shadow-[0_8px_0_0_#cbd5e1] hover:border-teal-400 hover:shadow-[0_8px_0_0_#34d399] transition-all duration-300 overflow-hidden group"
+                    className="bg-white rounded-3xl border-2 border-slate-200 shadow-[0_6px_0_0_#cbd5e1] hover:border-teal-400 hover:shadow-[0_6px_0_0_#34d399] transition-all duration-300 overflow-hidden group"
                   >
-                    <div className="flex flex-col sm:flex-row relative">
+                    <div className="flex flex-col sm:flex-row relative sm:h-48 h-full">
                       {/* Image Area */}
-                      <div className="w-full sm:w-72 h-48 sm:h-auto shrink-0 relative overflow-hidden bg-slate-100">
+                      <div className="w-full sm:w-60 h-44 sm:h-full shrink-0 relative overflow-hidden bg-slate-100">
                         <img
                           src={item.image || "https://images.unsplash.com/photo-1633613286991-611bcfb63dba?auto=format&fit=crop&w=800&q=80"}
                           alt={item.title}
@@ -376,36 +376,37 @@ const News = () => {
                         />
                         <div className="absolute inset-0 bg-linear-to-t from-slate-900/60 via-transparent to-transparent sm:hidden" />
                         <span
-                          className={`absolute top-4 left-4 px-3 py-1 rounded-full text-[10px] uppercase font-black shadow-lg tracking-wider border-2 border-white/20 backdrop-blur-sm ${categoryStyles[item.category] || "bg-emerald-500 text-white"}`}
+                          className={`absolute top-3 left-3 px-2.5 py-0.5 rounded-full text-[9px] uppercase font-black shadow-lg tracking-wider border-2 border-white/20 backdrop-blur-sm ${categoryStyles[item.category] || "bg-emerald-500 text-white"}`}
                         >
                           {item.category}
                         </span>
                         {item.isSaved && (
-                          <div className="absolute top-4 right-4 bg-amber-400 text-white p-2 rounded-full shadow-lg border-2 border-amber-600 animate-bounce-subtle">
-                            <Bookmark className="h-4 w-4 fill-current" />
+                          <div className="absolute top-3 right-3 bg-amber-400 text-white p-1.5 rounded-full shadow-lg border-2 border-amber-600">
+                            <Bookmark className="h-3 w-3 fill-current" />
                           </div>
                         )}
                       </div>
 
                       {/* Content Area */}
-                      <div className="flex-1 p-5 sm:p-6 lg:p-8 flex flex-col justify-between overflow-hidden">
-                        <div className="mb-4">
-                          <div className="flex items-center gap-1.5 text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider">
-                            <Calendar className="h-3.5 w-3.5" />
+                      <div className="flex-1 p-4 sm:p-5 lg:p-6 flex flex-col min-h-0">
+                        {/* Text part - Centered in remaining space */}
+                        <div className="flex-1 flex flex-col justify-center min-h-0">
+                          <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 mb-1 uppercase tracking-wider">
+                            <Calendar className="h-3 w-3" />
                             <span>{new Date(item.createdAt).toLocaleDateString("id-ID", { year: "numeric", month: "long", day: "numeric" })}</span>
                           </div>
 
-                          <h2 className="text-xl sm:text-2xl font-black text-slate-800 mb-2 group-hover:text-teal-600 transition-colors line-clamp-2 leading-tight">
+                          <h2 className="text-lg sm:text-xl font-black text-slate-800 mb-1 group-hover:text-teal-600 transition-colors line-clamp-1 leading-tight">
                             {item.title}
                           </h2>
 
-                          <p className="text-slate-500 font-medium text-sm line-clamp-2 md:line-clamp-3 leading-relaxed pr-2">
+                          <p className="text-slate-500 font-medium text-xs sm:text-sm line-clamp-2 leading-relaxed pr-2">
                             {item.deskripsi}
                           </p>
                         </div>
 
-                        {/* Footer Info */}
-                        <div className="flex items-center justify-between pt-4 mt-auto border-t-2 border-slate-100">
+                        {/* Footer Info - Pinned to bottom */}
+                        <div className="flex items-center justify-between pt-3 border-t-2 border-slate-50 mt-auto">
                           <div className="flex items-center gap-2.5 min-w-0 mr-4">
                             {item.author.avatar ? (
                               <img

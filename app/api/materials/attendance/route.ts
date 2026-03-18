@@ -107,6 +107,7 @@ export async function POST(req: NextRequest) {
         clarity,
         relevance,
         feedback,
+        updatedAt: new Date(),
       },
     });
 

@@ -19,8 +19,20 @@ export async function GET(req: NextRequest) {
 
     const isPrivileged = user.role === "instruktur" || user.role === "admin" || user.role === "super_admin";
 
-    // 1. Standalone quizzes (materialId is null) — visible to everyone
-    const standaloneQuizzes = await prisma.material_quizzes.findMany({
+    // Build a set of INACTIVE quiz IDs to exclude (non-privileged users only)
+    let inactiveQuizIdSet: Set<string> = new Set();
+    if (!isPrivileged) {
+      try {
+        const inactiveRows: any[] = await prisma.$queryRaw`SELECT id FROM material_quizzes WHERE isActive = 0`;
+        inactiveQuizIdSet = new Set(inactiveRows.map(q => String(q.id)));
+      } catch (e) {
+        // If column doesn't exist yet, show all quizzes (safe fallback)
+        console.warn("isActive column query failed, showing all quizzes:", e);
+      }
+    }
+
+    // 1. Standalone quizzes (materialId is null) — fetch all, filter later
+    const allStandaloneQuizzes = await prisma.material_quizzes.findMany({
       where: { materialId: null },
       include: {
         users: { select: { id: true, name: true, avatar: true } },
@@ -35,11 +47,16 @@ export async function GET(req: NextRequest) {
       orderBy: { createdAt: "desc" },
     });
 
-    // 2. Material-bound quizzes — only from materials user has access to
+    // Filter inactive quizzes for regular users
+    const standaloneQuizzes = isPrivileged
+      ? allStandaloneQuizzes
+      : allStandaloneQuizzes.filter(q => !inactiveQuizIdSet.has(q.id));
+
+    // 2. Material-bound quizzes
     let materialQuizzes: any[] = [];
 
     if (isPrivileged) {
-      // Instructors/admins can see all material quizzes
+      // Instructors/admins see all
       materialQuizzes = await prisma.material_quizzes.findMany({
         where: { materialId: { not: null } },
         include: {
@@ -55,7 +72,7 @@ export async function GET(req: NextRequest) {
         orderBy: { createdAt: "desc" },
       });
     } else {
-      // Regular users: only quizzes from materials they have accepted invites for
+      // Regular users: only active quizzes from accepted materials
       const acceptedInvites = await prisma.materialinvite.findMany({
         where: { userId: session.user.id, status: "accepted" },
         select: { materialId: true },
@@ -63,7 +80,7 @@ export async function GET(req: NextRequest) {
       const materialIds = acceptedInvites.map((i) => i.materialId);
 
       if (materialIds.length > 0) {
-        materialQuizzes = await prisma.material_quizzes.findMany({
+        const allMaterialQuizzes = await prisma.material_quizzes.findMany({
           where: { materialId: { in: materialIds } },
           include: {
             material: { select: { id: true, title: true, thumbnailUrl: true } },
@@ -77,6 +94,8 @@ export async function GET(req: NextRequest) {
           },
           orderBy: { createdAt: "desc" },
         });
+        // Filter inactive quizzes
+        materialQuizzes = allMaterialQuizzes.filter(q => !inactiveQuizIdSet.has(q.id));
       }
     }
 

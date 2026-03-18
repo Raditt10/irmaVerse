@@ -81,9 +81,11 @@ export async function POST(req: Request) {
     // Buat friendship baru
     const friendship = await prisma.friendships.create({
       data: {
+        id: crypto.randomUUID(),
         followerId: userId,
         followingId: targetUserId,
         status,
+        updatedAt: new Date(),
       },
     });
 
@@ -91,7 +93,7 @@ export async function POST(req: Request) {
     if (reverseFollow && reverseFollow.status === "pending") {
       await prisma.friendships.update({
         where: { id: reverseFollow.id },
-        data: { status: "accepted" },
+        data: { status: "accepted", updatedAt: new Date() },
       });
     }
 
@@ -99,12 +101,14 @@ export async function POST(req: Request) {
     try {
       await prisma.notifications.create({
         data: {
+          id: crypto.randomUUID(),
           userId: targetUserId,
           senderId: userId,
           type: "basic",
           title: "Pengikut Baru",
           message: `${session.user.name || "Seseorang"} mulai mengikuti kamu!`,
           actionUrl: `/u/${userId}`,
+          updatedAt: new Date(),
         },
       });
     } catch (e) {

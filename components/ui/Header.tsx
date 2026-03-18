@@ -19,6 +19,7 @@ import {
   Trophy,
   CheckCheck,
   Users,
+  Handshake,
 } from "lucide-react";
 import Toast from "@/components/ui/Toast";
 import {
@@ -563,7 +564,7 @@ export default function DashboardHeader() {
                         onClick={() => router.push("/friends")}
                         className="cursor-pointer font-bold text-slate-600 focus:text-emerald-700 focus:bg-emerald-50 rounded-lg px-3 py-2.5 transition-colors"
                       >
-                        <Users className="h-4 w-4 mr-2" strokeWidth={2.5} />
+                        <Handshake className="h-4 w-4 mr-2" strokeWidth={2.5} />
                         <span>Temanku</span>
                       </DropdownMenuItem>
                     </>

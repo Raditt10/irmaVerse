@@ -171,7 +171,7 @@ const QuizHome = () => {
 
         <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-10">
           {/* --- HERO BANNER --- */}
-          <div className="bg-gradient-to-r from-teal-500 to-emerald-400 rounded-[2rem] lg:rounded-[3rem] p-6 lg:p-10 border-4 border-teal-700 shadow-[0_8px_0_0_#0f766e] text-white relative overflow-hidden mb-10 group">
+          <div className="bg-linear-to-r from-teal-500 to-emerald-400 rounded-4xl lg:rounded-[3rem] p-6 lg:p-10 border-4 border-teal-700 shadow-[0_8px_0_0_#0f766e] text-white relative overflow-hidden mb-10 group">
             <div className="absolute top-0 right-0 -mt-10 -mr-10 w-64 h-64 bg-white opacity-10 rounded-full blur-3xl group-hover:scale-110 transition-transform duration-700" />
             <div className="absolute bottom-0 left-20 w-32 h-32 bg-teal-300 opacity-20 rounded-full blur-2xl" />
 
@@ -234,16 +234,20 @@ const QuizHome = () => {
               {(
                 [
                   { key: "all", label: "Semua" },
-                  { key: "not_started", label: "Belum" },
-                  { key: "completed", label: "Selesai" },
+                  ...(!isInstructor
+                    ? ([
+                        { key: "not_started", label: "Belum" },
+                        { key: "completed", label: "Selesai" },
+                      ] as const)
+                    : []),
                   { key: "standalone", label: "Mandiri" },
                   { key: "material", label: "Materi" },
                 ] as const
-              ).map((f) => (
+              ).map((f: any) => (
                 <button
                   key={f.key}
                   onClick={() => setActiveFilter(f.key)}
-                  className={`flex-shrink-0 px-4 lg:px-6 py-2.5 rounded-xl text-xs font-black transition-all ${
+                  className={`shrink-0 px-4 lg:px-6 py-2.5 rounded-xl text-xs font-black transition-all ${
                     activeFilter === f.key
                       ? "bg-white text-teal-600 shadow-sm"
                       : "text-slate-500 hover:text-slate-700"
@@ -257,7 +261,7 @@ const QuizHome = () => {
 
           {/* --- BANNER TOTAL POIN --- */}
           {!isInstructor && (
-            <div className="mb-8 flex flex-col sm:flex-row items-center justify-between bg-white border-2 border-slate-200 rounded-[1.5rem] p-4 lg:p-5 shadow-[0_4px_0_0_#cbd5e1] hover:border-emerald-400 hover:shadow-[0_4px_0_0_#10b981] transition-all duration-300 group cursor-default">
+            <div className="mb-8 flex flex-col sm:flex-row items-center justify-between bg-white border-2 border-slate-200 rounded-3xl p-4 lg:p-5 shadow-[0_4px_0_0_#cbd5e1] hover:border-emerald-400 hover:shadow-[0_4px_0_0_#10b981] transition-all duration-300 group cursor-default">
               <div className="flex items-center gap-4 w-full sm:w-auto">
                 <div className="w-14 h-14 bg-emerald-50 rounded-full border-2 border-emerald-200 flex items-center justify-center transform group-hover:rotate-12 transition-transform duration-300 shrink-0 shadow-sm">
                   <Zap
@@ -304,59 +308,54 @@ const QuizHome = () => {
               {filteredQuizzes.map((quiz) => (
                 <div
                   key={quiz.id}
-                  className="bg-white rounded-[2rem] border-2 border-slate-200 shadow-[0_6px_0_0_#cbd5e1] hover:border-teal-400 hover:shadow-[0_6px_0_0_#2dd4bf] hover:-translate-y-1 transition-all duration-300 flex flex-col overflow-hidden group cursor-pointer"
+                  className="bg-white rounded-3xl border-2 border-slate-200 shadow-[0_6px_0_0_#e2e8f0] hover:border-teal-300 hover:shadow-[0_6px_0_0_#99f6e4] hover:-translate-y-1 transition-all duration-300 flex flex-col overflow-hidden group cursor-pointer"
                   onClick={() => handleQuizClick(quiz)}
                 >
-                  {/* Card Header */}
-                  <div className="h-40 relative flex items-end justify-between overflow-hidden">
-                    {/* Background Layer */}
+                  {/* Card Cover — unified for both types */}
+                  <div className="h-36 relative overflow-hidden">
                     {quiz.materialThumbnail ? (
-                      <div className="absolute inset-0">
-                        <img 
-                          src={quiz.materialThumbnail} 
-                          alt={quiz.title} 
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                      </div>
+                      <img 
+                        src={quiz.materialThumbnail} 
+                        alt={quiz.title} 
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
                     ) : (
-                      <div className={`absolute inset-0 bg-gradient-to-br ${quiz.coverColor}`}>
-                        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 mix-blend-overlay" />
+                      <div className={`w-full h-full bg-linear-to-br ${quiz.coverColor}`}>
+                        <div className="absolute inset-0 opacity-[0.08]" style={{backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")"}} />
                       </div>
                     )}
+                    {/* Gradient overlay for readability */}
+                    <div className="absolute inset-0 bg-linear-to-t from-black/50 via-transparent to-transparent" />
 
-                    {/* Decorative 3D Elements */}
-                    <div className="absolute top-4 right-4 w-12 h-12 bg-white/10 rounded-full blur-md" />
-                    <div className="absolute -bottom-4 -left-4 w-20 h-20 bg-black/10 rounded-full blur-xl" />
+                    {/* Floating decoratives */}
+                    <div className="absolute top-3 right-3 w-10 h-10 bg-white/15 rounded-full blur-sm" />
 
-                    {/* Meta Info */}
-                    <div className="relative z-10 p-5 flex flex-col gap-2">
-                       <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/90 backdrop-blur-sm rounded-lg text-[10px] font-black text-slate-700 shadow-[0_2px_0_0_#e2e8f0] w-max">
-                        <BookOpen className="h-3 w-3 text-emerald-500" />
+                    {/* Top-left badges */}
+                    <div className="absolute top-3 left-3 z-10 flex flex-col gap-1.5">
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-white/90 backdrop-blur-sm rounded-lg text-[10px] font-black text-slate-700 shadow-sm w-max">
+                        <BookOpen className="h-3 w-3 text-teal-500" />
                         {quiz.questionCount} Soal
-                      </div>
-                      {quiz.isStandalone && (
-                        <div className="inline-flex items-center gap-1 px-2 py-0.5 bg-indigo-500/90 backdrop-blur-sm rounded-md text-[10px] font-black text-white w-max shadow-[0_2px_0_0_#312e81]">
-                          <Zap className="h-3 w-3" /> Mandiri
-                        </div>
-                      )}
+                      </span>
+                      <span className={`inline-flex items-center gap-1 px-2.5 py-1 backdrop-blur-sm rounded-lg text-[10px] font-black w-max shadow-sm ${
+                        quiz.isStandalone 
+                          ? "bg-indigo-500/90 text-white" 
+                          : "bg-emerald-500/90 text-white"
+                      }`}>
+                        {quiz.isStandalone ? <Zap className="h-3 w-3" /> : <BookOpen className="h-3 w-3" />}
+                        {quiz.isStandalone ? "Mandiri" : "Kajian"}
+                      </span>
                     </div>
 
+                    {/* Bottom-right play/medal icon */}
                     {!isStaffRole && (
-                      <div className="relative z-10 p-5">
+                      <div className="absolute bottom-3 right-3 z-10">
                         {quiz.status === "completed" ? (
-                          <div className="w-12 h-12 bg-yellow-400 rounded-full flex items-center justify-center border-2 border-white shadow-[0_4px_0_0_#d97706] transform group-hover:rotate-12 transition-transform">
-                            <Medal
-                              className="h-6 w-6 text-white"
-                              fill="currentColor"
-                            />
+                          <div className="w-11 h-11 bg-amber-400 rounded-xl flex items-center justify-center border-2 border-white shadow-[0_3px_0_0_#d97706] group-hover:rotate-6 transition-transform">
+                            <Medal className="h-5 w-5 text-white" fill="currentColor" />
                           </div>
                         ) : (
-                          <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center border-2 border-slate-100 shadow-[0_4px_0_0_#e2e8f0] transform group-hover:scale-110 transition-transform">
-                            <Play
-                              className="h-6 w-6 text-emerald-500 ml-1"
-                              fill="currentColor"
-                            />
+                          <div className="w-11 h-11 bg-white rounded-xl flex items-center justify-center border-2 border-slate-100 shadow-[0_3px_0_0_#e2e8f0] group-hover:scale-110 transition-transform">
+                            <Play className="h-5 w-5 text-teal-500 ml-0.5" fill="currentColor" />
                           </div>
                         )}
                       </div>
@@ -365,38 +364,40 @@ const QuizHome = () => {
 
                   {/* Card Body */}
                   <div className="p-5 flex flex-col flex-1">
-                    <p className="text-xs font-bold text-slate-400 mb-1 line-clamp-1">
+                    <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wide mb-1 line-clamp-1">
                       {quiz.isStandalone
                         ? quiz.creatorName
                           ? `Oleh ${quiz.creatorName}`
                           : "Quiz Mandiri"
-                        : quiz.materialTitle}
+                        : quiz.materialTitle || "Kajian"}
                     </p>
-                    <h3 className="text-lg font-black text-slate-800 mb-4 line-clamp-2 leading-tight group-hover:text-teal-600 transition-colors">
+                    <h3 className="text-base font-black text-slate-800 mb-3 line-clamp-2 leading-snug group-hover:text-teal-600 transition-colors">
                       {quiz.title}
                     </h3>
+                    {quiz.description && (
+                      <p className="text-xs text-slate-400 font-medium line-clamp-2 mb-3">{quiz.description}</p>
+                    )}
 
-                    <div className="mt-auto pt-4 border-t-2 border-slate-100 flex items-center justify-between gap-2 overflow-x-auto no-scrollbar">
+                    {/* Footer */}
+                    <div className="mt-auto pt-3 border-t-2 border-slate-100 flex items-center justify-between gap-2">
                       <div className="flex items-center gap-2 shrink-0">
                         {quiz.status === "not_started" && (
                           <>
-                            <span className="w-2.5 h-2.5 rounded-full bg-slate-300" />
-                            <span className="text-xs font-bold text-slate-500">
-                              Belum Mulai
-                            </span>
+                            <span className="w-2 h-2 rounded-full bg-slate-300" />
+                            <span className="text-[11px] font-bold text-slate-400">Belum Mulai</span>
                           </>
                         )}
                         {quiz.status === "completed" && (
                           <>
-                            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
-                            <span className="text-xs font-bold text-emerald-600">
+                            <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                            <span className="text-[11px] font-bold text-emerald-600">
                               Skor: {quiz.score}/{quiz.totalScore}
                             </span>
                           </>
                         )}
                       </div>
 
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1.5">
                         {quiz.status === "completed" || isStaffRole ? (
                           <>
                             <button
@@ -404,9 +405,9 @@ const QuizHome = () => {
                                 e.stopPropagation();
                                 handleQuizClick(quiz, "review");
                               }}
-                              className="px-3 py-2 rounded-xl text-[10px] font-black bg-slate-100 text-slate-600 border-b-4 border-slate-300 hover:bg-slate-200 active:border-b-0 active:translate-y-1 transition-all whitespace-nowrap"
+                              className="px-3 py-1.5 rounded-lg text-[10px] font-black bg-slate-100 text-slate-600 hover:bg-slate-200 active:translate-y-0.5 transition-all whitespace-nowrap"
                             >
-                              Lihat Detail
+                              Detail
                             </button>
                             {!isStaffRole && (
                               <button
@@ -414,9 +415,9 @@ const QuizHome = () => {
                                   e.stopPropagation();
                                   handleQuizClick(quiz, "retake");
                                 }}
-                                className="px-3 py-2 rounded-xl text-[10px] font-black bg-emerald-400 text-white border-b-4 border-emerald-600 hover:bg-emerald-500 active:border-b-0 active:translate-y-1 transition-all shadow-sm whitespace-nowrap"
+                                className="px-3 py-1.5 rounded-lg text-[10px] font-black bg-teal-500 text-white hover:bg-teal-600 active:translate-y-0.5 transition-all shadow-sm whitespace-nowrap"
                               >
-                                Kerjakan Ulang
+                                Ulang
                               </button>
                             )}
                           </>
@@ -426,9 +427,9 @@ const QuizHome = () => {
                               e.stopPropagation();
                               handleQuizClick(quiz);
                             }}
-                            className="px-4 py-2 rounded-xl text-xs font-black bg-teal-400 text-white border-b-4 border-teal-600 hover:bg-teal-500 shadow-[0_2px_0_0_#0f766e] active:border-b-0 active:translate-y-1 transition-all whitespace-nowrap"
+                            className="px-4 py-1.5 rounded-lg text-[11px] font-black bg-teal-500 text-white hover:bg-teal-600 active:translate-y-0.5 transition-all shadow-sm whitespace-nowrap"
                           >
-                            Mulai
+                            Mulai →
                           </button>
                         )}
                       </div>

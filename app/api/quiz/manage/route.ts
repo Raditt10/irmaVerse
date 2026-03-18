@@ -24,6 +24,7 @@ export async function GET(req: NextRequest) {
         : {
             OR: [
               { creatorId: session.user.id },
+              { materialId: null },
               { material: { instructorId: session.user.id } },
             ],
           };
@@ -39,6 +40,15 @@ export async function GET(req: NextRequest) {
       orderBy: { createdAt: "desc" },
     });
 
+    // Fetch isActive status separately via raw query to bypass out-of-sync Prisma Client
+    let statusMap = new Map();
+    if (quizzes.length > 0) {
+      const activeStatus: any[] = await prisma.$queryRawUnsafe(
+        `SELECT id, isActive FROM material_quizzes WHERE id IN (${quizzes.map(q => `'${q.id}'`).join(',')})`
+      );
+      statusMap = new Map(activeStatus.map(s => [s.id, s.isActive === 1 || s.isActive === true]));
+    }
+
     const result = quizzes.map((q) => ({
       id: q.id,
       title: q.title,
@@ -50,6 +60,7 @@ export async function GET(req: NextRequest) {
       attemptCount: q.quiz_attempts.length,
       createdAt: q.createdAt,
       isStandalone: q.materialId === null,
+      isActive: statusMap.get(q.id) ?? true,
     }));
 
     return NextResponse.json(result);

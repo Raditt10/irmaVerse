@@ -36,6 +36,7 @@ import {
   CheckSquare,
   Square,
   Layers,
+  MapPin,
 } from "lucide-react";
 import Loading from "@/components/ui/Loading";
 
@@ -958,14 +959,20 @@ const CreateMaterial = () => {
                     <label className="block text-xs lg:text-sm font-bold text-slate-600 ml-1">
                       Lokasi / Platform <span className="text-red-500">*</span>
                     </label>
-                    <Input
-                      type="text"
-                      name="location"
-                      value={formData.location}
-                      onChange={handleInputChange}
-                      placeholder="Contoh: Masjid Irma atau Link Zoom..."
-                      required
-                    />
+                    <div className="relative group">
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <MapPin className="h-5 w-5 text-emerald-500 group-hover:text-emerald-600 transition-colors" />
+                      </div>
+                      <Input
+                        type="text"
+                        name="location"
+                        value={formData.location}
+                        onChange={handleInputChange}
+                        placeholder="Contoh: Masjid Irma atau Link Zoom..."
+                        required
+                        className="pl-12 lg:pl-12 border-2 border-slate-200 focus:border-emerald-400 focus:ring-emerald-100"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>

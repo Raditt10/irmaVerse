@@ -35,6 +35,7 @@ interface ManagedQuiz {
   attemptCount: number;
   createdAt: string;
   isStandalone: boolean;
+  isActive: boolean;
 }
 
 type FilterType = "all" | "standalone" | "material";
@@ -318,9 +319,18 @@ export default function QuizManagePage() {
                           </h3>
                           <span
                             className={`shrink-0 text-[10px] font-black px-2 py-0.5 rounded-full border ${
-                              quiz.isStandalone
+                              quiz.isActive
                                 ? "bg-emerald-50 text-emerald-600 border-emerald-200"
-                                : "bg-emerald-50 text-emerald-600 border-emerald-200"
+                                : "bg-slate-50 text-slate-400 border-slate-200"
+                            }`}
+                          >
+                            {quiz.isActive ? "Aktif" : "Nonaktif"}
+                          </span>
+                          <span
+                            className={`shrink-0 text-[10px] font-black px-2 py-0.5 rounded-full border ${
+                              quiz.isStandalone
+                                ? "bg-blue-50 text-blue-600 border-blue-200"
+                                : "bg-purple-50 text-purple-600 border-purple-200"
                             }`}
                           >
                             {quiz.isStandalone ? "Mandiri" : "Materi"}

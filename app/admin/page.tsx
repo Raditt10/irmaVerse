@@ -68,19 +68,7 @@ export default function AdminDashboard() {
   };
 
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-[#FDFBF7]">
-        <DashboardHeader />
-        <div className="flex">
-          <Sidebar />
-          <div className="flex-1 flex items-center justify-center h-[calc(100vh-80px)]">
-            <Loading text="Memuat dashboard administrator..." size="lg" />
-          </div>
-        </div>
-      </div>
-    );
-  }
+  if (loading) return <Loading fullScreen text="Membuat dashboard..." />;
 
   return (
     <div className="min-h-screen bg-[#FDFBF7]">

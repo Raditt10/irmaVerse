@@ -26,11 +26,11 @@ export async function GET(req: NextRequest) {
       where.status = statusFilter;
     }
 
-    const [notifications, unreadCount] = await Promise.all([
+    const [rawNotifications, unreadCount] = await Promise.all([
       prisma.notifications.findMany({
         where,
         include: {
-          sender: {
+          users_notifications_senderIdTousers: {
             select: {
               id: true,
               name: true,
@@ -49,6 +49,13 @@ export async function GET(req: NextRequest) {
         },
       }),
     ]);
+
+    // Map Prisma relation name to frontend-friendly 'sender'
+    const notifications = rawNotifications.map((n: any) => ({
+      ...n,
+      sender: n.users_notifications_senderIdTousers || null,
+      users_notifications_senderIdTousers: undefined,
+    }));
 
     return NextResponse.json({
       success: true,
@@ -204,11 +211,11 @@ export async function PATCH(req: NextRequest) {
       }
     }
 
-    const updated = await prisma.notifications.update({
+    const rawUpdated = await prisma.notifications.update({
       where: { id },
       data: { status },
       include: {
-        sender: {
+        users_notifications_senderIdTousers: {
           select: {
             id: true,
             name: true,
@@ -218,6 +225,13 @@ export async function PATCH(req: NextRequest) {
         },
       },
     });
+
+    // Map Prisma relation name to frontend-friendly 'sender'
+    const updated = {
+      ...rawUpdated,
+      sender: (rawUpdated as any).users_notifications_senderIdTousers || null,
+      users_notifications_senderIdTousers: undefined,
+    };
 
     return NextResponse.json({ success: true, notification: updated });
   } catch (error) {

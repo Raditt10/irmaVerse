@@ -65,6 +65,10 @@ export async function GET(
       })),
     }));
 
+    // Fetch isActive separately via raw query to bypass out-of-sync Prisma Client
+    const rawStatus: any[] = await prisma.$queryRaw`SELECT isActive FROM material_quizzes WHERE id = ${quizId}`;
+    const quizStatus = rawStatus.length > 0 ? (rawStatus[0].isActive === 1 || rawStatus[0].isActive === true) : true;
+
     return NextResponse.json({
       id: quiz.id,
       materialId: quiz.materialId || null,
@@ -76,6 +80,7 @@ export async function GET(
       questionCount: quiz.quiz_questions.length,
       questions,
       attempts: quiz.quiz_attempts,
+      isActive: quizStatus,
       createdAt: quiz.createdAt,
     });
   } catch (error) {
@@ -183,6 +188,44 @@ export async function DELETE(
     console.error("Delete quiz error:", error);
     return NextResponse.json(
       { error: "Gagal menghapus quiz" },
+      { status: 500 },
+    );
+  }
+}
+// PATCH - toggle quiz activation status
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: Promise<{ quizId: string }> },
+) {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const user = await prisma.users.findUnique({
+      where: { id: session.user.id },
+    });
+    if (!user || (user.role !== "instruktur" && user.role !== "admin" && user.role !== "super_admin")) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    const { quizId } = await params;
+    const body = await req.json();
+    const { isActive } = body;
+
+    if (typeof isActive !== "boolean") {
+      return NextResponse.json({ error: "Invalid status" }, { status: 400 });
+    }
+
+    // Use raw query to bypass out-of-sync Prisma Client
+    await prisma.$executeRaw`UPDATE material_quizzes SET isActive = ${isActive ? 1 : 0} WHERE id = ${quizId}`;
+
+    return NextResponse.json({ success: true, isActive });
+  } catch (error: any) {
+    console.error("Toggle quiz status error:", error);
+    return NextResponse.json(
+      { error: "Gagal memperbarui status quiz", details: error.message },
       { status: 500 },
     );
   }

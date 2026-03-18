@@ -457,7 +457,7 @@ const Dashboard = () => {
   return (
     // Background hangat (Warm White)
     <div className="min-h-screen bg-[#FDFBF7]">
-      {isLoading && <Loading fullScreen text="Memuat halaman..." size="lg" />}
+      {isLoading && <Loading fullScreen text="Membuat dashboard..." size="lg" />}
       <DashboardHeader />
       <div className="flex">
         <Sidebar />

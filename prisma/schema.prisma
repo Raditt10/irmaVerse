@@ -242,6 +242,7 @@ model material_quizzes {
   creatorId      String?
   title          String
   description    String?          @db.Text
+  isActive       Boolean          @default(true)
   createdAt      DateTime         @default(now())
   updatedAt      DateTime
   users          users?           @relation(fields: [creatorId], references: [id])

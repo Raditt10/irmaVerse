@@ -66,7 +66,7 @@ export default function InstructorAcademy() {
 
 
 
-  if (loading) return <AcademyLoading />;
+  if (loading) return <AcademyLoading fullScreen text="Membuat dashboard..." />;
 
   return (
     <div className="min-h-screen bg-[#FDFBF7]">
