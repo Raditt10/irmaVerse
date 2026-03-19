@@ -469,7 +469,7 @@ export default function StandaloneQuizSessionPage() {
                             
                             // Style dinamis layaknya Duolingo
                             let optClass = "bg-slate-50 border-slate-200 text-slate-600 border-2";
-                            let icon = null;
+                            let icon: React.ReactNode = null;
 
                             if (isCorrectOpt && isSelected) {
                               optClass = "bg-emerald-50 border-emerald-500 text-emerald-700 shadow-sm";

@@ -44,7 +44,7 @@ const categoryStyles: Record<NewsItem["category"], string> = {
 
 // Algoritma Levenshtein untuk mengecek kemiripan string (Typos)
 const getLevenshteinDistance = (a: string, b: string) => {
-  const matrix = [];
+  const matrix: number[][] = [];
   for (let i = 0; i <= b.length; i++) {
     matrix[i] = [i];
   }

@@ -87,7 +87,7 @@ export default function DatePicker({
 
   const daysInMonth = getDaysInMonth(currentMonth);
   const firstDay = getFirstDayOfMonth(currentMonth);
-  const days = [];
+  const days: Array<number | null> = [];
 
   for (let i = 0; i < firstDay; i++) {
     days.push(null);

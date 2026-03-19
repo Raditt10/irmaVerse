@@ -500,7 +500,7 @@ export default function QuizSessionPage() {
                           const isCorrectOpt = opt.isCorrect;
                           let optClass =
                             "bg-slate-50 border-slate-200 text-slate-600";
-                          let icon = null;
+                          let icon: React.ReactNode = null;
 
                           if (isCorrectOpt && isSelected) {
                             optClass =

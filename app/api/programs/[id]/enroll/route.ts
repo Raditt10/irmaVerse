@@ -41,6 +41,7 @@ export async function POST(
 
     await prisma.program_enrollments.create({
       data: {
+        id: crypto.randomUUID(),
         programId: id,
         userId: session.user.id,
       },

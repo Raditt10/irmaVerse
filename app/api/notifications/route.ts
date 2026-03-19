@@ -154,7 +154,7 @@ export async function PATCH(req: NextRequest) {
       if (status === "accepted" || status === "rejected") {
         // Update the materialinvite
         // Strategy: Try by token first, if fails, try by materialId + userId (fallback)
-        let invite = null;
+        let invite: any = null;
         if (inviteToken) {
           invite = await prisma.materialinvite.findUnique({
             where: { token: inviteToken },

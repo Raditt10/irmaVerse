@@ -23,6 +23,7 @@ export async function recordActivity({
   try {
     return await prisma.activity_logs.create({
       data: {
+        id: crypto.randomUUID(),
         userId,
         type,
         title,

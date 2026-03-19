@@ -69,10 +69,14 @@ export async function GET(req: NextRequest) {
       if (p.totalKajian > 0) {
         // Complete jika sudah ada semua materi sebanyak totalKajian DAN user menghadiri semuanya
         const hasAllMaterials = filteredMaterials.length >= p.totalKajian;
-        const attendedAll = filteredMaterials.length > 0 && filteredMaterials.every((m) => attendedMaterialIds.has(m.id));
+        const attendedAll =
+          filteredMaterials.length > 0 &&
+          filteredMaterials.every((m: any) => attendedMaterialIds.has(m.id));
         isCompleted = hasAllMaterials && attendedAll;
       } else {
-        isCompleted = filteredMaterials.length > 0 && filteredMaterials.every((m) => attendedMaterialIds.has(m.id));
+        isCompleted =
+          filteredMaterials.length > 0 &&
+          filteredMaterials.every((m: any) => attendedMaterialIds.has(m.id));
       }
 
       return {

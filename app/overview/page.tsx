@@ -230,7 +230,7 @@ const Dashboard = () => {
             : [];
 
           // Get rekapan for the attended materials. We only need max 2 real rekapans.
-          const enrichedFinished = [];
+          const enrichedFinished: any[] = [];
           for (const att of finished) {
             if (enrichedFinished.length >= 2) break;
             try {

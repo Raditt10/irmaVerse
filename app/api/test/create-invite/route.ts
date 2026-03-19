@@ -55,11 +55,13 @@ export async function POST(req: NextRequest) {
 
     const invite = await prisma.materialinvite.create({
       data: {
+        id: crypto.randomUUID(),
         materialId,
         instructorId: finalInstructorId,
         userId,
         token,
         status: "pending",
+        updatedAt: new Date(),
       },
       include: {
         material: true,
