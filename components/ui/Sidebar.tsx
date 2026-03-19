@@ -277,42 +277,42 @@ const Sidebar = () => {
           },
         ]
       : isAdmin
-      ? [
-          {
-            icon: Contact,
-            label: "Instruktur",
-            path: "/instructors",
-          },
-          {
-            icon: Users,
-            label: "Daftar Anggota",
-            path: "/members",
-          },
-        ]
-      : [
-          {
-            icon: Contact,
-            label: "Instruktur",
-            id: "menu-instruktur",
-            submenu: [
-              {
-                icon: Contact,
-                label: "Daftar Instruktur",
-                path: "/instructors",
-              },
-              {
-                icon: MessageCircle,
-                label: "Chat Instruktur",
-                path: "/instructors/chat",
-              },
-            ],
-          },
-          {
-            icon: Users,
-            label: "Daftar Anggota",
-            path: "/members",
-          },
-        ]),
+        ? [
+            {
+              icon: Contact,
+              label: "Instruktur",
+              path: "/instructors",
+            },
+            {
+              icon: Users,
+              label: "Daftar Anggota",
+              path: "/members",
+            },
+          ]
+        : [
+            {
+              icon: Contact,
+              label: "Instruktur",
+              id: "menu-instruktur",
+              submenu: [
+                {
+                  icon: Contact,
+                  label: "Daftar Instruktur",
+                  path: "/instructors",
+                },
+                {
+                  icon: MessageCircle,
+                  label: "Chat Instruktur",
+                  path: "/instructors/chat",
+                },
+              ],
+            },
+            {
+              icon: Users,
+              label: "Daftar Anggota",
+              path: "/members",
+            },
+          ]),
     // ----------------------------------------------------
     {
       icon: Newspaper,
@@ -347,8 +347,40 @@ const Sidebar = () => {
                 : []),
             ],
           },
+          {
+            icon: MessageSquare,
+            label: "Feedback Pengguna",
+            path: "/admin/feedback",
+          },
+          {
+            icon: Settings,
+            label: "Pengaturan Sistem",
+            id: "menu-settings",
+            submenu: [
+              {
+                icon: GraduationCap,
+                label: "Kelola Kelas",
+                path: "/admin/settings/class-grades",
+              },
+              {
+                icon: BookOpen,
+                label: "Kelola Kelas Kajian",
+                path: "/admin/settings/material-class-assignment",
+              },
+              {
+                icon: GraduationCap,
+                label: "Kelola Kelas Program",
+                path: "/admin/settings/program-class-assignment",
+              },
+            ],
+          },
         ]
       : []),
+    {
+      icon: MessageSquare,
+      label: "Feedback & Saran",
+      path: "/feedback",
+    },
   ];
 
   return (

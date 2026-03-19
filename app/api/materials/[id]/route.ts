@@ -81,7 +81,10 @@ export async function GET(
       );
     }
 
-    const isPrivileged = User.role === "instruktur" || User.role === "admin" || User.role === "super_admin";
+    const isPrivileged =
+      User.role === "instruktur" ||
+      User.role === "admin" ||
+      User.role === "super_admin";
 
     // Access control: non-privileged users must be enrolled (courseenrollment)
     // OR have an accepted invitation to view this material.
@@ -209,7 +212,11 @@ export async function DELETE(
     }
 
     // Authorization removal as per previous request
-    if (session.user.role !== "admin" && session.user.role !== "super_admin" && material.instructorId !== session.user.id) {
+    if (
+      session.user.role !== "admin" &&
+      session.user.role !== "super_admin" &&
+      material.instructorId !== session.user.id
+    ) {
       return NextResponse.json(
         { error: "Hanya pembuat materi atau admin yang bisa menghapus kajian" },
         { status: 403 },
@@ -271,6 +278,7 @@ export async function PUT(
       time,
       category,
       grade,
+      classGradeId,
       thumbnailUrl,
       invites,
       programId,
@@ -294,7 +302,11 @@ export async function PUT(
     }
 
     // Authorization removal
-    if (session.user.role !== "admin" && session.user.role !== "super_admin" && material.instructorId !== session.user.id) {
+    if (
+      session.user.role !== "admin" &&
+      session.user.role !== "super_admin" &&
+      material.instructorId !== session.user.id
+    ) {
       return NextResponse.json(
         { error: "Hanya pembuat materi atau admin yang bisa mengedit kajian" },
         { status: 403 },
@@ -326,6 +338,7 @@ export async function PUT(
         date: new Date(date),
         startedAt: time || null,
         grade: mappedGrade as any,
+        classGradeId: classGradeId || null,
         thumbnailUrl: thumbnailUrl || null,
         programId: programId || null,
         kajianOrder: kajianOrder ? parseInt(kajianOrder, 10) : null,
@@ -351,7 +364,7 @@ export async function PUT(
       });
 
       if (usersToInvite.length > 0) {
-        const userIds = usersToInvite.map(u => u.id);
+        const userIds = usersToInvite.map((u) => u.id);
 
         // 2. Check which users already have invitations
         const existingInvites = await (prisma as any).materialinvite.findMany({
@@ -363,7 +376,9 @@ export async function PUT(
         });
 
         const alreadyInvitedIds = existingInvites.map((inv: any) => inv.userId);
-        const newUserIds = userIds.filter(uid => !alreadyInvitedIds.includes(uid));
+        const newUserIds = userIds.filter(
+          (uid) => !alreadyInvitedIds.includes(uid),
+        );
 
         if (newUserIds.length > 0) {
           const generateToken = () =>

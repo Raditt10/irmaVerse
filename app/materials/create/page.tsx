@@ -47,16 +47,27 @@ const CreateMaterial = () => {
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [availablePrograms, setAvailablePrograms] = useState<
-    { id: string; title: string; totalKajian?: number; usedKajianOrders?: number[] }[]
+    {
+      id: string;
+      title: string;
+      totalKajian?: number;
+      usedKajianOrders?: number[];
+    }[]
   >([]);
   const [fetchingPrograms, setFetchingPrograms] = useState(false);
   const [availableInstructors, setAvailableInstructors] = useState<
     { id: string; name: string; avatar?: string; email: string }[]
   >([]);
   const [fetchingInstructors, setFetchingInstructors] = useState(false);
+  const [availableClasses, setAvailableClasses] = useState<
+    { id: string; label: string }[]
+  >([]);
+  const [fetchingClasses, setFetchingClasses] = useState(false);
   const [isProgramDropdownOpen, setIsProgramDropdownOpen] = useState(false);
   const [isKajianDropdownOpen, setIsKajianDropdownOpen] = useState(false);
-  const [isInstructorDropdownOpen, setIsInstructorDropdownOpen] = useState(false);
+  const [isInstructorDropdownOpen, setIsInstructorDropdownOpen] =
+    useState(false);
+  const [isClassDropdownOpen, setIsClassDropdownOpen] = useState(false);
   const { data: session } = useSession();
 
   const userRole = session?.user?.role?.toLowerCase();
@@ -76,6 +87,7 @@ const CreateMaterial = () => {
     time: "",
     category: "Program Wajib",
     grade: "Semua",
+    classGradeId: "",
     thumbnailUrl: "",
     programId: queryProgramId,
     kajianOrder: "",
@@ -141,6 +153,7 @@ const CreateMaterial = () => {
     fetchUsers();
     fetchPrograms();
     fetchInstructors();
+    fetchClasses();
   }, [isAdmin]);
 
   const fetchPrograms = async () => {
@@ -159,17 +172,31 @@ const CreateMaterial = () => {
       }
       const data = await res.json();
       setAvailablePrograms(
-        data.map((p: any) => ({ 
-          id: p.id, 
-          title: p.title, 
-          totalKajian: p.totalKajian, 
-          usedKajianOrders: p.usedKajianOrders 
+        data.map((p: any) => ({
+          id: p.id,
+          title: p.title,
+          totalKajian: p.totalKajian,
+          usedKajianOrders: p.usedKajianOrders,
         })),
       );
     } catch (err) {
       console.error("Error fetching programs:", err);
     } finally {
       setFetchingPrograms(false);
+    }
+  };
+
+  const fetchClasses = async () => {
+    try {
+      setFetchingClasses(true);
+      const res = await fetch("/api/admin/settings/class-grades");
+      if (!res.ok) throw new Error("Gagal mengambil data kelas");
+      const data = await res.json();
+      setAvailableClasses(data.grades || data);
+    } catch (err) {
+      console.error("Error fetching classes:", err);
+    } finally {
+      setFetchingClasses(false);
     }
   };
 
@@ -191,7 +218,9 @@ const CreateMaterial = () => {
   };
 
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >,
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -241,21 +270,22 @@ const CreateMaterial = () => {
   };
 
   const handleToggleUserSelect = (userEmail: string) => {
-    setInvitedUsers(prev => 
+    setInvitedUsers((prev) =>
       prev.includes(userEmail)
-        ? prev.filter(e => e !== userEmail)
-        : [...prev, userEmail]
+        ? prev.filter((e) => e !== userEmail)
+        : [...prev, userEmail],
     );
   };
 
-  const isAllUsersSelected = userOptions.length > 0 && 
-    userOptions.every(u => invitedUsers.includes(u.email));
+  const isAllUsersSelected =
+    userOptions.length > 0 &&
+    userOptions.every((u) => invitedUsers.includes(u.email));
 
   const handleSelectAllUsers = () => {
     if (isAllUsersSelected) {
       setInvitedUsers([]);
     } else {
-      setInvitedUsers(userOptions.map(u => u.email));
+      setInvitedUsers(userOptions.map((u) => u.email));
     }
   };
 
@@ -302,10 +332,7 @@ const CreateMaterial = () => {
       return;
     }
 
-    if (
-      formData.materialType === "editor" &&
-      !formData.rekapanContent.trim()
-    ) {
+    if (formData.materialType === "editor" && !formData.rekapanContent.trim()) {
       showToast("Materi kajian tidak boleh kosong", "error");
       return;
     }
@@ -332,10 +359,11 @@ const CreateMaterial = () => {
       const result = await res.json();
 
       // Save rekapan if content is provided OR it's a link material
-      const finalRekapanContent = formData.materialType === "link"
-        ? formData.materialLink.trim()
-        : formData.rekapanContent.trim();
-        
+      const finalRekapanContent =
+        formData.materialType === "link"
+          ? formData.materialLink.trim()
+          : formData.rekapanContent.trim();
+
       if (finalRekapanContent && result.id) {
         try {
           await fetch(`/api/materials/${result.id}/rekapan`, {
@@ -388,7 +416,10 @@ const CreateMaterial = () => {
                   Isi detail kajian kamu dan undang peserta kajian.
                 </p>
                 <div className="mt-4 inline-flex items-center gap-2 text-sm font-bold bg-rose-50 text-rose-600 px-3 py-2 rounded-xl border-2 border-rose-100">
-                  <span className="text-rose-500 font-black text-lg leading-none mt-1">*</span> Wajib diisi
+                  <span className="text-rose-500 font-black text-lg leading-none mt-1">
+                    *
+                  </span>{" "}
+                  Wajib diisi
                 </div>
               </div>
             </div>
@@ -411,13 +442,16 @@ const CreateMaterial = () => {
                       <div className="space-y-2">
                         <label className="text-xs lg:text-sm font-bold text-slate-600 ml-1 flex items-center gap-2">
                           <Plus className="h-4 w-4 text-emerald-500" />{" "}
-                          Instruktur Kajian <span className="text-red-500">*</span>
+                          Instruktur Kajian{" "}
+                          <span className="text-red-500">*</span>
                         </label>
                         <div className="relative">
                           <button
                             type="button"
                             onClick={() =>
-                              setIsInstructorDropdownOpen(!isInstructorDropdownOpen)
+                              setIsInstructorDropdownOpen(
+                                !isInstructorDropdownOpen,
+                              )
                             }
                             className={`
                               w-full flex items-center justify-between rounded-2xl border-2 bg-white px-5 py-3.5 
@@ -433,19 +467,33 @@ const CreateMaterial = () => {
                               {formData.instructorId ? (
                                 <>
                                   <div className="w-6 h-6 rounded-full bg-slate-100 overflow-hidden border border-slate-200">
-                                    <img 
-                                      src={availableInstructors.find(i => i.id === formData.instructorId)?.avatar || "/img/icons/default-avatar.png"} 
+                                    <img
+                                      src={
+                                        availableInstructors.find(
+                                          (i) => i.id === formData.instructorId,
+                                        )?.avatar ||
+                                        "/img/icons/default-avatar.png"
+                                      }
                                       alt="avatar"
                                       className="w-full h-full object-cover"
-                                      onError={(e) => (e.currentTarget.src = "/img/icons/default-avatar.png")}
+                                      onError={(e) =>
+                                        (e.currentTarget.src =
+                                          "/img/icons/default-avatar.png")
+                                      }
                                     />
                                   </div>
                                   <span className="truncate">
-                                    {availableInstructors.find(i => i.id === formData.instructorId)?.name}
+                                    {
+                                      availableInstructors.find(
+                                        (i) => i.id === formData.instructorId,
+                                      )?.name
+                                    }
                                   </span>
                                 </>
                               ) : (
-                                <span className="text-slate-400 italic font-medium">— Pilih Instruktur —</span>
+                                <span className="text-slate-400 italic font-medium">
+                                  — Pilih Instruktur —
+                                </span>
                               )}
                             </div>
                             <ChevronDown
@@ -483,16 +531,26 @@ const CreateMaterial = () => {
                                       }`}
                                     >
                                       <div className="w-8 h-8 rounded-full bg-slate-100 overflow-hidden border border-slate-200">
-                                        <img 
-                                          src={inst.avatar || "/img/icons/default-avatar.png"} 
+                                        <img
+                                          src={
+                                            inst.avatar ||
+                                            "/img/icons/default-avatar.png"
+                                          }
                                           alt={inst.name}
                                           className="w-full h-full object-cover"
-                                          onError={(e) => (e.currentTarget.src = "/img/icons/default-avatar.png")}
+                                          onError={(e) =>
+                                            (e.currentTarget.src =
+                                              "/img/icons/default-avatar.png")
+                                          }
                                         />
                                       </div>
                                       <div className="flex flex-col items-start leading-tight truncate">
-                                        <span className="truncate">{inst.name}</span>
-                                        <span className="text-[10px] text-slate-400 font-medium truncate">{inst.email}</span>
+                                        <span className="truncate">
+                                          {inst.name}
+                                        </span>
+                                        <span className="text-[10px] text-slate-400 font-medium truncate">
+                                          {inst.email}
+                                        </span>
                                       </div>
                                     </button>
                                   ))
@@ -731,64 +789,100 @@ const CreateMaterial = () => {
                           </p>
 
                           {/* KAJIAN KE- Berapa (Muncul jika ada program yang dipilih) */}
-                          {availablePrograms.find((p) => p.id === formData.programId) && (
+                          {availablePrograms.find(
+                            (p) => p.id === formData.programId,
+                          ) && (
                             <div className="mt-4 pt-4 border-t-2 border-slate-100 animate-in fade-in slide-in-from-top-2 duration-300">
                               <label className="block text-xs lg:text-sm font-bold text-slate-600 mb-2 ml-1 flex items-center gap-2">
-                                <BookOpen className="h-4 w-4 text-emerald-500" /> Kajian Ke-
-                                <span className="text-red-500 ml-1 font-bold">*</span>
+                                <BookOpen className="h-4 w-4 text-emerald-500" />{" "}
+                                Kajian Ke-
+                                <span className="text-red-500 ml-1 font-bold">
+                                  *
+                                </span>
                               </label>
                               <div className="relative">
                                 {/* Trigger Button */}
                                 <button
                                   type="button"
-                                  onClick={() => setIsKajianDropdownOpen(!isKajianDropdownOpen)}
+                                  onClick={() =>
+                                    setIsKajianDropdownOpen(
+                                      !isKajianDropdownOpen,
+                                    )
+                                  }
                                   className={`w-full flex items-center justify-between rounded-2xl border-2 bg-white px-5 py-3.5 font-bold transition-all shadow-[0_4px_0_0_#e2e8f0] hover:border-teal-300 focus:outline-none focus:ring-4 focus:ring-teal-100 ${
-                                    isKajianDropdownOpen ? "border-teal-400" : "border-slate-200"
+                                    isKajianDropdownOpen
+                                      ? "border-teal-400"
+                                      : "border-slate-200"
                                   } ${formData.kajianOrder ? "text-slate-700" : "text-slate-400"}`}
                                 >
                                   <span>
-                                    {formData.kajianOrder 
-                                      ? `Kajian Ke-${formData.kajianOrder}` 
+                                    {formData.kajianOrder
+                                      ? `Kajian Ke-${formData.kajianOrder}`
                                       : "-- Pilih Urutan Kajian --"}
                                   </span>
-                                  <ChevronDown 
-                                    className={`h-5 w-5 text-slate-400 transition-transform ${isKajianDropdownOpen ? "rotate-180 text-teal-500" : ""}`} 
+                                  <ChevronDown
+                                    className={`h-5 w-5 text-slate-400 transition-transform ${isKajianDropdownOpen ? "rotate-180 text-teal-500" : ""}`}
                                   />
                                 </button>
 
                                 {/* Dropdown Menu */}
                                 {isKajianDropdownOpen && (
                                   <>
-                                    <div 
-                                      className="fixed inset-0 z-40" 
-                                      onClick={() => setIsKajianDropdownOpen(false)} 
+                                    <div
+                                      className="fixed inset-0 z-40"
+                                      onClick={() =>
+                                        setIsKajianDropdownOpen(false)
+                                      }
                                     />
                                     <div className="absolute z-50 w-full mt-2 bg-white border-2 border-slate-100 rounded-2xl shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 p-1.5">
                                       {(() => {
-                                        const selectedProgram = availablePrograms.find((p) => p.id === formData.programId);
-                                        if (!selectedProgram || !selectedProgram.totalKajian) return (
-                                          <div className="p-4 text-center text-sm font-bold text-slate-400 bg-slate-50 rounded-xl border border-dashed border-slate-200">
-                                            Data program tidak ditemukan
-                                          </div>
-                                        );
-                                        
+                                        const selectedProgram =
+                                          availablePrograms.find(
+                                            (p) => p.id === formData.programId,
+                                          );
+                                        if (
+                                          !selectedProgram ||
+                                          !selectedProgram.totalKajian
+                                        )
+                                          return (
+                                            <div className="p-4 text-center text-sm font-bold text-slate-400 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                                              Data program tidak ditemukan
+                                            </div>
+                                          );
+
                                         return (
                                           <div className="max-h-60 overflow-y-auto pr-1 space-y-1 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
-                                            {Array.from({ length: selectedProgram.totalKajian }, (_, i) => i + 1).map((num) => {
-                                              const isUsed = selectedProgram.usedKajianOrders?.includes(num);
+                                            {Array.from(
+                                              {
+                                                length:
+                                                  selectedProgram.totalKajian,
+                                              },
+                                              (_, i) => i + 1,
+                                            ).map((num) => {
+                                              const isUsed =
+                                                selectedProgram.usedKajianOrders?.includes(
+                                                  num,
+                                                );
                                               return (
                                                 <button
                                                   key={num}
                                                   type="button"
                                                   disabled={isUsed}
                                                   onClick={() => {
-                                                    setFormData({ ...formData, kajianOrder: num.toString() });
-                                                    setIsKajianDropdownOpen(false);
+                                                    setFormData({
+                                                      ...formData,
+                                                      kajianOrder:
+                                                        num.toString(),
+                                                    });
+                                                    setIsKajianDropdownOpen(
+                                                      false,
+                                                    );
                                                   }}
                                                   className={`w-full text-left px-4 py-3.5 text-sm font-bold rounded-xl transition-all flex items-center justify-between border ${
-                                                    isUsed 
-                                                      ? "bg-slate-50 border-slate-100 text-slate-400 cursor-not-allowed" 
-                                                      : formData.kajianOrder === num.toString()
+                                                    isUsed
+                                                      ? "bg-slate-50 border-slate-100 text-slate-400 cursor-not-allowed"
+                                                      : formData.kajianOrder ===
+                                                          num.toString()
                                                         ? "bg-teal-50 border-teal-200 text-teal-700 shadow-sm"
                                                         : "bg-white border-transparent text-slate-600 hover:bg-slate-50 hover:border-slate-200 hover:text-teal-600"
                                                   }`}
@@ -799,9 +893,11 @@ const CreateMaterial = () => {
                                                       Sudah Terisi
                                                     </span>
                                                   )}
-                                                  {formData.kajianOrder === num.toString() && !isUsed && (
-                                                    <div className="h-2 w-2 bg-teal-500 rounded-full shadow-[0_0_8px_rgba(20,184,166,0.6)]" />
-                                                  )}
+                                                  {formData.kajianOrder ===
+                                                    num.toString() &&
+                                                    !isUsed && (
+                                                      <div className="h-2 w-2 bg-teal-500 rounded-full shadow-[0_0_8px_rgba(20,184,166,0.6)]" />
+                                                    )}
                                                 </button>
                                               );
                                             })}
@@ -815,6 +911,105 @@ const CreateMaterial = () => {
                             </div>
                           )}
                         </div>
+                      </div>
+
+                      {/* --- CLASS/GRADE SELECTOR --- */}
+                      <div className="mt-4">
+                        <label className="block text-xs lg:text-sm font-bold text-slate-600 mb-2 ml-1 flex items-center gap-2">
+                          <GraduationCap className="h-4 w-4 text-purple-500" />{" "}
+                          Kelas / Tingkat
+                          <span className="text-[11px] text-slate-400 font-medium ml-1">
+                            (Opsional)
+                          </span>
+                        </label>
+                        <div className="relative">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setIsClassDropdownOpen(!isClassDropdownOpen)
+                            }
+                            className={`
+                              w-full flex items-center justify-between rounded-2xl border-2 bg-white px-5 py-3.5 
+                              font-bold text-slate-700 transition-all cursor-pointer
+                              ${
+                                isClassDropdownOpen
+                                  ? "border-purple-400 shadow-[0_4px_0_0_#d946ef]"
+                                  : "border-slate-200 shadow-[0_4px_0_0_#e2e8f0] hover:border-purple-300"
+                              }
+                            `}
+                          >
+                            <span className="truncate">
+                              {availableClasses.find(
+                                (c) => c.id === formData.classGradeId,
+                              )?.label || "--- Tidak ada kelas ---"}
+                            </span>
+                            <ChevronDown
+                              className={`h-5 w-5 text-slate-400 transition-transform ${isClassDropdownOpen ? "rotate-180" : ""}`}
+                            />
+                          </button>
+
+                          {isClassDropdownOpen && (
+                            <div className="absolute top-full left-0 right-0 mt-2 z-20 bg-white border-2 border-slate-200 rounded-2xl shadow-[0_8px_0_0_#cbd5e1] overflow-hidden max-h-60 overflow-y-auto">
+                              <div className="p-1.5 space-y-1">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setFormData({
+                                      ...formData,
+                                      classGradeId: "",
+                                    });
+                                    setIsClassDropdownOpen(false);
+                                  }}
+                                  className={`w-full text-left px-4 py-3 rounded-xl text-sm font-bold transition-all ${
+                                    !formData.classGradeId
+                                      ? "bg-purple-50 text-purple-700"
+                                      : "text-slate-400 hover:bg-slate-50"
+                                  }`}
+                                >
+                                  — Tanpa Kelas —
+                                </button>
+                                {fetchingClasses ? (
+                                  <div className="px-4 py-3 text-sm text-slate-500 font-bold italic">
+                                    Memuat kelas...
+                                  </div>
+                                ) : availableClasses.length === 0 ? (
+                                  <div className="px-4 py-3 text-sm text-slate-500 font-bold italic">
+                                    Tidak ada kelas tersedia
+                                  </div>
+                                ) : (
+                                  availableClasses.map((classGrade) => (
+                                    <button
+                                      key={classGrade.id}
+                                      type="button"
+                                      onClick={() => {
+                                        setFormData({
+                                          ...formData,
+                                          classGradeId: classGrade.id,
+                                        });
+                                        setIsClassDropdownOpen(false);
+                                      }}
+                                      className={`
+                                        w-full text-left px-4 py-3 rounded-xl text-sm font-bold transition-all
+                                        ${
+                                          formData.classGradeId ===
+                                          classGrade.id
+                                            ? "bg-purple-50 text-purple-600"
+                                            : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                                        }
+                                      `}
+                                    >
+                                      {classGrade.label}
+                                    </button>
+                                  ))
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                        <p className="text-[10px] font-bold text-slate-400 mt-2 ml-1 italic">
+                          * Pilih kelas jika materi ini terbatas untuk tingkat
+                          kelas tertentu
+                        </p>
                       </div>
 
                       {/* --- REKAPAN / RINGKASAN MATERI SECTION --- */}
@@ -878,7 +1073,8 @@ const CreateMaterial = () => {
                               className="text-sm border-2 focus:ring-emerald-200"
                             />
                             <p className="text-[10px] font-bold text-slate-400 mt-2 ml-1 italic">
-                              * Rekapan berisi ringkasan kajian agar peserta bisa membaca ulang kapan pun.
+                              * Rekapan berisi ringkasan kajian agar peserta
+                              bisa membaca ulang kapan pun.
                             </p>
                           </div>
                         ) : (
@@ -922,7 +1118,12 @@ const CreateMaterial = () => {
                           Tingkat Kelas / Sasaran
                         </h3>
                         <CategoryFilter
-                          categories={["Semua", "Kelas 10", "Kelas 11", "Kelas 12"]}
+                          categories={[
+                            "Semua",
+                            "Kelas 10",
+                            "Kelas 11",
+                            "Kelas 12",
+                          ]}
                           subCategories={[]}
                           selectedCategory={formData.grade}
                           selectedSubCategory=""
@@ -1037,11 +1238,14 @@ const CreateMaterial = () => {
                 <div className="bg-white p-5 lg:p-6 rounded-3xl lg:rounded-[2.5rem] border-2 border-slate-200 shadow-[0_4px_0_0_#cbd5e1] lg:shadow-[0_8px_0_0_#cbd5e1]">
                   <div className="flex items-center justify-between mb-4">
                     <h2 className="text-lg font-black text-slate-700 flex items-center gap-2">
-                      <Users className="h-5 w-5 text-amber-500" /> Undang Peserta{" "}
-                      <span className="text-red-400 text-sm hidden sm:inline">(wajib min. 1)</span>
+                      <Users className="h-5 w-5 text-amber-500" /> Undang
+                      Peserta{" "}
+                      <span className="text-red-400 text-sm hidden sm:inline">
+                        (wajib min. 1)
+                      </span>
                     </h2>
-                    <button 
-                      type="button" 
+                    <button
+                      type="button"
                       onClick={() => setShowAllUsersModal(true)}
                       className="text-amber-600 hover:text-amber-700 text-sm font-bold flex items-center gap-1"
                     >
@@ -1209,7 +1413,7 @@ const CreateMaterial = () => {
                 <X className="w-5 h-5 md:w-6 md:h-6" />
               </button>
             </div>
-            
+
             {/* Modal Body */}
             <div className="flex-1 overflow-y-auto bg-slate-50 p-4 md:p-6 space-y-4 relative">
               <div className="sticky top-0 z-10 bg-slate-50 pb-2">
@@ -1223,7 +1427,9 @@ const CreateMaterial = () => {
 
               <div className="flex items-center justify-between pt-2 pb-1">
                 <p className="text-xs font-bold text-slate-500">
-                  Terpilih: <span className="text-amber-600">{invitedUsers.length}</span> dari {userOptions.length}
+                  Terpilih:{" "}
+                  <span className="text-amber-600">{invitedUsers.length}</span>{" "}
+                  dari {userOptions.length}
                 </p>
                 <button
                   type="button"
@@ -1231,62 +1437,85 @@ const CreateMaterial = () => {
                   className="flex items-center gap-1.5 text-xs font-black text-amber-600 hover:text-amber-700 transition-colors"
                 >
                   {isAllUsersSelected ? (
-                    <><CheckSquare className="w-4 h-4" /> Batal Pilih Semua</>
+                    <>
+                      <CheckSquare className="w-4 h-4" /> Batal Pilih Semua
+                    </>
                   ) : (
-                    <><Square className="w-4 h-4" /> Pilih Semua</>
+                    <>
+                      <Square className="w-4 h-4" /> Pilih Semua
+                    </>
                   )}
                 </button>
               </div>
 
               <div className="space-y-2">
                 {userOptions
-                  .filter(u => 
-                     u.label.toLowerCase().includes(searchModalInput.toLowerCase()) || 
-                     u.email.toLowerCase().includes(searchModalInput.toLowerCase())
+                  .filter(
+                    (u) =>
+                      u.label
+                        .toLowerCase()
+                        .includes(searchModalInput.toLowerCase()) ||
+                      u.email
+                        .toLowerCase()
+                        .includes(searchModalInput.toLowerCase()),
                   )
                   .map((user) => {
                     const isSelected = invitedUsers.includes(user.email);
                     return (
-                      <div 
+                      <div
                         key={user.email}
                         onClick={() => handleToggleUserSelect(user.email)}
                         className={`flex items-center gap-3 p-3 rounded-2xl border-2 transition-all cursor-pointer ${
-                          isSelected 
-                            ? "bg-amber-50 border-amber-300 shadow-[0_2px_0_0_#fcd34d]" 
+                          isSelected
+                            ? "bg-amber-50 border-amber-300 shadow-[0_2px_0_0_#fcd34d]"
                             : "bg-white border-slate-100 hover:border-slate-300 hover:shadow-sm"
                         }`}
                       >
-                         <div className={`w-5 h-5 rounded flex items-center justify-center shrink-0 border ${isSelected ? "bg-amber-500 border-amber-600" : "bg-white border-slate-300"}`}>
-                           {isSelected && <CheckSquare className="w-4 h-4 text-white" />}
-                         </div>
-                         
-                         {user.avatar ? (
-                            <img src={user.avatar} alt={user.label} className="w-8 h-8 rounded-full object-cover border border-slate-200" />
-                         ) : (
-                            <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center text-amber-600 font-bold text-xs uppercase">
-                              {user.label.charAt(0)}
-                            </div>
-                         )}
-                         
-                         <div className="flex-1 min-w-0">
-                           <p className={`font-bold text-sm truncate ${isSelected ? "text-amber-900" : "text-slate-700"}`}>{user.label}</p>
-                           <p className="text-xs text-slate-400 truncate">{user.email}</p>
-                         </div>
+                        <div
+                          className={`w-5 h-5 rounded flex items-center justify-center shrink-0 border ${isSelected ? "bg-amber-500 border-amber-600" : "bg-white border-slate-300"}`}
+                        >
+                          {isSelected && (
+                            <CheckSquare className="w-4 h-4 text-white" />
+                          )}
+                        </div>
+
+                        {user.avatar ? (
+                          <img
+                            src={user.avatar}
+                            alt={user.label}
+                            className="w-8 h-8 rounded-full object-cover border border-slate-200"
+                          />
+                        ) : (
+                          <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center text-amber-600 font-bold text-xs uppercase">
+                            {user.label.charAt(0)}
+                          </div>
+                        )}
+
+                        <div className="flex-1 min-w-0">
+                          <p
+                            className={`font-bold text-sm truncate ${isSelected ? "text-amber-900" : "text-slate-700"}`}
+                          >
+                            {user.label}
+                          </p>
+                          <p className="text-xs text-slate-400 truncate">
+                            {user.email}
+                          </p>
+                        </div>
                       </div>
                     );
-                })}
+                  })}
               </div>
             </div>
 
             {/* Modal Footer */}
             <div className="p-4 md:p-6 border-t border-slate-100 bg-white shrink-0">
-               <button 
-                 type="button" 
-                 onClick={() => setShowAllUsersModal(false)}
-                 className="w-full py-3 md:py-4 bg-amber-500 text-white font-black rounded-2xl border-b-4 border-amber-600 hover:bg-amber-400 active:border-b-0 active:translate-y-1 transition-all"
-               >
-                 Selesai ({invitedUsers.length} Peserta)
-               </button>
+              <button
+                type="button"
+                onClick={() => setShowAllUsersModal(false)}
+                className="w-full py-3 md:py-4 bg-amber-500 text-white font-black rounded-2xl border-b-4 border-amber-600 hover:bg-amber-400 active:border-b-0 active:translate-y-1 transition-all"
+              >
+                Selesai ({invitedUsers.length} Peserta)
+              </button>
             </div>
           </div>
         </div>

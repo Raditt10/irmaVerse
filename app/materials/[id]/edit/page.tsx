@@ -65,6 +65,7 @@ const EditMaterial = () => {
     time: "",
     category: "Program Wajib",
     grade: "Semua",
+    classGradeId: "",
     thumbnailUrl: "",
     programId: "",
     kajianOrder: "",
@@ -77,11 +78,21 @@ const EditMaterial = () => {
   const [instructorName, setInstructorName] = useState<string | null>(null);
 
   const [availablePrograms, setAvailablePrograms] = useState<
-    { id: string; title: string; totalKajian?: number; usedKajianOrders?: number[] }[]
+    {
+      id: string;
+      title: string;
+      totalKajian?: number;
+      usedKajianOrders?: number[];
+    }[]
   >([]);
   const [fetchingPrograms, setFetchingPrograms] = useState(false);
+  const [availableClasses, setAvailableClasses] = useState<
+    { id: string; label: string }[]
+  >([]);
+  const [fetchingClasses, setFetchingClasses] = useState(false);
   const [isProgramDropdownOpen, setIsProgramDropdownOpen] = useState(false);
   const [isKajianDropdownOpen, setIsKajianDropdownOpen] = useState(false);
+  const [isClassDropdownOpen, setIsClassDropdownOpen] = useState(false);
 
   // --- Invite State ---
   const [inviteInput, setInviteInput] = useState("");
@@ -127,6 +138,7 @@ const EditMaterial = () => {
     }
     fetchUsers();
     fetchPrograms();
+    fetchClasses();
   }, []);
 
   const fetchPrograms = async () => {
@@ -147,6 +159,20 @@ const EditMaterial = () => {
       console.error("Error fetching programs:", err);
     } finally {
       setFetchingPrograms(false);
+    }
+  };
+
+  const fetchClasses = async () => {
+    try {
+      setFetchingClasses(true);
+      const res = await fetch("/api/admin/settings/class-grades");
+      if (!res.ok) throw new Error("Gagal mengambil data kelas");
+      const data = await res.json();
+      setAvailableClasses(data.grades || data);
+    } catch (err) {
+      console.error("Error fetching classes:", err);
+    } finally {
+      setFetchingClasses(false);
     }
   };
 
@@ -179,6 +205,7 @@ const EditMaterial = () => {
             time: material.startedAt || material.time || "",
             category: material.category || "Program Wajib",
             grade: material.grade || "Semua",
+            classGradeId: material.classGradeId || "",
             thumbnailUrl: material.thumbnailUrl || "",
             programId: material.programId || material.parentId || "",
             kajianOrder: material.kajianOrder?.toString() || "",
@@ -219,7 +246,9 @@ const EditMaterial = () => {
 
   // --- Handlers ---
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >,
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -350,10 +379,11 @@ const EditMaterial = () => {
       const updatedMaterial = await res.json();
 
       // Sync to separate rekapan table for long-term consistency
-      const finalRekapanContent = formData.materialType === "link"
-        ? formData.materialLink.trim()
-        : formData.materialContent.trim();
-        
+      const finalRekapanContent =
+        formData.materialType === "link"
+          ? formData.materialLink.trim()
+          : formData.materialContent.trim();
+
       if (finalRekapanContent && materialId) {
         try {
           await fetch(`/api/materials/${materialId}/rekapan`, {
@@ -406,7 +436,9 @@ const EditMaterial = () => {
               </button>
               <div>
                 <h1 className="text-2xl lg:text-4xl font-black text-slate-800 tracking-tight mb-2 flex items-center gap-2 lg:gap-3">
-                  {(session?.user?.role === "admin" || session?.user?.role === "super_admin") && instructorName
+                  {(session?.user?.role === "admin" ||
+                    session?.user?.role === "super_admin") &&
+                  instructorName
                     ? `Edit jadwal kajian ${instructorName}`
                     : "Edit Jadwal Kajianmu"}
                 </h1>
@@ -414,7 +446,10 @@ const EditMaterial = () => {
                   Update detail kajian yang sudah dibuat.
                 </p>
                 <div className="mt-4 inline-flex items-center gap-2 text-sm font-bold bg-rose-50 text-rose-600 px-3 py-2 rounded-xl border-2 border-rose-100">
-                  <span className="text-rose-500 font-black text-lg leading-none mt-1">*</span> Wajib diisi
+                  <span className="text-rose-500 font-black text-lg leading-none mt-1">
+                    *
+                  </span>{" "}
+                  Wajib diisi
                 </div>
               </div>
             </div>
@@ -449,7 +484,8 @@ const EditMaterial = () => {
 
                     <div className="space-y-2">
                       <label className="block text-xs lg:text-sm font-bold text-slate-600 ml-1">
-                        Deskripsi Singkat <span className="text-red-500">*</span>
+                        Deskripsi Singkat{" "}
+                        <span className="text-red-500">*</span>
                       </label>
                       <Textarea
                         name="description"
@@ -656,65 +692,100 @@ const EditMaterial = () => {
                         </p>
 
                         {/* KAJIAN KE- Berapa (Muncul jika ada program yang dipilih) */}
-                        {availablePrograms.find((p) => p.id === formData.programId) && (
+                        {availablePrograms.find(
+                          (p) => p.id === formData.programId,
+                        ) && (
                           <div className="mt-4 pt-4 border-t-2 border-slate-100 animate-in fade-in slide-in-from-top-2 duration-300">
                             <label className="block text-xs lg:text-sm font-bold text-slate-600 mb-2 ml-1 flex items-center gap-2">
-                              <BookOpen className="h-4 w-4 text-emerald-500" /> Kajian Ke-
-                              <span className="text-red-500 ml-1 font-bold">*</span>
+                              <BookOpen className="h-4 w-4 text-emerald-500" />{" "}
+                              Kajian Ke-
+                              <span className="text-red-500 ml-1 font-bold">
+                                *
+                              </span>
                             </label>
                             <div className="relative">
                               {/* Trigger Button */}
                               <button
                                 type="button"
-                                onClick={() => setIsKajianDropdownOpen(!isKajianDropdownOpen)}
+                                onClick={() =>
+                                  setIsKajianDropdownOpen(!isKajianDropdownOpen)
+                                }
                                 className={`w-full flex items-center justify-between rounded-2xl border-2 bg-white px-5 py-3.5 font-bold transition-all shadow-[0_4px_0_0_#e2e8f0] hover:border-teal-300 focus:outline-none focus:ring-4 focus:ring-teal-100 ${
-                                  isKajianDropdownOpen ? "border-teal-400" : "border-slate-200"
+                                  isKajianDropdownOpen
+                                    ? "border-teal-400"
+                                    : "border-slate-200"
                                 } ${formData.kajianOrder ? "text-slate-700" : "text-slate-400"}`}
                               >
                                 <span>
-                                  {formData.kajianOrder 
-                                    ? `Kajian Ke-${formData.kajianOrder}` 
+                                  {formData.kajianOrder
+                                    ? `Kajian Ke-${formData.kajianOrder}`
                                     : "-- Pilih Urutan Kajian --"}
                                 </span>
-                                <ChevronDown 
-                                  className={`h-5 w-5 text-slate-400 transition-transform ${isKajianDropdownOpen ? "rotate-180 text-teal-500" : ""}`} 
+                                <ChevronDown
+                                  className={`h-5 w-5 text-slate-400 transition-transform ${isKajianDropdownOpen ? "rotate-180 text-teal-500" : ""}`}
                                 />
                               </button>
 
                               {/* Dropdown Menu */}
                               {isKajianDropdownOpen && (
                                 <>
-                                  <div 
-                                    className="fixed inset-0 z-40" 
-                                    onClick={() => setIsKajianDropdownOpen(false)} 
+                                  <div
+                                    className="fixed inset-0 z-40"
+                                    onClick={() =>
+                                      setIsKajianDropdownOpen(false)
+                                    }
                                   />
                                   <div className="absolute z-50 w-full mt-2 bg-white border-2 border-slate-100 rounded-2xl shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 p-1.5">
                                     {(() => {
-                                      const selectedProgram = availablePrograms.find((p) => p.id === formData.programId);
-                                      if (!selectedProgram || !selectedProgram.totalKajian) return (
-                                        <div className="p-4 text-center text-sm font-bold text-slate-400 bg-slate-50 rounded-xl border border-dashed border-slate-200">
-                                          Data program tidak ditemukan
-                                        </div>
-                                      );
-                                      
+                                      const selectedProgram =
+                                        availablePrograms.find(
+                                          (p) => p.id === formData.programId,
+                                        );
+                                      if (
+                                        !selectedProgram ||
+                                        !selectedProgram.totalKajian
+                                      )
+                                        return (
+                                          <div className="p-4 text-center text-sm font-bold text-slate-400 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                                            Data program tidak ditemukan
+                                          </div>
+                                        );
+
                                       return (
                                         <div className="max-h-60 overflow-y-auto pr-1 space-y-1 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
-                                          {Array.from({ length: selectedProgram.totalKajian }, (_, i) => i + 1).map((num) => {
+                                          {Array.from(
+                                            {
+                                              length:
+                                                selectedProgram.totalKajian,
+                                            },
+                                            (_, i) => i + 1,
+                                          ).map((num) => {
                                             // Izinkan nomor yang sudah dipilih oleh materi INI SENDIRI, disable nomor lain yang terpakai
-                                            const isUsedByOther = selectedProgram.usedKajianOrders?.includes(num) && num.toString() !== formData.kajianOrder;
+                                            const isUsedByOther =
+                                              selectedProgram.usedKajianOrders?.includes(
+                                                num,
+                                              ) &&
+                                              num.toString() !==
+                                                formData.kajianOrder;
                                             return (
                                               <button
                                                 key={num}
                                                 type="button"
                                                 disabled={isUsedByOther}
                                                 onClick={() => {
-                                                  setFormData({ ...formData, kajianOrder: num.toString() });
-                                                  setIsKajianDropdownOpen(false);
+                                                  setFormData({
+                                                    ...formData,
+                                                    kajianOrder: num.toString(),
+                                                  });
+                                                  setIsKajianDropdownOpen(
+                                                    false,
+                                                  );
                                                 }}
                                                 className={`w-full text-left px-4 py-3.5 text-sm font-bold rounded-xl transition-all flex items-center justify-between border ${
-                                                  isUsedByOther 
-                                                    ? "bg-slate-50 border-slate-100 text-slate-400 cursor-not-allowed" 
-                                                    : formData.kajianOrder === num.toString()
+                                                  isUsedByOther
+                                                    ? "bg-slate-50 border-slate-100 text-slate-400 cursor-not-allowed"
+                                                    : formData.kajianOrder ===
+                                                        num.toString()
                                                       ? "bg-teal-50 border-teal-200 text-teal-700 shadow-sm"
                                                       : "bg-white border-transparent text-slate-600 hover:bg-slate-50 hover:border-slate-200 hover:text-teal-600"
                                                 }`}
@@ -725,9 +796,11 @@ const EditMaterial = () => {
                                                     Sudah Terisi
                                                   </span>
                                                 )}
-                                                {formData.kajianOrder === num.toString() && !isUsedByOther && (
-                                                  <div className="h-2 w-2 bg-teal-500 rounded-full shadow-[0_0_8px_rgba(20,184,166,0.6)]" />
-                                                )}
+                                                {formData.kajianOrder ===
+                                                  num.toString() &&
+                                                  !isUsedByOther && (
+                                                    <div className="h-2 w-2 bg-teal-500 rounded-full shadow-[0_0_8px_rgba(20,184,166,0.6)]" />
+                                                  )}
                                               </button>
                                             );
                                           })}
@@ -743,114 +816,213 @@ const EditMaterial = () => {
                       </div>
                     </div>
 
-                      <div className="pt-6 border-t-2 border-slate-100 mt-6">
-                        <div className="flex items-center justify-between mb-4">
-                          <h3 className="text-sm font-bold text-slate-700 ml-1 flex items-center gap-2">
-                            <FileText className="h-4 w-4 text-emerald-500" />{" "}
-                            Rekapan Materi
-                          <span className="text-[11px] text-slate-400 font-medium ml-1">
-                            (Disarankan)
+                    {/* --- CLASS/GRADE SELECTOR --- */}
+                    <div className="mt-4">
+                      <label className="block text-xs lg:text-sm font-bold text-slate-600 mb-2 ml-1 flex items-center gap-2">
+                        <GraduationCap className="h-4 w-4 text-purple-500" />{" "}
+                        Kelas / Tingkat
+                        <span className="text-[11px] text-slate-400 font-medium ml-1">
+                          (Opsional)
+                        </span>
+                      </label>
+                      <div className="relative">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setIsClassDropdownOpen(!isClassDropdownOpen)
+                          }
+                          className={`
+                            w-full flex items-center justify-between rounded-2xl border-2 bg-white px-5 py-3.5 
+                            font-bold text-slate-700 transition-all cursor-pointer
+                            ${
+                              isClassDropdownOpen
+                                ? "border-purple-400 shadow-[0_4px_0_0_#d946ef]"
+                                : "border-slate-200 shadow-[0_4px_0_0_#e2e8f0] hover:border-purple-300"
+                            }
+                          `}
+                        >
+                          <span className="truncate">
+                            {availableClasses.find(
+                              (c) => c.id === formData.classGradeId,
+                            )?.label || "--- Tidak ada kelas ---"}
                           </span>
-                          </h3>
+                          <ChevronDown
+                            className={`h-5 w-5 text-slate-400 transition-transform ${isClassDropdownOpen ? "rotate-180" : ""}`}
+                          />
+                        </button>
 
-                          {/* Toggle Switch */}
-                          <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200">
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setFormData((prev) => ({
-                                  ...prev,
-                                  materialType: "editor",
-                                }))
-                              }
-                              className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all flex items-center gap-1.5 ${
-                                formData.materialType === "editor"
-                                  ? "bg-white text-emerald-600 shadow-sm border border-slate-100"
-                                  : "text-slate-400 hover:text-slate-600"
-                              }`}
-                            >
-                              <FileEdit className="h-3.5 w-3.5" />
-                              Teks
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setFormData((prev) => ({
-                                  ...prev,
-                                  materialType: "link",
-                                }))
-                              }
-                              className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all flex items-center gap-1.5 ${
-                                formData.materialType === "link"
-                                  ? "bg-white text-indigo-600 shadow-sm border border-slate-100"
-                                  : "text-slate-400 hover:text-slate-600"
-                              }`}
-                            >
-                              <Link className="h-3.5 w-3.5" />
-                              Drive Link
-                            </button>
-                          </div>
-                        </div>
-
-                        {formData.materialType === "editor" ? (
-                          <div className="animate-in fade-in slide-in-from-top-1 duration-200">
-                            <Textarea
-                              name="materialContent"
-                              required={formData.materialType === "editor"}
-                              rows={8}
-                              value={formData.materialContent}
-                              onChange={(e) =>
-                                setFormData({
-                                  ...formData,
-                                  materialContent: e.target.value,
-                                })
-                              }
-                              placeholder="Tulis ringkasan materi kajian di sini. Rekapan ini akan bisa dibaca oleh peserta kapan saja sebagai bahan belajar mandiri..."
-                              className="text-sm border-2 focus:ring-emerald-200"
-                            />
-                            <p className="text-[10px] font-bold text-slate-400 mt-2 ml-1 italic">
-                              * Rekapan berisi ringkasan kajian agar peserta bisa membaca ulang kapan pun.
-                            </p>
-                          </div>
-                        ) : (
-                          <div className="animate-in fade-in slide-in-from-top-1 duration-200 space-y-3">
-                            <div className="relative group">
-                              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                <Globe className="h-5 w-5 text-emerald-500" />
-                              </div>
-                              <Input
-                                type="url"
-                                name="materialLink"
-                                required={formData.materialType === "link"}
-                                value={formData.materialLink}
-                                onChange={(e) =>
+                        {isClassDropdownOpen && (
+                          <div className="absolute top-full left-0 right-0 mt-2 z-20 bg-white border-2 border-slate-200 rounded-2xl shadow-[0_8px_0_0_#cbd5e1] overflow-hidden max-h-60 overflow-y-auto">
+                            <div className="p-1.5 space-y-1">
+                              <button
+                                type="button"
+                                onClick={() => {
                                   setFormData({
                                     ...formData,
-                                    materialLink: e.target.value,
-                                  })
-                                }
-                                placeholder="https://drive.google.com/file/d/..."
-                                className="pl-12 lg:pl-12 border-2 border-teal-100 focus:border-teal-400 focus:ring-teal-100"
-                              />
-                            </div>
-                            <div className="p-4 rounded-2xl bg-teal-50 border border-teal-100 flex gap-3">
-                              <div className="h-10 w-10 rounded-xl bg-white flex items-center justify-center shrink-0 border border-teal-200">
-                                <Link className="h-5 w-5 text-emerald-500" />
-                              </div>
-                              <div>
-                                <p className="text-xs font-black text-teal-900 mb-0.5">
-                                  Sertakan Link Materi
-                                </p>
-                                <p className="text-[10px] font-bold text-teal-700/80 leading-relaxed">
-                                  Pastikan akses file Google Drive Anda sudah
-                                  diatur ke "Siapa saja yang memiliki link" agar
-                                  peserta dapat membacanya.
-                                </p>
-                              </div>
+                                    classGradeId: "",
+                                  });
+                                  setIsClassDropdownOpen(false);
+                                }}
+                                className={`w-full text-left px-4 py-3 rounded-xl text-sm font-bold transition-all ${
+                                  !formData.classGradeId
+                                    ? "bg-purple-50 text-purple-700"
+                                    : "text-slate-400 hover:bg-slate-50"
+                                }`}
+                              >
+                                — Tanpa Kelas —
+                              </button>
+                              {fetchingClasses ? (
+                                <div className="px-4 py-3 text-sm text-slate-500 font-bold italic">
+                                  Memuat kelas...
+                                </div>
+                              ) : availableClasses.length === 0 ? (
+                                <div className="px-4 py-3 text-sm text-slate-500 font-bold italic">
+                                  Tidak ada kelas tersedia
+                                </div>
+                              ) : (
+                                availableClasses.map((classGrade) => (
+                                  <button
+                                    key={classGrade.id}
+                                    type="button"
+                                    onClick={() => {
+                                      setFormData({
+                                        ...formData,
+                                        classGradeId: classGrade.id,
+                                      });
+                                      setIsClassDropdownOpen(false);
+                                    }}
+                                    className={`
+                                      w-full text-left px-4 py-3 rounded-xl text-sm font-bold transition-all
+                                      ${
+                                        formData.classGradeId === classGrade.id
+                                          ? "bg-purple-50 text-purple-600"
+                                          : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                                      }
+                                    `}
+                                  >
+                                    {classGrade.label}
+                                  </button>
+                                ))
+                              )}
                             </div>
                           </div>
                         )}
                       </div>
+                      <p className="text-[10px] font-bold text-slate-400 mt-2 ml-1 italic">
+                        * Pilih kelas jika materi ini terbatas untuk tingkat
+                        kelas tertentu
+                      </p>
+                    </div>
+
+                    <div className="pt-6 border-t-2 border-slate-100 mt-6">
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-sm font-bold text-slate-700 ml-1 flex items-center gap-2">
+                          <FileText className="h-4 w-4 text-emerald-500" />{" "}
+                          Rekapan Materi
+                          <span className="text-[11px] text-slate-400 font-medium ml-1">
+                            (Disarankan)
+                          </span>
+                        </h3>
+
+                        {/* Toggle Switch */}
+                        <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setFormData((prev) => ({
+                                ...prev,
+                                materialType: "editor",
+                              }))
+                            }
+                            className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all flex items-center gap-1.5 ${
+                              formData.materialType === "editor"
+                                ? "bg-white text-emerald-600 shadow-sm border border-slate-100"
+                                : "text-slate-400 hover:text-slate-600"
+                            }`}
+                          >
+                            <FileEdit className="h-3.5 w-3.5" />
+                            Teks
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setFormData((prev) => ({
+                                ...prev,
+                                materialType: "link",
+                              }))
+                            }
+                            className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all flex items-center gap-1.5 ${
+                              formData.materialType === "link"
+                                ? "bg-white text-indigo-600 shadow-sm border border-slate-100"
+                                : "text-slate-400 hover:text-slate-600"
+                            }`}
+                          >
+                            <Link className="h-3.5 w-3.5" />
+                            Drive Link
+                          </button>
+                        </div>
+                      </div>
+
+                      {formData.materialType === "editor" ? (
+                        <div className="animate-in fade-in slide-in-from-top-1 duration-200">
+                          <Textarea
+                            name="materialContent"
+                            required={formData.materialType === "editor"}
+                            rows={8}
+                            value={formData.materialContent}
+                            onChange={(e) =>
+                              setFormData({
+                                ...formData,
+                                materialContent: e.target.value,
+                              })
+                            }
+                            placeholder="Tulis ringkasan materi kajian di sini. Rekapan ini akan bisa dibaca oleh peserta kapan saja sebagai bahan belajar mandiri..."
+                            className="text-sm border-2 focus:ring-emerald-200"
+                          />
+                          <p className="text-[10px] font-bold text-slate-400 mt-2 ml-1 italic">
+                            * Rekapan berisi ringkasan kajian agar peserta bisa
+                            membaca ulang kapan pun.
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="animate-in fade-in slide-in-from-top-1 duration-200 space-y-3">
+                          <div className="relative group">
+                            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                              <Globe className="h-5 w-5 text-emerald-500" />
+                            </div>
+                            <Input
+                              type="url"
+                              name="materialLink"
+                              required={formData.materialType === "link"}
+                              value={formData.materialLink}
+                              onChange={(e) =>
+                                setFormData({
+                                  ...formData,
+                                  materialLink: e.target.value,
+                                })
+                              }
+                              placeholder="https://drive.google.com/file/d/..."
+                              className="pl-12 lg:pl-12 border-2 border-teal-100 focus:border-teal-400 focus:ring-teal-100"
+                            />
+                          </div>
+                          <div className="p-4 rounded-2xl bg-teal-50 border border-teal-100 flex gap-3">
+                            <div className="h-10 w-10 rounded-xl bg-white flex items-center justify-center shrink-0 border border-teal-200">
+                              <Link className="h-5 w-5 text-emerald-500" />
+                            </div>
+                            <div>
+                              <p className="text-xs font-black text-teal-900 mb-0.5">
+                                Sertakan Link Materi
+                              </p>
+                              <p className="text-[10px] font-bold text-teal-700/80 leading-relaxed">
+                                Pastikan akses file Google Drive Anda sudah
+                                diatur ke "Siapa saja yang memiliki link" agar
+                                peserta dapat membacanya.
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
 
                     {/* Tingkat / Kelas selector */}
                     <div className="mt-6 border-t-2 border-slate-100 pt-6">

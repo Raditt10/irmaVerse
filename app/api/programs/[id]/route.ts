@@ -53,8 +53,8 @@ export async function GET(
       );
     }
 
-    const instructorMaterials = program.material.filter(m => 
-      user.role === "instruktur" ? m.instructorId === user.id : true
+    const instructorMaterials = program.material.filter((m) =>
+      user.role === "instruktur" ? m.instructorId === user.id : true,
     );
     const materialIds = instructorMaterials.map((m) => m.id);
 
@@ -63,7 +63,9 @@ export async function GET(
       total: program.totalKajian > 0 ? program.totalKajian : materialIds.length,
       percentage: 0,
     };
-    const isEnrolled = program.program_enrollments.some((e) => e.userId === user.id);
+    const isEnrolled = program.program_enrollments.some(
+      (e) => e.userId === user.id,
+    );
 
     if (materialIds.length > 0) {
       const attendanceCount = await prisma.attendance.count({
@@ -76,10 +78,12 @@ export async function GET(
 
       userProgress = {
         completed: attendanceCount,
-        total: program.totalKajian > 0 ? program.totalKajian : materialIds.length,
-        percentage: program.totalKajian > 0 
-           ? Math.round((attendanceCount / program.totalKajian) * 100) 
-           : Math.round((attendanceCount / materialIds.length) * 100),
+        total:
+          program.totalKajian > 0 ? program.totalKajian : materialIds.length,
+        percentage:
+          program.totalKajian > 0
+            ? Math.round((attendanceCount / program.totalKajian) * 100)
+            : Math.round((attendanceCount / materialIds.length) * 100),
       };
     }
 
@@ -189,7 +193,11 @@ export async function PUT(
       );
     }
 
-    if (session.user.role !== "instruktur" && session.user.role !== "admin" && session.user.role !== "super_admin") {
+    if (
+      session.user.role !== "instruktur" &&
+      session.user.role !== "admin" &&
+      session.user.role !== "super_admin"
+    ) {
       return NextResponse.json(
         { error: "Hanya instruktur atau admin yang bisa mengubah program" },
         { status: 403 },
@@ -210,6 +218,7 @@ export async function PUT(
       description,
       grade,
       category,
+      classGradeId,
       thumbnailUrl,
       duration,
       syllabus,
@@ -251,6 +260,7 @@ export async function PUT(
         description: description || null,
         grade: (GRADE_MAP[grade] || "X") as any,
         category: (CATEGORY_MAP[category] || "Wajib") as any,
+        classGradeId: classGradeId || null,
         thumbnailUrl: thumbnailUrl || null,
         duration: duration || null,
         syllabus: Array.isArray(syllabus) ? syllabus : [],
@@ -268,7 +278,7 @@ export async function PUT(
         type: "admin_program_managed" as any,
         title: "Memperbarui Program Kurikulum",
         description: `Admin memperbarui program: ${updated.title}`,
-        metadata: { programId: updated.id }
+        metadata: { programId: updated.id },
       });
     }
 
@@ -294,7 +304,11 @@ export async function DELETE(
         { status: 401 },
       );
     }
-    if (session.user.role !== "instruktur" && session.user.role !== "admin" && session.user.role !== "super_admin") {
+    if (
+      session.user.role !== "instruktur" &&
+      session.user.role !== "admin" &&
+      session.user.role !== "super_admin"
+    ) {
       return NextResponse.json(
         { error: "Tidak memiliki akses" },
         { status: 403 },
@@ -325,7 +339,7 @@ export async function DELETE(
         type: "admin_program_managed" as any,
         title: "Menghapus Program Kurikulum",
         description: `Admin menghapus program: ${program.title}`,
-        metadata: { programId: id }
+        metadata: { programId: id },
       });
     }
 

@@ -16,7 +16,10 @@ export async function GET(req: NextRequest) {
 
     if (!session.user.email) {
       console.error("[GET /api/materials] Session user has no email");
-      return NextResponse.json({ error: "Invalid session: email missing" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Invalid session: email missing" },
+        { status: 400 },
+      );
     }
 
     // Check if user exists (using email for higher reliability with session)
@@ -25,8 +28,14 @@ export async function GET(req: NextRequest) {
     });
 
     if (!User) {
-      console.log("[GET /api/materials] User not found in database for email:", session.user.email);
-      return NextResponse.json({ error: "User profile not found" }, { status: 404 });
+      console.log(
+        "[GET /api/materials] User not found in database for email:",
+        session.user.email,
+      );
+      return NextResponse.json(
+        { error: "User profile not found" },
+        { status: 404 },
+      );
     }
 
     console.log("[GET /api/materials] User role:", User.role, "ID:", User.id);
@@ -43,7 +52,10 @@ export async function GET(req: NextRequest) {
 
     // If user is not instructor/admin, only show materials where they are enrolled or invited
     // Normalizing role check to include both 'instruktur' and 'instructor'
-    const isPrivileged = User.role === "instruktur" || User.role === "admin" || User.role === "super_admin";
+    const isPrivileged =
+      User.role === "instruktur" ||
+      User.role === "admin" ||
+      User.role === "super_admin";
 
     if (User.role === "instruktur") {
       where.OR = [
@@ -113,8 +125,18 @@ export async function GET(req: NextRequest) {
 
     // Get attendance and total invite counts manually
     const [attendanceCounts, inviteCounts] = await Promise.all([
-      Promise.all(materials.map(m => prisma.attendance.count({ where: { materialId: m.id } }))),
-      Promise.all(materials.map(m => prisma.materialinvite.count({ where: { materialId: m.id, status: { not: "rejected" } } })))
+      Promise.all(
+        materials.map((m) =>
+          prisma.attendance.count({ where: { materialId: m.id } }),
+        ),
+      ),
+      Promise.all(
+        materials.map((m) =>
+          prisma.materialinvite.count({
+            where: { materialId: m.id, status: { not: "rejected" } },
+          }),
+        ),
+      ),
     ]);
 
     // normalize ke format frontend
@@ -158,18 +180,26 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(result);
   } catch (error: any) {
     console.error("Error fetching materials:", error);
-    
+
     // Check for database connection errors specifically
-    if (error?.message?.includes("Can't connect to MySQL server") || error?.code === 'P2002' || error?.code === 'P2021') {
+    if (
+      error?.message?.includes("Can't connect to MySQL server") ||
+      error?.code === "P2002" ||
+      error?.code === "P2021"
+    ) {
       return NextResponse.json(
-        { error: "Database connection failed. Please ensure Laragon/MySQL is running." },
-        { status: 503 }
+        {
+          error:
+            "Database connection failed. Please ensure Laragon/MySQL is running.",
+        },
+        { status: 503 },
       );
     }
 
     return NextResponse.json(
       {
-        error: error instanceof Error ? error.message : "Failed to fetch materials",
+        error:
+          error instanceof Error ? error.message : "Failed to fetch materials",
       },
       { status: 500 },
     );
@@ -188,7 +218,11 @@ export async function POST(req: NextRequest) {
     }
 
     // Check if user is instructor or admin
-    if (session.user.role !== "instruktur" && session.user.role !== "admin" && session.user.role !== "super_admin") {
+    if (
+      session.user.role !== "instruktur" &&
+      session.user.role !== "admin" &&
+      session.user.role !== "super_admin"
+    ) {
       return NextResponse.json(
         { error: "Hanya instruktur atau admin yang bisa membuat kajian" },
         { status: 403 },
@@ -203,6 +237,7 @@ export async function POST(req: NextRequest) {
       time,
       category,
       grade,
+      classGradeId,
       thumbnailUrl,
       invites,
       programId,
@@ -215,8 +250,10 @@ export async function POST(req: NextRequest) {
     } = body;
 
     // Determine target instructor ID
-    const isAdmin = session.user.role === "admin" || session.user.role === "super_admin";
-    const targetInstructorId = (isAdmin && providedInstructorId) ? providedInstructorId : session.user.id;
+    const isAdmin =
+      session.user.role === "admin" || session.user.role === "super_admin";
+    const targetInstructorId =
+      isAdmin && providedInstructorId ? providedInstructorId : session.user.id;
 
     // Detailed validation
     if (!title || !title.toString().trim()) {
@@ -295,6 +332,7 @@ export async function POST(req: NextRequest) {
         startedAt: time || null,
         category: mappedCategory as any,
         grade: mappedGrade as any,
+        classGradeId: classGradeId || null,
         thumbnailUrl: thumbnailUrl || null,
         instructorId: targetInstructorId,
         programId: programId || null,

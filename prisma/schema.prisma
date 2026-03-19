@@ -202,6 +202,7 @@ model material {
   title                                          String
   description                                    String?
   grade                                          material_grade
+  classGradeId                                   String?
   thumbnailUrl                                   String?
   instructorId                                   String
   nextCourseId                                   String?
@@ -221,6 +222,7 @@ model material {
   isAttendanceOpen                               Boolean            @default(true)
   courseenrollment                               courseenrollment[]
   users                                          users              @relation(fields: [instructorId], references: [id], onDelete: Cascade, map: "Material_instructorId_fkey")
+  class_grade                                    class_grades?      @relation(fields: [classGradeId], references: [id], onDelete: SetNull)
   material_material_nextCourseIdTomaterial       material?          @relation("material_nextCourseIdTomaterial", fields: [nextCourseId], references: [id], map: "Material_nextCourseId_fkey")
   other_material_material_nextCourseIdTomaterial material[]         @relation("material_nextCourseIdTomaterial")
   material_material_parentIdTomaterial           material?          @relation("material_parentIdTomaterial", fields: [parentId], references: [id], map: "Material_parentId_fkey")
@@ -234,6 +236,7 @@ model material {
   @@index([nextCourseId], map: "Material_nextCourseId_fkey")
   @@index([parentId], map: "Material_parentId_fkey")
   @@index([programId], map: "Material_programId_fkey")
+  @@index([classGradeId])
 }
 
 model material_quizzes {
@@ -333,6 +336,7 @@ model programs {
   title               String
   description         String?               @db.Text
   grade               programs_grade
+  classGradeId        String?
   category            programs_category
   thumbnailUrl        String?
   instructorId        String
@@ -345,9 +349,11 @@ model programs {
   updatedAt           DateTime
   material            material[]
   program_enrollments program_enrollments[]
+  class_grade         class_grades?         @relation(fields: [classGradeId], references: [id], onDelete: SetNull)
   users               users                 @relation(fields: [instructorId], references: [id], onDelete: Cascade)
 
   @@index([instructorId])
+  @@index([classGradeId])
 }
 
 model quiz_attempts {
@@ -493,6 +499,8 @@ model users {
   saved_news                                                    saved_news[]
   schedules                                                     schedules[]
   user_badges                                                   user_badges[]
+  feature_requests_userIdTousers                                feature_requests[]     @relation("feature_requests_userIdTousers")
+  feature_requests_respondedByTousers                           feature_requests[]     @relation("feature_requests_respondedByTousers")
 }
 
 enum activity_logs_type {
@@ -599,4 +607,67 @@ enum users_role {
   admin
   super_admin
   instruktur
+}
+
+enum feedback_status {
+  open
+  in_progress
+  completed
+  closed
+}
+
+enum feedback_type {
+  feature_request
+  bug_report
+}
+
+enum feedback_priority {
+  low
+  medium
+  high
+  critical
+}
+
+model feature_requests {
+  id          String             @id
+  userId      String
+  type        feedback_type      @default(feature_request)
+  title       String
+  description String             @db.Text
+  status      feedback_status    @default(open)
+  priority    feedback_priority  @default(medium)
+  votes       Int                @default(0)
+  response    String?            @db.Text
+  respondedBy String?
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  users       users              @relation("feature_requests_userIdTousers", fields: [userId], references: [id], onDelete: Cascade)
+  admin       users?             @relation("feature_requests_respondedByTousers", fields: [respondedBy], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([status])
+  @@index([type])
+  @@index([createdAt])
+  @@index([respondedBy])
+}
+
+model system_settings {
+  id            String   @id
+  key           String   @unique
+  value         Json
+  description   String?  @db.Text
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model class_grades {
+  id        String     @id
+  code      String     @unique
+  label     String
+  isActive  Boolean    @default(true)
+  order     Int        @default(0)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  materials material[]
+  programs  programs[]
 }

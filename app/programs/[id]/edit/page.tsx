@@ -18,6 +18,7 @@ import {
   Target,
   Clock,
   Layers,
+  ChevronDown,
 } from "lucide-react";
 import CategoryFilter from "@/components/ui/CategoryFilter";
 import { Input } from "@/components/ui/InputText";
@@ -31,6 +32,11 @@ const EditProgram = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [availableClasses, setAvailableClasses] = useState<
+    { id: string; label: string }[]
+  >([]);
+  const [fetchingClasses, setFetchingClasses] = useState(false);
+  const [isClassDropdownOpen, setIsClassDropdownOpen] = useState(false);
 
   const [toast, setToast] = useState<{
     show: boolean;
@@ -44,6 +50,7 @@ const EditProgram = () => {
     duration: "",
     grade: "Semua",
     category: "Program Wajib",
+    classGradeId: "",
     thumbnailUrl: "",
     totalKajian: "",
     syllabus: [] as string[],
@@ -58,7 +65,22 @@ const EditProgram = () => {
 
   useEffect(() => {
     if (programId) fetchProgramData();
+    fetchClasses();
   }, [programId]);
+
+  const fetchClasses = async () => {
+    try {
+      setFetchingClasses(true);
+      const res = await fetch("/api/admin/settings/class-grades");
+      if (!res.ok) throw new Error("Gagal mengambil data kelas");
+      const data = await res.json();
+      setAvailableClasses(data.grades || data);
+    } catch (err) {
+      console.error("Error fetching classes:", err);
+    } finally {
+      setFetchingClasses(false);
+    }
+  };
 
   const fetchProgramData = async () => {
     try {
@@ -73,6 +95,7 @@ const EditProgram = () => {
         duration: program.duration || "",
         grade: program.level || "Semua",
         category: program.category || "Program Wajib",
+        classGradeId: program.classGradeId || "",
         thumbnailUrl: program.image || "",
         totalKajian: program.totalKajian ? program.totalKajian.toString() : "",
         syllabus: program.syllabus || [],
@@ -209,7 +232,10 @@ const EditProgram = () => {
                   Perbarui informasi dan detail program.
                 </p>
                 <div className="mt-4 inline-flex items-center gap-2 text-sm font-bold bg-rose-50 text-rose-600 px-3 py-2 rounded-xl border-2 border-rose-100">
-                  <span className="text-rose-500 font-black text-lg leading-none mt-1">*</span> Wajib diisi
+                  <span className="text-rose-500 font-black text-lg leading-none mt-1">
+                    *
+                  </span>{" "}
+                  Wajib diisi
                 </div>
               </div>
             </div>
@@ -241,7 +267,8 @@ const EditProgram = () => {
                     </div>
                     <div className="space-y-2">
                       <label className="block text-sm font-bold text-slate-600 ml-1">
-                        Deskripsi Program <span className="text-red-500">*</span>
+                        Deskripsi Program{" "}
+                        <span className="text-red-500">*</span>
                       </label>
                       <Textarea
                         name="description"
@@ -287,6 +314,109 @@ const EditProgram = () => {
                         </div>
                       </div>
                     </div>
+                  </div>
+                </div>
+
+                {/* CLASS/GRADE SELECTOR */}
+                <div className="bg-white p-6 lg:p-8 rounded-[2.5rem] border-2 border-slate-200 shadow-[0_8px_0_0_#cbd5e1]">
+                  <h2 className="text-xl font-black text-slate-700 mb-6 flex items-center gap-2">
+                    <GraduationCap className="h-6 w-6 text-purple-500" /> Kelas
+                    / Tingkat
+                  </h2>
+                  <div className="space-y-2">
+                    <label className="block text-sm font-bold text-slate-600 ml-1">
+                      Kelas / Tingkat{" "}
+                      <span className="text-[11px] text-slate-400 font-medium">
+                        (Opsional)
+                      </span>
+                    </label>
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setIsClassDropdownOpen(!isClassDropdownOpen)
+                        }
+                        className={`
+                          w-full flex items-center justify-between rounded-2xl border-2 bg-white px-5 py-3.5 
+                          font-bold text-slate-700 transition-all cursor-pointer
+                          ${
+                            isClassDropdownOpen
+                              ? "border-purple-400 shadow-[0_4px_0_0_#d946ef]"
+                              : "border-slate-200 shadow-[0_4px_0_0_#e2e8f0] hover:border-purple-300"
+                          }
+                        `}
+                      >
+                        <span className="truncate">
+                          {availableClasses.find(
+                            (c) => c.id === formData.classGradeId,
+                          )?.label || "--- Tidak ada kelas ---"}
+                        </span>
+                        <ChevronDown
+                          className={`h-5 w-5 text-slate-400 transition-transform ${isClassDropdownOpen ? "rotate-180" : ""}`}
+                        />
+                      </button>
+
+                      {isClassDropdownOpen && (
+                        <div className="absolute top-full left-0 right-0 mt-2 z-20 bg-white border-2 border-slate-200 rounded-2xl shadow-[0_8px_0_0_#cbd5e1] overflow-hidden max-h-60 overflow-y-auto">
+                          <div className="p-1.5 space-y-1">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setFormData({
+                                  ...formData,
+                                  classGradeId: "",
+                                });
+                                setIsClassDropdownOpen(false);
+                              }}
+                              className={`w-full text-left px-4 py-3 rounded-xl text-sm font-bold transition-all ${
+                                !formData.classGradeId
+                                  ? "bg-purple-50 text-purple-700"
+                                  : "text-slate-400 hover:bg-slate-50"
+                              }`}
+                            >
+                              — Tanpa Kelas —
+                            </button>
+                            {fetchingClasses ? (
+                              <div className="px-4 py-3 text-sm text-slate-500 font-bold italic">
+                                Memuat kelas...
+                              </div>
+                            ) : availableClasses.length === 0 ? (
+                              <div className="px-4 py-3 text-sm text-slate-500 font-bold italic">
+                                Tidak ada kelas tersedia
+                              </div>
+                            ) : (
+                              availableClasses.map((classGrade) => (
+                                <button
+                                  key={classGrade.id}
+                                  type="button"
+                                  onClick={() => {
+                                    setFormData({
+                                      ...formData,
+                                      classGradeId: classGrade.id,
+                                    });
+                                    setIsClassDropdownOpen(false);
+                                  }}
+                                  className={`
+                                    w-full text-left px-4 py-3 rounded-xl text-sm font-bold transition-all
+                                    ${
+                                      formData.classGradeId === classGrade.id
+                                        ? "bg-purple-50 text-purple-600"
+                                        : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                                    }
+                                  `}
+                                >
+                                  {classGrade.label}
+                                </button>
+                              ))
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    <p className="text-[10px] font-bold text-slate-400 mt-2 ml-1 italic">
+                      * Pilih kelas jika program ini terbatas untuk tingkat
+                      kelas tertentu
+                    </p>
                   </div>
                 </div>
 
@@ -412,14 +542,21 @@ const EditProgram = () => {
                 {/* Kategori Program */}
                 <div className="bg-white p-6 lg:p-8 rounded-[2.5rem] border-2 border-slate-200 shadow-[0_8px_0_0_#cbd5e1]">
                   <h3 className="text-sm font-bold text-slate-700 mb-4 ml-1 flex items-center gap-2">
-                    <Layers className="h-4 w-4 text-emerald-500" /> Kategori Program
+                    <Layers className="h-4 w-4 text-emerald-500" /> Kategori
+                    Program
                   </h3>
                   <CategoryFilter
-                    categories={["Program Wajib", "Program Ekstra", "Next Level"]}
+                    categories={[
+                      "Program Wajib",
+                      "Program Ekstra",
+                      "Next Level",
+                    ]}
                     subCategories={[]}
                     selectedCategory={formData.category}
                     selectedSubCategory=""
-                    onCategoryChange={(cat) => setFormData({ ...formData, category: cat })}
+                    onCategoryChange={(cat) =>
+                      setFormData({ ...formData, category: cat })
+                    }
                     onSubCategoryChange={() => {}}
                   />
                 </div>
