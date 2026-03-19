@@ -91,7 +91,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Attempt to find the invitation
-    let invite = null;
+    let invite: any = null;
     if (token) {
       invite = await prisma.materialinvite.findUnique({
         where: { token },
@@ -196,6 +196,7 @@ export async function POST(req: NextRequest) {
           },
           update: {},
           create: {
+            id: crypto.randomUUID(),
             programId: materialWithProgram.programId,
             userId: user.id,
           },

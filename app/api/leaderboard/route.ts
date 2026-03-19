@@ -1,9 +1,12 @@
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
-import { Role } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 
-const VALID_ROLES: string[] = Object.values(Role);
+const VALID_ROLES = ["user", "instruktur", "admin", "super_admin"] as const;
+type ValidRole = (typeof VALID_ROLES)[number];
+
+const isValidRole = (value: string): value is ValidRole =>
+  VALID_ROLES.includes(value as ValidRole);
 
 export async function GET(req: NextRequest) {
   try {
@@ -19,8 +22,8 @@ export async function GET(req: NextRequest) {
 
     // ── Build where clause ──────────────────────────────────────────────
     const where: Record<string, unknown> = {};
-    if (role !== "all" && VALID_ROLES.includes(role)) {
-      where.role = role as Role;
+    if (role !== "all" && isValidRole(role)) {
+      where.role = role;
     }
 
     // ── Period-based leaderboard ────────────────────────────────────────
@@ -38,9 +41,7 @@ export async function GET(req: NextRequest) {
         by: ["userId"],
         where: {
           createdAt: { gte: startDate },
-          ...(role !== "all" && VALID_ROLES.includes(role)
-            ? { user: { role: role as Role } }
-            : {}),
+          ...(role !== "all" && isValidRole(role) ? { user: { role } } : {}),
         },
         _sum: { xpEarned: true },
         orderBy: { _sum: { xpEarned: "desc" } },

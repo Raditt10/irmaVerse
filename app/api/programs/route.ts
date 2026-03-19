@@ -19,7 +19,10 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    const isPrivileged = user.role === "instruktur" || user.role === "admin" || user.role === "super_admin";
+    const isPrivileged =
+      user.role === "instruktur" ||
+      user.role === "admin" ||
+      user.role === "super_admin";
 
     const programs = await prisma.programs.findMany({
       include: {
@@ -59,20 +62,26 @@ export async function GET(req: NextRequest) {
 
     // Semua user bisa melihat semua program kurikulum
     const result = programs.map((p: any) => {
-      const isEnrolled = p.program_enrollments?.some((e: any) => e.userId === user.id);
-      
-      const filteredMaterials = (p.material || []).filter((m: any) => 
-        user.role === "instruktur" ? m.instructorId === user.id : true
+      const isEnrolled = p.program_enrollments?.some(
+        (e: any) => e.userId === user.id,
+      );
+
+      const filteredMaterials = (p.material || []).filter((m: any) =>
+        user.role === "instruktur" ? m.instructorId === user.id : true,
       );
 
       let isCompleted = false;
       if (p.totalKajian > 0) {
         // Complete jika sudah ada semua materi sebanyak totalKajian DAN user menghadiri semuanya
         const hasAllMaterials = filteredMaterials.length >= p.totalKajian;
-        const attendedAll = filteredMaterials.length > 0 && filteredMaterials.every((m) => attendedMaterialIds.has(m.id));
+        const attendedAll =
+          filteredMaterials.length > 0 &&
+          filteredMaterials.every((m: any) => attendedMaterialIds.has(m.id));
         isCompleted = hasAllMaterials && attendedAll;
       } else {
-        isCompleted = filteredMaterials.length > 0 && filteredMaterials.every((m) => attendedMaterialIds.has(m.id));
+        isCompleted =
+          filteredMaterials.length > 0 &&
+          filteredMaterials.every((m: any) => attendedMaterialIds.has(m.id));
       }
 
       return {
@@ -118,7 +127,11 @@ export async function POST(req: Request) {
       );
     }
 
-    if (session.user.role !== "instruktur" && session.user.role !== "admin" && session.user.role !== "super_admin") {
+    if (
+      session.user.role !== "instruktur" &&
+      session.user.role !== "admin" &&
+      session.user.role !== "super_admin"
+    ) {
       return NextResponse.json(
         { error: "Hanya instruktur atau admin yang bisa membuat program" },
         { status: 403 },
@@ -195,7 +208,7 @@ export async function POST(req: Request) {
         type: "admin_program_managed" as any,
         title: "Membuat Program Kurikulum",
         description: `Admin membuat program baru: ${program.title}`,
-        metadata: { programId: program.id }
+        metadata: { programId: program.id },
       });
     }
 
