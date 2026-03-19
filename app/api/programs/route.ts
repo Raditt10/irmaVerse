@@ -35,6 +35,9 @@ export async function GET(req: NextRequest) {
         program_enrollments: {
           select: { id: true, userId: true },
         },
+        class_grade: {
+          select: { id: true, label: true },
+        },
       },
       orderBy: { createdAt: "desc" },
     });
@@ -91,6 +94,8 @@ export async function GET(req: NextRequest) {
         duration: p.duration || "Belum ditentukan",
         level: GRADE_LABEL[p.grade] || p.grade,
         category: CATEGORY_LABEL[p.category] || p.category,
+        classGradeId: (p as any).classGradeId || null,
+        classGradeLabel: (p as any).class_grade?.label || null,
         thumbnail: p.thumbnailUrl,
         instructor: p.users?.name || "Instruktur IRMA",
         instructorAvatar: p.users?.avatar,

@@ -119,6 +119,9 @@ export async function GET(req: NextRequest) {
         programs: {
           select: { id: true, title: true },
         },
+        class_grade: {
+          select: { id: true, label: true },
+        },
       },
       orderBy: { date: "desc" },
     });
@@ -164,6 +167,8 @@ export async function GET(req: NextRequest) {
         instructorAvatar: m.users?.avatar || null,
         category: CATEGORY_LABEL[m.category] || m.category,
         grade: GRADE_LABEL[m.grade as keyof typeof GRADE_LABEL] || m.grade,
+        classGradeId: (m as any).classGradeId || null,
+        classGradeLabel: (m as any).class_grade?.label || null,
         startedAt: m.startedAt,
         thumbnailUrl: m.thumbnailUrl,
         location: m.location,

@@ -32,6 +32,8 @@ interface Program {
   duration: string;
   level: string;
   category: string;
+  classGradeId?: string | null;
+  classGradeLabel?: string | null;
   thumbnail?: string;
   instructor: string;
   materialCount: number;
@@ -40,9 +42,15 @@ interface Program {
   isCompleted: boolean;
 }
 
+interface ClassGrade {
+  id: string;
+  label: string;
+}
+
 const OurPrograms = () => {
   const [programs, setPrograms] = useState<Program[]>([]);
   const [loading, setLoading] = useState(true);
+  const [classGrades, setClassGrades] = useState<ClassGrade[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("Semua Kategori");
   const [selectedStatus, setSelectedStatus] = useState("Semua Status");
@@ -59,15 +67,31 @@ const OurPrograms = () => {
   const { data: session } = useSession({ required: false });
 
   const isPrivileged =
-    session?.user?.role === "instruktur" || session?.user?.role === "admin" || session?.user?.role === "super_admin";
+    session?.user?.role === "instruktur" ||
+    session?.user?.role === "admin" ||
+    session?.user?.role === "super_admin";
 
   const showToast = (message: string, type: "success" | "error") => {
     setToast({ show: true, message, type });
     setTimeout(() => setToast((prev) => ({ ...prev, show: false })), 3000);
   };
 
+  const fetchClassGrades = async () => {
+    try {
+      const res = await fetch("/api/admin/settings/class-grades");
+      if (res.ok) {
+        const data = await res.json();
+        const grades = Array.isArray(data) ? data : data.grades || [];
+        setClassGrades(grades);
+      }
+    } catch (error) {
+      console.error("Error fetching class grades:", error);
+    }
+  };
+
   useEffect(() => {
     fetchPrograms();
+    fetchClassGrades();
   }, []);
 
   const fetchPrograms = async () => {
@@ -129,13 +153,24 @@ const OurPrograms = () => {
     }
 
     let matchStatus = true;
-    if (selectedStatus === "Selesai") {
-      matchStatus = program.isCompleted === true;
-    } else if (selectedStatus === "Belum Selesai") {
-      matchStatus = program.isCompleted === false;
+    let matchClass = true;
+
+    if (isPrivileged) {
+      // For privileged users, selectedStatus is actually a class filter
+      if (selectedStatus !== "Semua Kelas") {
+        const classGrade = classGrades.find((c) => c.label === selectedStatus);
+        matchClass = classGrade ? program.classGradeId === classGrade.id : true;
+      }
+    } else {
+      // For non-privileged users, selectedStatus is a status filter
+      if (selectedStatus === "Selesai") {
+        matchStatus = program.isCompleted === true;
+      } else if (selectedStatus === "Belum Selesai") {
+        matchStatus = program.isCompleted === false;
+      }
     }
 
-    return matchSearch && matchCategory && matchStatus;
+    return matchSearch && matchCategory && matchStatus && matchClass;
   });
 
   const categories = [
@@ -144,8 +179,10 @@ const OurPrograms = () => {
     "Program Ekstra",
     "Next Level",
   ];
-  
-  const subCategories = isPrivileged ? [] : ["Semua Status", "Belum Selesai", "Selesai"];
+
+  const subCategories = isPrivileged
+    ? ["Semua Kelas", ...classGrades.map((c) => c.label)]
+    : ["Semua Status", "Belum Selesai", "Selesai"];
 
   return (
     <div className="min-h-screen bg-[#FDFBF7]">
@@ -288,6 +325,12 @@ const OurPrograms = () => {
                       {/* Content */}
                       <div className="p-4 sm:p-6 flex flex-col justify-between flex-1">
                         <div className="mb-4">
+                          {program.classGradeLabel && (
+                            <span className="inline-block px-2 py-0.5 rounded-md bg-purple-50 text-purple-600 text-[10px] font-black border border-purple-200 mb-2 uppercase tracking-wide">
+                              {program.classGradeLabel}
+                            </span>
+                          )}
+
                           <h3 className="text-lg sm:text-xl font-black text-slate-800 leading-tight group-hover:text-teal-600 transition-colors line-clamp-2 mb-2">
                             {program.title}
                           </h3>
@@ -304,7 +347,6 @@ const OurPrograms = () => {
                               <Clock3 className="h-3.5 w-3.5 text-teal-400" />
                               <span>{program.duration}</span>
                             </div>
-
                           </div>
 
                           {/* Progress bar for enrolled users */}
