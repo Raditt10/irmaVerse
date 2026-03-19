@@ -210,8 +210,18 @@ export default function AdminDashboard() {
                       {stats.recentMaterials.map((material) => (
                         <div key={material.id} className="flex items-center justify-between p-4 rounded-3xl bg-slate-50 border-2 border-dashed border-slate-200 hover:bg-white transition-all group">
                             <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 rounded-2xl bg-emerald-100 flex items-center justify-center text-emerald-600 font-black text-xl shrink-0">
-                                    {material.title.charAt(0)}
+                                <div className="w-14 h-14 rounded-2xl bg-emerald-50 border-2 border-emerald-100 flex items-center justify-center overflow-hidden group-hover:scale-105 transition-transform shadow-sm shrink-0">
+                                    {material.thumbnailUrl ? (
+                                      <img
+                                        src={material.thumbnailUrl}
+                                        alt={material.title}
+                                        className="w-full h-full object-cover"
+                                      />
+                                    ) : (
+                                      <div className="w-full h-full bg-emerald-100 flex items-center justify-center text-emerald-600 font-black text-xl">
+                                        {material.title.charAt(0)}
+                                      </div>
+                                    )}
                                 </div>
                                 <div className="min-w-0">
                                     <h3 className="font-black text-slate-700 group-hover:text-emerald-600 transition-colors truncate uppercase tracking-tight">{material.title}</h3>

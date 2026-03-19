@@ -242,7 +242,7 @@ export default function FriendsPage() {
                 {activeTab === "suggestions" ? (
                   <Sparkles className="h-10 w-10 text-slate-300" />
                 ) : (
-                  <Users className="h-10 w-10 text-slate-300" />
+                  <Handshake className="h-10 w-10 text-slate-300" />
                 )}
               </div>
               <h3 className="text-lg sm:text-xl font-black text-slate-700 text-center px-4">

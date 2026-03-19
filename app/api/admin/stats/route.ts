@@ -54,7 +54,11 @@ export async function GET() {
         orderBy: {
           date: 'desc'
         },
-        include: {
+        select: {
+          id: true,
+          title: true,
+          thumbnailUrl: true,
+          createdAt: true,
           users: {
             select: {
               name: true
@@ -166,6 +170,7 @@ export async function GET() {
       return {
         id: m.id,
         title: m.title,
+        thumbnailUrl: m.thumbnailUrl,
         instructor: m.users?.name || "TBA",
         createdAt: m.createdAt,
         isCompleted: isCompleted,

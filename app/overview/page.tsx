@@ -735,7 +735,7 @@ const Dashboard = () => {
                     </h2>
                   </div>
                   <Link
-                    href="/materials"
+                    href="/materials/rekapan"
                     className="text-sm font-bold text-emerald-600 hover:text-emerald-700 flex items-center gap-1"
                   >
                     Lihat Semua <ArrowRight className="w-4 h-4" />

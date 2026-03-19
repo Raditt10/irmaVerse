@@ -393,7 +393,7 @@ const ProgramDetail = () => {
                       </p>
                     </div>
                   ) : (
-                    <div className="space-y-4">
+                    <div className="max-h-[500px] md:max-h-[650px] overflow-y-auto overscroll-contain pr-3 space-y-5 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent hover:scrollbar-thumb-teal-200 transition-all duration-300">
                       {(() => {
                         // Jika totalKajian ditentukan (> 0), buat slot sebanyak totalKajian.
                         // Jika tidak, cukup render materi yang ada seperti biasa.
