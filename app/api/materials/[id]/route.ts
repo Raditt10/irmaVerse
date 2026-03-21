@@ -71,6 +71,11 @@ export async function GET(
             },
           },
         },
+        rekapan: {
+          select: {
+            content: true,
+          },
+        },
       },
     });
 
@@ -135,10 +140,12 @@ export async function GET(
       startedAt: m.startedAt,
       thumbnailUrl: m.thumbnailUrl,
       location: m.location,
-      content: m.content,
+      content: m.content || (m.rekapan && m.rekapan.length > 0 ? m.rekapan[0].content : null),
       link: m.link,
       materialType: m.materialType,
+      kajianOrder: m.kajianOrder,
       isAttendanceOpen: m.isAttendanceOpen,
+      hasRekapan: !!(m.content || m.link || (m.rekapan && m.rekapan.length > 0)),
       isJoined:
         m.courseenrollment?.length > 0 ||
         (m.materialinvite || []).some((inv: any) => inv.status === "accepted"),

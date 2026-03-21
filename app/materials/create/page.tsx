@@ -82,7 +82,6 @@ const CreateMaterial = () => {
     materialType: "editor" as "editor" | "link",
     materialContent: "",
     materialLink: "",
-    rekapanContent: "",
     location: "",
     instructorId: "",
   });
@@ -305,7 +304,7 @@ const CreateMaterial = () => {
 
     if (
       formData.materialType === "editor" &&
-      !formData.rekapanContent.trim()
+      !formData.materialContent.trim()
     ) {
       showToast("Materi kajian tidak boleh kosong", "error");
       return;
@@ -350,7 +349,7 @@ const CreateMaterial = () => {
       // Save rekapan if content is provided OR it's a link material
       const finalRekapanContent = formData.materialType === "link"
         ? formData.materialLink.trim()
-        : formData.rekapanContent.trim();
+        : formData.materialContent.trim();
         
       if (finalRekapanContent && result.id) {
         try {
@@ -895,9 +894,10 @@ const CreateMaterial = () => {
                         {formData.materialType === "editor" ? (
                           <div className="animate-in fade-in slide-in-from-top-1 duration-200">
                             <Textarea
-                              name="rekapanContent"
+                              name="materialContent"
+                              required={formData.materialType === "editor"}
                               rows={8}
-                              value={formData.rekapanContent}
+                              value={formData.materialContent}
                               onChange={handleInputChange}
                               placeholder="Tulis ringkasan materi kajian di sini. Rekapan ini akan bisa dibaca oleh peserta kapan saja sebagai bahan belajar mandiri..."
                               className="text-sm border-2 focus:ring-emerald-200"
