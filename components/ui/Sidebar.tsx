@@ -23,6 +23,7 @@ import {
   Contact,
   Shield,
   Settings,
+  ClipboardList,
 } from "lucide-react";
 
 // Custom scrollbar styles - Cartoon Style
@@ -187,6 +188,11 @@ const Sidebar = () => {
                 icon: Calendar,
                 label: "Kelola Jadwal Kajian",
                 path: "/materials",
+              },
+              {
+                icon: ClipboardList,
+                label: "Perkembangan Kajian",
+                path: "/materials/progress",
               },
               {
                 icon: BookMarked,

@@ -529,36 +529,36 @@ const EditMaterial = () => {
                           </p>
                         </div>
 
-                        {/* Card Next Level */}
+                        {/* Card Susulan */}
                         <div
                           onClick={() =>
                             setFormData({
                               ...formData,
-                              category: "Program Next Level",
+                              category: "Program Susulan",
                             })
                           }
                           className={`cursor-pointer rounded-2xl border-2 p-4 transition-all ${
-                            formData.category === "Program Next Level"
+                            formData.category === "Program Susulan"
                               ? "bg-indigo-50 border-indigo-500 shadow-[0_4px_0_0_#6366f1]"
                               : "bg-white border-slate-200 hover:border-indigo-300 hover:bg-slate-50 relative top-1"
                           }`}
                         >
                           <div className="flex items-center gap-3 mb-2">
                             <div
-                              className={`p-2 rounded-xl border ${formData.category === "Program Next Level" ? "bg-indigo-500 border-indigo-600 text-white" : "bg-slate-100 border-slate-200 text-slate-500"}`}
-                            >
-                              <Rocket className="h-5 w-5" />
-                            </div>
-                            <span
-                              className={`font-black ${formData.category === "Program Next Level" ? "text-indigo-700" : "text-slate-700"}`}
-                            >
-                              Next Level
-                            </span>
+                            className={`p-2 rounded-xl border ${formData.category === "Program Susulan" ? "bg-indigo-500 border-indigo-600 text-white" : "bg-slate-100 border-slate-200 text-slate-500"}`}
+                          >
+                            <Rocket className="h-5 w-5" />
                           </div>
-                          <p className="text-xs font-semibold text-slate-500 leading-tight">
-                            Materi tingkat lanjut.
-                          </p>
+                          <span
+                            className={`font-black ${formData.category === "Program Susulan" ? "text-indigo-700" : "text-slate-700"}`}
+                          >
+                            Susulan
+                          </span>
                         </div>
+                        <p className="text-xs font-semibold text-slate-500 leading-tight">
+                          Materi untuk kajian susulan.
+                        </p>
+                      </div>
                       </div>
 
                       {/* --- PROGRAM (KURSUS) DROPDOWN --- */}

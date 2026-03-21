@@ -357,10 +357,10 @@ const ProgramDetail = () => {
                       </div>
                       <div>
                         <h2 className="text-xl lg:text-2xl font-black text-slate-800">
-                          Daftar Materi
+                          Daftar Kajian
                         </h2>
                         <p className="text-sm text-slate-500 font-bold italic">
-                          {program.materials.length} {program.totalKajian > 0 ? `/ ${program.totalKajian}` : ""} materi dalam Program ini
+                          {program.materials.length} {program.totalKajian > 0 ? `/ ${program.totalKajian}` : ""} kajian dalam Program ini
                         </p>
                       </div>
                     </div>
@@ -375,7 +375,7 @@ const ProgramDetail = () => {
                         className="flex items-center gap-2 px-4 py-2.5 bg-teal-500 text-white font-black text-sm rounded-2xl border-2 border-teal-600 shadow-[0_3px_0_0_#0f766e] hover:bg-teal-600 active:translate-y-0.5 active:shadow-none transition-all"
                       >
                         <ListChecks className="h-4 w-4" />
-                        Tambah Materi
+                        Tambah Kajian
                       </button>
                     )}
                   </div>

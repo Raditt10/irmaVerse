@@ -121,8 +121,8 @@ const OurPrograms = () => {
 
     let matchCategory = true;
     if (selectedCategory !== "Semua Kategori") {
-      if (selectedCategory === "Next Level") {
-        matchCategory = program.category === "Program Next Level";
+      if (selectedCategory === "Susulan") {
+        matchCategory = program.category === "Program Susulan";
       } else {
         matchCategory = program.category === selectedCategory;
       }
@@ -142,7 +142,7 @@ const OurPrograms = () => {
     "Semua Kategori",
     "Program Wajib",
     "Program Ekstra",
-    "Next Level",
+    "Susulan",
   ];
   
   const subCategories = isPrivileged ? [] : ["Semua Status", "Belum Selesai", "Selesai"];
