@@ -38,6 +38,11 @@ interface Program {
   enrollmentCount: number;
   isEnrolled: boolean;
   isCompleted: boolean;
+  progress?: {
+    completed: number;
+    total: number;
+    percentage: number;
+  };
 }
 
 const OurPrograms = () => {
@@ -314,25 +319,25 @@ const OurPrograms = () => {
                                 <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider">
                                   Progress
                                 </span>
-                                {program.isCompleted ? (
+                                {program.isCompleted || program.progress?.percentage === 100 ? (
                                   <span className="text-[10px] font-black text-amber-600">
                                     Selesai 🏆
                                   </span>
                                 ) : (
                                   <span className="text-[10px] font-black text-emerald-600">
-                                    Terdaftar ✓
+                                    Terdaftar ✓ {program.progress?.percentage || 0}%
                                   </span>
                                 )}
                               </div>
                               <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
                                 <div
                                   className={`h-full rounded-full transition-all duration-500 ${
-                                    program.isCompleted
+                                    program.isCompleted || program.progress?.percentage === 100
                                       ? "bg-amber-400"
                                       : "bg-emerald-400"
                                   }`}
                                   style={{
-                                    width: program.isCompleted ? "100%" : "30%",
+                                    width: `${program.progress?.percentage || 0}%`,
                                   }}
                                 />
                               </div>

@@ -111,18 +111,34 @@ export async function GET(req: NextRequest) {
       );
 
       let isCompleted = false;
+      let attendanceCount = 0;
+      if (filteredMaterials.length > 0) {
+        attendanceCount = filteredMaterials.filter((m: any) => attendedMaterialIds.has(m.id)).length;
+      }
+      
+      const totalKajianTarget = p.totalKajian > 0 ? p.totalKajian : filteredMaterials.length;
+      let progressPercentage = 0;
+
+      if (totalKajianTarget > 0) {
+        progressPercentage = Math.round((attendanceCount / totalKajianTarget) * 100);
+        progressPercentage = Math.min(progressPercentage, 100);
+      }
+
       if (p.totalKajian > 0) {
         // Complete jika sudah ada semua materi sebanyak totalKajian DAN user menghadiri semuanya
         const hasAllMaterials = filteredMaterials.length >= p.totalKajian;
-        const attendedAll =
-          filteredMaterials.length > 0 &&
-          filteredMaterials.every((m: any) => attendedMaterialIds.has(m.id));
-        isCompleted = hasAllMaterials && attendedAll;
+        isCompleted = hasAllMaterials && (attendanceCount >= p.totalKajian);
       } else {
         isCompleted =
           filteredMaterials.length > 0 &&
-          filteredMaterials.every((m: any) => attendedMaterialIds.has(m.id));
+          (attendanceCount >= filteredMaterials.length);
       }
+
+      const progress = {
+        completed: attendanceCount,
+        total: totalKajianTarget,
+        percentage: progressPercentage,
+      };
 
       return {
         id: p.id,
@@ -150,6 +166,7 @@ export async function GET(req: NextRequest) {
         enrollmentCount: p.program_enrollments?.length || 0,
         isEnrolled,
         isCompleted,
+        progress,
         createdAt: p.createdAt,
       };
     });
