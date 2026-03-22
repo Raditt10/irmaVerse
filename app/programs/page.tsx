@@ -285,7 +285,7 @@ const OurPrograms = () => {
                             strokeWidth={2.5}
                           />
                           <span className="text-[11px] font-bold text-white">
-                            {program.materialCount} Materi
+                            {program.materialCount} Kajian
                           </span>
                         </div>
                       </div>
@@ -388,7 +388,7 @@ const OurPrograms = () => {
       <CartoonConfirmDialog
         type="warning"
         title="Hapus Program?"
-        message="Apakah Anda yakin ingin menghapus program ini? Materi di dalamnya tidak akan terhapus."
+        message="Apakah Anda yakin ingin menghapus program ini? Kajian di dalamnya tidak akan terhapus."
         confirmText="Ya, Hapus"
         cancelText="Batal"
         isOpen={showConfirmDelete}

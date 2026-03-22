@@ -313,7 +313,7 @@ const ProgramDetail = () => {
                   </div>
                   <div className="flex-1">
                     <h2 className="text-xl font-black text-slate-800">
-                      Progress Program
+                      Perkembanganmu di Program ini
                     </h2>
                     <p className="text-sm text-slate-500 font-bold">
                       {program.progress.completed} dari {program.progress.total}{" "}
@@ -386,10 +386,10 @@ const ProgramDetail = () => {
                         <BookOpen className="w-8 h-8 text-slate-300" />
                       </div>
                       <h4 className="text-slate-500 font-black mb-1">
-                        Belum ada materi
+                        Belum ada Kajian
                       </h4>
                       <p className="text-slate-400 text-sm font-bold">
-                        Instruktur belum menambahkan materi ke Program Kurikulum ini.
+                        Instruktur belum menambahkan Kajian ke Program Kurikulum ini.
                       </p>
                     </div>
                   ) : (
@@ -780,7 +780,7 @@ const ProgramDetail = () => {
                   <div className="bg-emerald-50 border-2 border-emerald-200 rounded-3xl p-5 text-center">
                     <CheckCircle2 className="h-8 w-8 text-emerald-500 mx-auto mb-2" />
                     <p className="text-sm text-emerald-700 font-black">
-                      Anda terdaftar di Program ini
+                      Anda sudah terdaftar di Program ini
                     </p>
                   </div>
                 )}
